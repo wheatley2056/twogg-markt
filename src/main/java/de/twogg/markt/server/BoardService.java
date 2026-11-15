@@ -169,7 +169,7 @@ public final class BoardService {
 
     public static void handle(ServerPlayer p, Views.Action act) {
         if ("close".equals(act.a)) {
-            Sessions.close(p, "board");
+            Sessions.close(p, "board", act.session);
             return;
         }
         if (Sessions.check(p, "board") == null) {

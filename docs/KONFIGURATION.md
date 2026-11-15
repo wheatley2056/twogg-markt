@@ -137,7 +137,7 @@ Vorlagen mit unbekannter Item-ID werden beim Ziehen übersprungen.
 | `potPayoutPercent` | double | `80` | Anteil des Topfs, der ausgeschüttet wird |
 | `lotteryShares` | Liste | `[50, 30, 20]` | Aufteilung auf Platz 1, 2, 3 … in % |
 | `giftReward` | double | `0.5` | Coins pro gefundenem Geschenk |
-| `wichteln` | boolean | `true` | Wichtelbaum |
+| `wichteln` | boolean | `true` | Wichteln an der Losbude |
 | `advent` | boolean | `true` | Adventskalender |
 | `adventDays` | Liste | 24 Tage | `day` (1–24), `coins`, `item`, `count`, `text` |
 | `vote` | boolean | `true` | Abstimmung „schönster Stand“ |

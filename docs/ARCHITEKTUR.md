@@ -62,7 +62,7 @@ de.twogg.markt
     ├── Snapshots         Leerzustand sichern/herstellen
     ├── Holograms         TextDisplays über Ständen und Bestenliste-Tafel, Aufräumen verwaister beim Laden
     ├── EventService      Phasen, Öffnungszeiten, Bossbar, Musik, Atmos, Statistik, Abstimmung, Siegerehrung, Feuerwerk
-    ├── ActivityService   Fenster „lottery“, „advent“, „wichtel“; versteckte Geschenke
+    ├── ActivityService   Fenster „lottery“ (Lose und Wichteln) und „advent“; versteckte Geschenke
     ├── Levels            Dimension aus ID
     ├── AdminService      Fenster „admin“ und alle Admin-Aktionen (auch für /markt-Befehle)
     └── MarktCommands     /markt …
@@ -102,13 +102,13 @@ stützen den Kurs, Nebenverdienste drücken ihn leicht.
 | shop | `refresh`, `close`, `buy` (id, count, cash), `offer_add` (amount, count; Ware aus der Hand), `offer_edit`, `offer_remove`, `toggle`, `collect` |
 | buyer | `refresh`, `close`, `sell` (id = Item-ID, flag = alle) |
 | board | `refresh`, `close`, `deliver` (id), `post` (count, amount, text, cash; Item aus der Hand), `cancel`, `pickup` |
-| lottery | `refresh`, `close`, `buy` (count, cash) |
+| lottery | `refresh`, `close`, `buy` (count, cash), Wichteln: `give` (Stapel aus der Hand), `take`, `pickup` |
 | advent | `refresh`, `close`, `open` (heutiges Türchen) |
-| wichtel | `refresh`, `close`, `give` (Stapel aus der Hand), `take`, `pickup` |
 | market, shop | zusätzlich `vote` |
 | admin | `open`, `refresh`, `close`, `sel_expand`, `sel_clear`, `plot_create`, `plot_*`, `zone_create`, `zone_delete`, `buyer_add`/`_edit`/`_remove`, `jobs_reroll`, `job_remove`, `setting`, `reload` |
 
-Absicherung: Block-Fenster gelten nur mit offener Sitzung am selben Block (≤ 8 Blöcke, Block noch da). Ein spätes
+Jede Ansicht trägt eine Sitzungsnummer (`View.session`); `close` schickt sie zurück und schließt nur genau diese
+Sitzung. Absicherung: Block-Fenster gelten nur mit offener Sitzung am selben Block (≤ 8 Blöcke, Block noch da). Ein spätes
 `close` eines alten Fensters beendet nur die Sitzung desselben Fenstertyps. Ansichten ohne Aktion höchstens alle
 200 ms. Admin-Aktionen prüfen `Commands.LEVEL_GAMEMASTERS` bei jedem Paket. Fehlende Felder führen nicht zu
 Ausnahmen; Ausnahmen in Aktionen werden geloggt und nicht weitergereicht.

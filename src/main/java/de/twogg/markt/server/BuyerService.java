@@ -89,7 +89,7 @@ public final class BuyerService {
 
     public static void handle(ServerPlayer p, Views.Action act) {
         if ("close".equals(act.a)) {
-            Sessions.close(p, "buyer");
+            Sessions.close(p, "buyer", act.session);
             return;
         }
         if (Sessions.check(p, "buyer") == null) {

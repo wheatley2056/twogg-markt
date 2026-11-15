@@ -242,17 +242,6 @@ def advent():
     save(im, BLOCK, "advent_calendar.png")
 
 
-def tree():
-    im = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
-    d = ImageDraw.Draw(im)
-    d.polygon([(8, 0), (15, 13), (0, 13)], fill=GREEN)
-    d.polygon([(8, 2), (13, 11), (3, 11)], fill=(64, 140, 82))
-    d.rectangle([7, 13, 8, 15], fill=DARK)
-    for x, y, c in [(8, 0, GOLD), (6, 6, RED), (10, 8, GOLD), (5, 10, (90, 140, 220)), (11, 11, RED), (8, 10, WHITE)]:
-        im.putpixel((x, y), c + (255,))
-    save(im, BLOCK, "wichtel_tree.png")
-
-
 def gift():
     im = Image.new("RGBA", (16, 16), RED + (255,))
     d = ImageDraw.Draw(im)
@@ -262,27 +251,7 @@ def gift():
     save(im, BLOCK, "hidden_gift.png")
 
 
-def lights():
-    # Animierte Textur: 4 Bilder untereinander, Lämpchen wechseln die Farbe
-    colors = [(255, 220, 90), (120, 220, 255), (255, 110, 110), (140, 255, 140)]
-    im = Image.new("RGBA", (16, 64), (0, 0, 0, 0))
-    for f in range(4):
-        y0 = f * 16
-        for x in range(16):
-            y = y0 + 3 + (1 if 4 <= x % 8 <= 5 else 0)
-            im.putpixel((x, y), (40, 50, 40, 255))
-        for i, x in enumerate(range(1, 16, 4)):
-            c = colors[(i + f) % 4]
-            for dx, dy in [(0, 0), (1, 0), (0, 1), (1, 1)]:
-                im.putpixel((x + dx, y0 + 5 + dy), c + (255,))
-    save(im, BLOCK, "string_lights.png")
-    with open(os.path.join(BLOCK, "string_lights.png.mcmeta"), "w") as f:
-        f.write('{"animation": {"frametime": 10}}\n')
-
-
 if __name__ == "__main__":
     lottery()
     advent()
-    tree()
     gift()
-    lights()

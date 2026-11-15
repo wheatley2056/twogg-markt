@@ -150,7 +150,7 @@ public final class StallService {
 
     public static void handle(ServerPlayer p, Views.Action act) {
         if ("close".equals(act.a)) {
-            Sessions.close(p, "market");
+            Sessions.close(p, "market", act.session);
             return;
         }
         if (Sessions.check(p, "market") == null) {

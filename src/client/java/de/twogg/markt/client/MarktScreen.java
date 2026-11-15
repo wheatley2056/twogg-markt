@@ -57,7 +57,7 @@ abstract class MarktScreen extends KitScreen {
             case "buyer" -> new BuyerScreen(v);
             case "board" -> new BoardScreen(v);
             case "admin" -> new AdminScreen(mc.screen instanceof AdminScreen ? null : mc.screen, v);
-            case "lottery", "advent", "wichtel" -> new ActivityScreen(v);
+            case "lottery", "advent" -> new ActivityScreen(v);
             default -> null;
         };
         if (s != null) mc.setScreen(s);
@@ -97,7 +97,9 @@ abstract class MarktScreen extends KitScreen {
 
     @Override
     public void removed() {
-        send("close");
+        Views.Action close = Views.Action.of("close");
+        close.session = view.session;
+        send(close);
         super.removed();
     }
 

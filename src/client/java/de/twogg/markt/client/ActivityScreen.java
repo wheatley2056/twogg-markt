@@ -5,17 +5,26 @@ import de.twogg.kit.KitButton;
 import de.twogg.kit.KitColors;
 import de.twogg.kit.KitDraw;
 import de.twogg.kit.KitIcon;
+import de.twogg.kit.KitNav;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 
-/** Losbude, Adventskalender und Wichtelbaum – drei kleine Fenster mit gemeinsamer Basis. */
+/** Losbude (Seiten „Lose“ und „Wichteln“) und Adventskalender. */
 public class ActivityScreen extends MarktScreen {
     private final String id;
     private int count = 1;
+    /** Losbude: Seite Wichteln statt Lose. */
+    private boolean wichtel;
 
     ActivityScreen(Views.View v) {
-        super(null, v, v.title, v.subtitle, 0);
+        super(null, v, v.title, v.subtitle, "lottery".equals(v.screen) ? 96 : 0);
         this.id = v.screen;
+        wichtel = v.event != null && !v.event.lottery && v.event.wichteln;
+    }
+
+    /** Was gerade angezeigt wird: lottery, wichtel oder advent. */
+    private String mode() {
+        return "lottery".equals(id) && wichtel ? "wichtel" : id;
     }
 
     @Override
@@ -34,8 +43,15 @@ public class ActivityScreen extends MarktScreen {
     @Override
     protected void build() {
         addFooterButton(KitButton.primary(0, 0, 70, "Fertig", b -> onClose()));
+        if ("lottery".equals(id)) {
+            int n = 0;
+            if (ev().lottery) addNav(n++, new KitNav(0, 0, 0, KitIcon.BOX, "Lose", () -> ev().myTickets > 0 ? String.valueOf(ev().myTickets) : "",
+                    () -> !wichtel, () -> { wichtel = false; view.message = ""; rebuildWidgets(); }));
+            if (ev().wichteln) addNav(n, new KitNav(0, 0, 0, KitIcon.PLUS, "Wichteln", () -> ev().wichtelGift.isEmpty() ? "" : "1",
+                    () -> wichtel, () -> { wichtel = true; view.message = ""; rebuildWidgets(); }));
+        }
         int x = cx + PAD, y = cy + PAD, w = cw - 2 * PAD, by = cy + ch - PAD - 20;
-        switch (id) {
+        switch (mode()) {
             case "lottery" -> {
                 int left = Math.max(0, ev().maxTickets - ev().myTickets);
                 count = Math.max(1, Math.min(count, Math.max(1, left)));
@@ -66,7 +82,7 @@ public class ActivityScreen extends MarktScreen {
             }
             case "wichtel" -> {
                 int bw = (w - 8) / 3;
-                KitButton give = addRenderableWidget(KitButton.primary(x, by, bw, "Unter den Baum", b -> send("give")).accent(accent()));
+                KitButton give = addRenderableWidget(KitButton.primary(x, by, bw, "Geschenk abgeben", b -> send("give")).accent(accent()));
                 give.active = running() && ev().wichtelGift.isEmpty() && !view.hand.isEmpty();
                 KitButton take = addRenderableWidget(KitButton.second(x + bw + 4, by, bw, "Zurücknehmen", b -> send("take")));
                 take.active = !ev().wichtelGift.isEmpty() && running();
@@ -80,7 +96,7 @@ public class ActivityScreen extends MarktScreen {
     protected void renderContent(GuiGraphicsExtractor g, int mx, int my, float d) {
         int x = cx + PAD, y = cy + PAD, w = cw - 2 * PAD, by = cy + ch - PAD - 20;
         Views.EventInfo e = ev();
-        switch (id) {
+        switch (mode()) {
             case "lottery" -> {
                 KitDraw.label(g, running() ? "Weihnachtsmarkt #" + e.round + " · " + e.status : "Die Losbude öffnet mit dem Weihnachtsmarkt", x, y);
                 KitDraw.well(g, x, y + 14, w, 54);
@@ -100,7 +116,7 @@ public class ActivityScreen extends MarktScreen {
                 KitDraw.label(g, head, x, y);
             }
             case "wichtel" -> {
-                KitDraw.label(g, running() ? "Wichteln läuft · " + e.wichtelCount + (e.wichtelCount == 1 ? " Geschenk" : " Geschenke") + " unter dem Baum"
+                KitDraw.label(g, running() ? "Wichteln läuft · " + e.wichtelCount + (e.wichtelCount == 1 ? " Geschenk" : " Geschenke") + " abgegeben"
                         : "Wichteln beginnt mit dem Weihnachtsmarkt", x, y);
                 int ty = y + 16;
                 if (!e.wichtelGift.isEmpty()) {
@@ -111,7 +127,7 @@ public class ActivityScreen extends MarktScreen {
                 } else {
                     text(g, "Nimm dein Geschenk in die Hand.", x, ty, KitColors.AMBER_TEXT);
                 }
-                KitDraw.wrapped(g, Component.literal("Leg ein Geschenk unter den Baum (den ganzen Stapel in deiner Hand). Bei der Siegerehrung "
+                KitDraw.wrapped(g, Component.literal("Gib ein Geschenk ab (den ganzen Stapel in deiner Hand). Bei der Siegerehrung "
                         + "werden alle Geschenke verteilt – niemand bekommt sein eigenes. Abholen hier oder im Abholfach am Auftragsbrett."),
                         x, ty + 18, w, by - 4, KitColors.TEXT_SOFT);
             }

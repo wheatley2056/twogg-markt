@@ -1,5 +1,14 @@
 # Changelog: TwoGG Markt
 
+## 0.2.1+26.1.2 (15.11.2026)
+
+- Behoben: Hitboxen von Standschild, Auftragsbrett und Adventskalender drehen jetzt mit der Blickrichtung (vorher
+  immer Nord-Ausrichtung, quer zum Modell).
+- Entfernt: Wichtelbaum und Lichterkette. Wichteln läuft jetzt an der **Losbude** (zweite Seite „Wichteln“).
+  Bereits gesetzte Blöcke verschwinden beim Laden der Welt.
+- Behoben: Ein verspätetes „Fenster zu“ konnte die Sitzung eines gerade neu geöffneten Fensters desselben Typs
+  beenden (Aktionen wurden dann still abgewiesen). Fenster haben jetzt eine Sitzungsnummer.
+
 ## 0.2.0+26.1.2 (15.11.2026)
 
 **Hologramme und Weihnachtsmarkt-Event**

@@ -21,7 +21,7 @@
 ```
 cd ../twogg-kit && ./gradlew publishToMavenLocal
 cd ../twogg-markt
-./gradlew build          # build/libs/twogg-markt-0.2.0+26.1.2.jar (+ -sources.jar)
+./gradlew build          # build/libs/twogg-markt-0.2.1+26.1.2.jar (+ -sources.jar)
 ```
 
 Neue Economy-Version: Jar aus `../twogg-economy/build/libs/` nach `libs/` kopieren und `economy_version` in
@@ -51,9 +51,9 @@ zweiten Spieler (FakePlayer) kaufen, leert die Kasse, prüft den Bauschutz (Frem
 außerhalb schon), verkauft am Ankauf, liefert einen Marktauftrag, hängt einen eigenen Auftrag aus, lässt ihn vom zweiten
 Spieler erledigen, holt die Ware ab, räumt Schnee in einer Räumzone, lässt die Miete ablaufen, kauft als Kunde bar an
 einer fremden Theke, prüft die Hologramme über beiden Ständen, startet ein Event (Losbude über die Oberfläche, zweiter
-Spieler kauft Lose, Geschenk finden, Wichtelgeschenke von beiden, Abstimmen, Adventskalender, Event-Seite,
+Spieler kauft Lose, Geschenk finden, Wichtelgeschenke von beiden über die Losbude, Abstimmen, Adventskalender, Event-Seite,
 Bestenliste-Tafel) und prüft die Siegerehrung (Topf ausgeschüttet, Wichtelgeschenke getauscht, Preise auf dem Konto
-bzw. vorgemerkt). Danach alle Seiten der Marktverwaltung. Jeder Schritt wird auf dem Server geprüft
+bzw. vorgemerkt). Außerdem: Hitbox des Auftragsbretts dreht mit der Blickrichtung. Danach alle Seiten der Marktverwaltung. Jeder Schritt wird auf dem Server geprüft
 (Kontostände, Bargeld, Kasse, Inventare). 32 Screenshots unter `build/run/clientGameTest/screenshots/`.
 
 Kit-Knöpfe sind `AbstractButton`; der Test drückt sie über eine eigene Hilfe (`press`), Eingabefelder findet er über

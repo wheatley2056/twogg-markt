@@ -25,8 +25,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Mitmach-Aktionen des Weihnachtsmarkts: Losbude (Lose während des Events, Ziehung im Finale), Adventskalender
- * (1.–24. Dezember ein Türchen pro Tag), Wichtelbaum (Geschenk abgeben, Verteilung im Finale) und versteckte Geschenke.
+ * Mitmach-Aktionen des Weihnachtsmarkts: Losbude (Lose und Wichteln während des Events, Ziehung und Verteilung im
+ * Finale), Adventskalender (1.–24. Dezember ein Türchen pro Tag) und versteckte Geschenke.
  */
 public final class ActivityService {
     private ActivityService() {}
@@ -35,7 +35,7 @@ public final class ActivityService {
 
     public static void openLottery(ServerPlayer p, BlockPos pos) {
         if (!Send.canOpen(p)) return;
-        if (!MarktRuntime.config().event.lottery) {
+        if (!MarktRuntime.config().event.lottery && !MarktRuntime.config().event.wichteln) {
             p.sendOverlayMessage(Component.literal("Die Losbude ist zu.").withStyle(ChatFormatting.GRAY));
             return;
         }
@@ -53,16 +53,6 @@ public final class ActivityService {
         Pay.settle(p);
         Sessions.open(p, "advent", pos, ModContent.ADVENT, null);
         send(p, "advent", "", false);
-    }
-
-    public static void openWichtel(ServerPlayer p, BlockPos pos) {
-        if (!Send.canOpen(p)) return;
-        if (!MarktRuntime.config().event.wichteln) {
-            p.sendOverlayMessage(Component.literal("Wichteln gibt es dieses Jahr nicht.").withStyle(ChatFormatting.GRAY));
-            return;
-        }
-        Sessions.open(p, "wichtel", pos, ModContent.WICHTEL, null);
-        send(p, "wichtel", "", false);
     }
 
     /** Verstecktes Geschenk: einmal pro Spieler und Event. */
@@ -99,21 +89,17 @@ public final class ActivityService {
         switch (screen) {
             case "lottery" -> {
                 v.title = "Losbude";
-                v.subtitle = MarktRuntime.config().title + " · Ziehung bei der Siegerehrung";
-            }
-            case "advent" -> {
-                v.title = "Adventskalender";
-                v.subtitle = MarktRuntime.config().title + " · jeden Tag ein Türchen";
-                fillAdvent(p, v);
-            }
-            case "wichtel" -> {
-                v.title = "Wichtelbaum";
-                v.subtitle = MarktRuntime.config().title + " · Geschenke tauschen";
+                v.subtitle = MarktRuntime.config().title + " · Lose und Wichteln, Auflösung bei der Siegerehrung";
                 ItemStack hand = p.getMainHandItem();
                 if (!hand.isEmpty()) {
                     v.hand = Stacks.toString(p.level().registryAccess(), hand);
                     v.handName = hand.getCount() + "× " + hand.getHoverName().getString();
                 }
+            }
+            case "advent" -> {
+                v.title = "Adventskalender";
+                v.subtitle = MarktRuntime.config().title + " · jeden Tag ein Türchen";
+                fillAdvent(p, v);
             }
             default -> { }
         }
@@ -165,7 +151,7 @@ public final class ActivityService {
     public static void handle(ServerPlayer p, Views.Action act) {
         String screen = act.screen;
         if ("close".equals(act.a)) {
-            Sessions.close(p, screen);
+            Sessions.close(p, screen, act.session);
             return;
         }
         if (Sessions.check(p, screen) == null) {
@@ -177,11 +163,11 @@ public final class ActivityService {
             return;
         }
         String[] r = switch (screen + ":" + act.a) {
-            case "lottery:buy" -> buyTickets(p, Math.max(1, act.count), act.cash);
+            case "lottery:buy" -> MarktRuntime.config().event.lottery ? buyTickets(p, Math.max(1, act.count), act.cash) : fail("Lose gibt es gerade nicht.");
             case "advent:open" -> openDoor(p);
-            case "wichtel:give" -> giveWichtel(p);
-            case "wichtel:take" -> takeWichtel(p);
-            case "wichtel:pickup" -> pickup(p);
+            case "lottery:give" -> MarktRuntime.config().event.wichteln ? giveWichtel(p) : fail("Wichteln ist abgeschaltet.");
+            case "lottery:take" -> takeWichtel(p);
+            case "lottery:pickup" -> pickup(p);
             default -> new String[]{"", null};
         };
         send(p, screen, r[0], r[1] != null);
@@ -229,9 +215,9 @@ public final class ActivityService {
 
     private static String[] giveWichtel(ServerPlayer p) {
         MarktEvent e = EventService.ev();
-        if (!e.running()) return fail("Wichtelgeschenke nimmt der Baum nur während des Weihnachtsmarkts an.");
+        if (!e.running()) return fail("Wichtelgeschenke nimmt die Losbude nur während des Weihnachtsmarkts an.");
         String me = p.getUUID().toString();
-        for (MarktEvent.Gift g : e.wichtel) if (g.from.equals(me)) return fail("Du hast schon ein Geschenk unter den Baum gelegt.");
+        for (MarktEvent.Gift g : e.wichtel) if (g.from.equals(me)) return fail("Du hast schon ein Wichtelgeschenk abgegeben.");
         ItemStack hand = p.getMainHandItem();
         if (hand.isEmpty()) return fail("Nimm dein Geschenk in die Hand.");
         if (hand.is(ModContent.PLANNER)) return fail("Den Marktplaner verschenkst du lieber nicht.");
@@ -245,7 +231,7 @@ public final class ActivityService {
         e.wichtel.add(g);
         MarktRuntime.markDirty();
         p.level().playSound(null, p.blockPosition(), SoundEvents.BUNDLE_INSERT, SoundSource.PLAYERS, 0.8f, 1f);
-        return ok(what + " liegt unter dem Baum. Bei der Siegerehrung bekommt jemand anderes es – und du ein anderes Geschenk.");
+        return ok(what + " ist abgegeben. Bei der Siegerehrung bekommt jemand anderes es – und du ein anderes Geschenk.");
     }
 
     private static String[] takeWichtel(ServerPlayer p) {
@@ -258,7 +244,7 @@ public final class ActivityService {
             MarktRuntime.markDirty();
             return ok("Geschenk zurückgenommen.");
         }
-        return fail("Unter dem Baum liegt nichts von dir.");
+        return fail("Von dir liegt kein Wichtelgeschenk bereit.");
     }
 
     private static String[] pickup(ServerPlayer p) {

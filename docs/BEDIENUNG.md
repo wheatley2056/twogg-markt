@@ -119,7 +119,7 @@ sich alle 5 Sekunden und sind für alle sichtbar, auch ohne Mod. Ausschalten: Re
 | geschlossen | Stände lassen sich mieten. Mit `event.onlyDuringEvent` verkaufen Theken, Ankauf und Auftragsbrett nur im Event. |
 | Ankündigung | Bei festen Öffnungszeiten 15, 5 und 1 Minute vorher im Chat |
 | **Eröffnung** | Titel „Weihnachtsmarkt – ist eröffnet!“, Glocken, Bossbar, Schneefall; 60 Sekunden |
-| **geöffnet** | Bossbar mit Restzeit, Weihnachtslieder (Glockenspiel) und Atmos-Stimmung im Marktgelände, Losbude, Wichteln, Geschenkesuche, Abstimmung; 5 Minuten vor Schluss eine Erinnerung |
+| **geöffnet** | Bossbar mit Restzeit, Weihnachtslieder (Glockenspiel) und Atmos-Stimmung im Marktgelände, Losbude mit Wichteln, Geschenkesuche, Abstimmung; 5 Minuten vor Schluss eine Erinnerung |
 | **Siegerehrung** | Losziehung, Wichtelgeschenke werden verteilt, Preise je Kategorie, Ergebnisse im Chat und auf der Tafel, Feuerwerk; 90 Sekunden, dann schließt der Markt |
 
 Gestartet wird per `/markt event start [minuten]`, in der Marktverwaltung (Seite **Event**) oder automatisch nach
@@ -130,7 +130,7 @@ Gestartet wird per `/markt event start [minuten]`, in der Marktverwaltung (Seite
 | Aktion | Wie |
 |---|---|
 | **Losbude** | Lose kaufen (0,5 WLC = 5 €, höchstens 10). Bei der Siegerehrung werden 80 % des Topfs ausgeschüttet: 50 / 30 / 20 % an drei verschiedene Gewinner, Chance je nach Zahl der Lose. Der Rest bleibt beim Markt (wird vernichtet). |
-| **Wichtelbaum** | Den Stapel in der Hand unter den Baum legen (einer pro Spieler, zurücknehmen bis zur Siegerehrung). Bei der Siegerehrung bekommt jeder ein fremdes Geschenk ins Abholfach (abholen am Baum oder am Auftragsbrett). |
+| **Wichteln** (Losbude, Seite „Wichteln“) | Den Stapel in der Hand abgeben (einer pro Spieler, zurücknehmen bis zur Siegerehrung). Bei der Siegerehrung bekommt jeder ein fremdes Geschenk ins Abholfach (abholen an der Losbude oder am Auftragsbrett). |
 | **Geschenkesuche** | Admins verstecken „Versteckte Geschenke“. Rechtsklick: 0,5 WLC, einmal pro Geschenk und Spieler und Event. Zählt für die Bestenliste. |
 | **Adventskalender** | 1.–24. Dezember ein Türchen pro Tag und Spieler (Coins und/oder Items laut `event.adventDays`). Läuft unabhängig vom Event. Verpasste Tage bleiben zu. |
 | **Abstimmen** | „★ Für diesen Stand stimmen“ in der Standübersicht oder „★ Abstimmen“ an der Theke. Eine Stimme pro Spieler, umentscheiden geht, nicht für den eigenen Stand. |
@@ -154,7 +154,6 @@ und nach dem Event die Ergebnisse zeigt.
   Klangkategorie „Musikblöcke/Plattenspieler“ des Spielers.
 - **TwoGG Atmos** (optional): Preset `event.atmosPreset` (Standard `draussen_klar`) im Gelände.
 - **Schneefall** während des Events, **Feuerwerk** bei der Siegerehrung (über dem Siegerstand und im Gelände).
-- **Lichterkette:** Deko-Block mit wechselnden Farben, leuchtet.
 
 ## Für Admins (OP-Stufe 2)
 
@@ -217,8 +216,10 @@ Admins dürfen in allen Ständen bauen.
 | Block/Item | Wer stellt auf | Abbauen |
 |---|---|---|
 | Verkaufstheke | Spieler im eigenen Stand | Besitzer und Helfer (Holz) |
-| Standschild, Ankaufstelle, Auftragsbrett, Losbude, Adventskalender, Wichtelbaum, Verstecktes Geschenk | Admins | nur im Kreativmodus (wie das Bankterminal) |
-| Lichterkette | jeder (Deko) | normal |
+| Standschild, Ankaufstelle, Auftragsbrett, Losbude, Adventskalender, Verstecktes Geschenk | Admins | nur im Kreativmodus (wie das Bankterminal) |
+
+Wichtelbaum und Lichterkette gab es nur in 0.2.0. Wurden sie schon gesetzt, verschwinden sie beim Laden der Welt
+(Minecraft ersetzt unbekannte Blöcke durch Luft).
 | Marktplaner | – | Item, nur für Admins nutzbar |
 
 Es gibt keine Rezepte. Weitere Theken kaufen Spieler unter „Mein Stand“ (`shop.counterPrice`, 20 €).

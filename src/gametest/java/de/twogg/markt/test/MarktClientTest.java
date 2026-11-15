@@ -343,6 +343,18 @@ public final class MarktClientTest implements FabricClientGameTest {
             press(ctx, "Fertig", false);
             ctx.waitFor(mc -> mc.screen == null, 100);
 
+            // 9b2) Hitboxen drehen mit der Blickrichtung (Auftragsbrett: breit quer zur Blickrichtung, schmal entlang)
+            String shapes = sp.getServer().computeOnServer(server -> {
+                StringBuilder sb = new StringBuilder();
+                for (Direction d : new Direction[]{Direction.NORTH, Direction.EAST}) {
+                    var st = ModContent.BOARD.defaultBlockState().setValue(HorizontalDirectionalBlock.FACING, d);
+                    var bb = st.getShape(server.overworld(), BlockPos.ZERO).bounds();
+                    sb.append(d).append(':').append(Math.round((bb.maxX - bb.minX) * 16)).append('x').append(Math.round((bb.maxZ - bb.minZ) * 16)).append(' ');
+                }
+                return sb.toString().trim();
+            });
+            check(shapes.equals("north:16x3 east:3x16"), "Hitbox Auftragsbrett (Breite x Tiefe): " + shapes);
+
             // 9c) Hologramme über den Ständen
             String holo = sp.getServer().computeOnServer(server -> {
                 de.twogg.markt.server.Holograms.tick();
@@ -359,15 +371,13 @@ public final class MarktClientTest implements FabricClientGameTest {
                     "Hologramme: " + holo);
 
             // 9d) Weihnachtsmarkt-Event: Start, Losbude, Geschenk, Wichteln, Abstimmen, Siegerehrung
-            BlockPos lottery = base.offset(-3, 0, -2), gift = base.offset(3, 0, -2), tree = base.offset(-5, 0, -2), advent = base.offset(-7, 0, -2);
+            BlockPos lottery = base.offset(-3, 0, -2), gift = base.offset(3, 0, -2), advent = base.offset(-7, 0, -2);
             UUID kunde = UUID.nameUUIDFromBytes("kunde".getBytes());
             String started = sp.getServer().computeOnServer(server -> {
                 ServerLevel l = server.overworld();
                 l.setBlockAndUpdate(lottery, ModContent.LOTTERY.defaultBlockState());
                 l.setBlockAndUpdate(gift, ModContent.GIFT.defaultBlockState());
-                l.setBlockAndUpdate(tree, ModContent.WICHTEL.defaultBlockState());
                 l.setBlockAndUpdate(advent, ModContent.ADVENT.defaultBlockState());
-                l.setBlockAndUpdate(base.offset(-1, 2, -2), ModContent.LIGHTS.defaultBlockState());
                 return de.twogg.markt.server.EventService.start(MarktRuntime.now() + 30 * 60_000L, null, player(server));
             });
             check(sp.getServer().computeOnServer(server -> MarktRuntime.data().event.running()), "Event läuft nicht: " + started);
@@ -405,27 +415,29 @@ public final class MarktClientTest implements FabricClientGameTest {
             check(found.equals("5/1"), "Geschenk gefunden (Belohnung/Zähler): " + found);
             sp.getServer().runOnServer(server -> {
                 player(server).setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.DIAMOND, 2));
-                de.twogg.markt.server.ActivityService.openWichtel(player(server), tree);
+                de.twogg.markt.server.ActivityService.openLottery(player(server), lottery);
             });
             ctx.waitFor(mc -> mc.screen != null && mc.screen.getClass().getSimpleName().equals("ActivityScreen"), 100);
             ctx.waitTicks(5);
-            ctx.takeScreenshot("markt-21-wichtelbaum");
-            press(ctx, "Unter den Baum", false);
+            press(ctx, "Wichteln", false);
+            ctx.waitTicks(3);
+            ctx.takeScreenshot("markt-21-wichteln");
+            press(ctx, "Geschenk abgeben", false);
             ctx.waitTicks(10);
             press(ctx, "Fertig", false);
             ctx.waitFor(mc -> mc.screen == null, 100);
             String wich = sp.getServer().computeOnServer(server -> {
                 FakePlayer f = FakePlayer.get(server.overworld(), new GameProfile(kunde, "Kunde"));
-                f.setPos(tree.getX() + 0.5, tree.getY(), tree.getZ() - 1.5);
+                f.setPos(lottery.getX() + 0.5, lottery.getY(), lottery.getZ() - 1.5);
                 f.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.PUMPKIN_PIE, 3));
                 return "";
             });
             ctx.waitTicks(1);
             String wich2 = sp.getServer().computeOnServer(server -> {
                 FakePlayer f = FakePlayer.get(server.overworld(), new GameProfile(kunde, "Kunde"));
-                Sessions.open(f, "wichtel", tree, ModContent.WICHTEL, null);
+                Sessions.open(f, "lottery", lottery, ModContent.LOTTERY, null);
                 Views.Action act = Views.Action.of("give");
-                act.screen = "wichtel";
+                act.screen = "lottery";
                 de.twogg.markt.server.ActivityService.handle(f, act);
                 return MarktRuntime.data().event.wichtel.size() + "/" + player(server).getMainHandItem().isEmpty();
             });

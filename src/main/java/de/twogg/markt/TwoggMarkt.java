@@ -84,7 +84,7 @@ public class TwoggMarkt implements ModInitializer {
                 case "buyer" -> BuyerService.handle(player, act);
                 case "board" -> BoardService.handle(player, act);
                 case "admin" -> AdminService.handle(player, act);
-                case "lottery", "advent", "wichtel" -> ActivityService.handle(player, act);
+                case "lottery", "advent" -> ActivityService.handle(player, act);
                 default -> { }
             }
         } catch (RuntimeException e) {

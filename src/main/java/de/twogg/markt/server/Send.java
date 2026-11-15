@@ -37,6 +37,8 @@ public final class Send {
         v.periodName = c.stalls.periodName;
         v.periodNamePlural = c.stalls.periodNamePlural;
         v.message = message == null ? "" : message;
+        Sessions.Session s = Sessions.get(p);
+        v.session = s == null ? 0 : s.id();
         v.error = error;
         if (Economy.available()) {
             v.hasAccount = Economy.hasAccount(p);

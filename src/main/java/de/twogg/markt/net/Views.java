@@ -18,6 +18,8 @@ public final class Views {
 
     public static final class View {
         public String screen = "";
+        /** Sitzungsnummer; der Client schickt sie bei „close“ zurück. */
+        public int session;
         public String title = "";
         public String subtitle = "";
         public int accent = 0xFFEE5A4F;
@@ -199,6 +201,7 @@ public final class Views {
         public double value;
         public boolean cash;
         public boolean flag;
+        public int session;
 
         public static Action of(String a) {
             Action x = new Action();

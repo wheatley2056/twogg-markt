@@ -137,7 +137,7 @@ public final class AdminService {
 
     public static void handle(ServerPlayer p, Views.Action act) {
         if ("close".equals(act.a)) {
-            Sessions.close(p, "admin");
+            Sessions.close(p, "admin", act.session);
             return;
         }
         if (!isAdmin(p)) {

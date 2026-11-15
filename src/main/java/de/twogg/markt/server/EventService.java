@@ -273,7 +273,7 @@ public final class EventService {
             for (int i = 0; i < 3; i++) sound(p, SoundEvents.NOTE_BLOCK_BELL, 1f, Melodies.soundPitch(18 - i * 5));
             p.connection.send(new ClientboundSoundPacket(Holder.direct(SoundEvents.BELL_BLOCK), SoundSource.AMBIENT, p.getX(), p.getY(), p.getZ(), 1f, 1f, 1L));
         }
-        broadcast(Component.literal("🎄 Der " + title + " ist eröffnet! Stände, Losbude, Wichteln, Geschenkesuche – /markt")
+        broadcast(Component.literal("🎄 Der " + title + " ist eröffnet! Stände, Losbude mit Wichteln, Geschenkesuche – /markt")
                 .withStyle(ChatFormatting.GOLD));
         if (cfg().weatherSnow) {
             MarktRuntime.server().setWeatherParameters(0, (int) Math.min(Integer.MAX_VALUE, (e.endsAt - now) / 50 + 1200), true, false);
@@ -372,7 +372,7 @@ public final class EventService {
             MarktRuntime.data().pickup.computeIfAbsent(receiver.from, k -> new ArrayList<>()).add(g.item);
             ServerPlayer p = online(receiver.from);
             if (p != null) {
-                p.sendSystemMessage(Component.literal("🎁 Dein Wichtelgeschenk ist da! Abholen am Auftragsbrett (Abholfach) oder am Wichtelbaum.")
+                p.sendSystemMessage(Component.literal("🎁 Dein Wichtelgeschenk ist da! Abholen an der Losbude oder am Auftragsbrett (Abholfach).")
                         .withStyle(ChatFormatting.GREEN));
             }
         }

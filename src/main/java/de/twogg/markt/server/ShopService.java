@@ -89,14 +89,14 @@ public final class ShopService {
 
     public static void handle(ServerPlayer p, Views.Action act) {
         if ("close".equals(act.a)) {
-            Sessions.close(p, "shop");
+            Sessions.close(p, "shop", act.session);
             return;
         }
         Sessions.Session s = Sessions.check(p, "shop");
         Plot plot = s == null ? null : MarktRuntime.data().plots.get(s.plot());
         long now = MarktRuntime.now();
         if (plot == null || !plot.active(now)) {
-            Sessions.close(p, "shop");
+            Sessions.close(p, "shop", 0);
             p.sendOverlayMessage(Component.literal("Du stehst nicht mehr an der Theke.").withStyle(ChatFormatting.RED));
             return;
         }

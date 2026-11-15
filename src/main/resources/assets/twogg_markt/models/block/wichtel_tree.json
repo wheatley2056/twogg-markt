@@ -1,8 +1,0 @@
-{
-  "parent": "minecraft:block/cross",
-  "textures": {
-    "cross": "twogg_markt:block/wichtel_tree",
-    "particle": "twogg_markt:block/wichtel_tree"
-  },
-  "render_type": "minecraft:cutout"
-}

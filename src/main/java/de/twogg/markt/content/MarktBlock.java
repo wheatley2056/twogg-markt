@@ -18,6 +18,7 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
+import java.util.Map;
 import java.util.function.BiConsumer;
 
 /**
@@ -27,11 +28,14 @@ import java.util.function.BiConsumer;
 public class MarktBlock extends HorizontalDirectionalBlock {
     private final BiConsumer<ServerPlayer, BlockPos> onUse;
     private final VoxelShape shape;
+    /** Form je Blickrichtung (die Form ist für NORTH angegeben, gedreht wie die Blockstates). */
+    private final Map<Direction, VoxelShape> shapes;
 
     public MarktBlock(Properties properties, BiConsumer<ServerPlayer, BlockPos> onUse, VoxelShape shape) {
         super(properties);
         this.onUse = onUse;
         this.shape = shape == null ? Shapes.block() : shape;
+        this.shapes = Shapes.rotateHorizontal(this.shape);
         registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
     }
 
@@ -52,12 +56,11 @@ public class MarktBlock extends HorizontalDirectionalBlock {
 
     @Override
     protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext ctx) {
-        return shape;
+        return shapes.getOrDefault(state.getValue(FACING), shape);
     }
 
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
-        if (onUse == null) return InteractionResult.PASS;   // reine Deko (Lichterkette)
         if (!level.isClientSide() && player instanceof ServerPlayer sp) onUse.accept(sp, pos);
         return InteractionResult.SUCCESS;
     }

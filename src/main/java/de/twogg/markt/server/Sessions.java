@@ -18,12 +18,14 @@ public final class Sessions {
     private static final Map<UUID, Session> OPEN = new HashMap<>();
     private static final Map<UUID, Long> LAST_VIEW = new HashMap<>();
 
-    public record Session(String screen, GlobalPos pos, Block block, String plot) {}
+    public record Session(String screen, GlobalPos pos, Block block, String plot, int id) {}
+
+    private static int nextId = 1;
 
     private Sessions() {}
 
     public static void open(ServerPlayer p, String screen, BlockPos pos, Block block, String plot) {
-        OPEN.put(p.getUUID(), new Session(screen, pos == null ? null : new GlobalPos(p.level().dimension(), pos.immutable()), block, plot));
+        OPEN.put(p.getUUID(), new Session(screen, pos == null ? null : new GlobalPos(p.level().dimension(), pos.immutable()), block, plot, nextId++));
     }
 
     public static Session get(ServerPlayer p) {
@@ -32,11 +34,12 @@ public final class Sessions {
 
     /**
      * Fenster geschlossen. Nur die Sitzung dieses Fenstertyps: Ein spätes „close“ eines alten Fensters darf die Sitzung
-     * eines inzwischen geöffneten anderen Fensters nicht beenden.
+     * eines inzwischen geöffneten anderen Fensters nicht beenden – auch nicht eines neuen Fensters desselben Typs:
+     * Der Client schickt die Sitzungsnummer mit, die er mit der Ansicht bekommen hat (0 = alter Client, nur Typ prüfen).
      */
-    public static void close(ServerPlayer p, String screen) {
+    public static void close(ServerPlayer p, String screen, int session) {
         Session s = OPEN.get(p.getUUID());
-        if (s != null && s.screen().equals(screen)) OPEN.remove(p.getUUID());
+        if (s != null && s.screen().equals(screen) && (session == 0 || session == s.id())) OPEN.remove(p.getUUID());
     }
 
     public static void forget(UUID id) {

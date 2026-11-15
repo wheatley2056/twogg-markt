@@ -7,7 +7,5 @@
   "itemGroup.twogg_markt": "TwoGG Markt",
   "block.twogg_markt.lottery_booth": "Losbude",
   "block.twogg_markt.advent_calendar": "Adventskalender",
-  "block.twogg_markt.wichtel_tree": "Wichtelbaum",
-  "block.twogg_markt.hidden_gift": "Verstecktes Geschenk",
-  "block.twogg_markt.string_lights": "Lichterkette"
+  "block.twogg_markt.hidden_gift": "Verstecktes Geschenk"
 }

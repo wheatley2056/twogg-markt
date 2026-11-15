@@ -5,7 +5,7 @@ Spieler **mieten** sie für einen Zeitraum oder **kaufen** sie und verkaufen an 
 Spieler. Dazu kommen Nebenverdienste neben der eigentlichen Arbeit auf Winterland: **Ankauf**, **Auftragsbrett** und
 **Räumdienst**. Bezahlt wird mit [TwoGG Economy](../twogg-economy) (Konto oder Bargeld, Preise folgen dem Wertkurs).
 
-Aktuelle Version: **0.2.0+26.1.2**
+Aktuelle Version: **0.2.1+26.1.2**
 
 ## Features
 
@@ -33,8 +33,8 @@ Aktuelle Version: **0.2.0+26.1.2**
 - **Hologramme:** Über jedem Stand schwebt Name, Status und Preis (frei) bzw. Besitzer und Angebote (vergeben),
   während des Events auch die Stimmen. Vanilla-Textanzeigen – sichtbar für alle, aktualisieren sich selbst.
 - **Weihnachtsmarkt-Event:** Öffnungszeiten oder Start per Befehl, Eröffnung mit Titel und Glocken, Bossbar mit
-  Restzeit, Weihnachtslieder (Glockenspiel) und Atmos-Stimmung im Marktgelände, Schneefall. Mitmachen: **Losbude**,
-  **Wichtelbaum**, **Geschenkesuche**, **Adventskalender** (1.–24. Dezember). Wettbewerb: **schönster Stand**
+  Restzeit, Weihnachtslieder (Glockenspiel) und Atmos-Stimmung im Marktgelände, Schneefall. Mitmachen: **Losbude**
+  (Lose und Wichteln), **Geschenkesuche**, **Adventskalender** (1.–24. Dezember). Wettbewerb: **schönster Stand**
   (Abstimmung), bester Umsatz, fleißigste Helfer, Räumdienst, Geschenkesuche – mit **Siegerehrung**, Preisen,
   Feuerwerk und einer **Bestenliste-Tafel** als Hologramm.
 - **Marktverwaltung** (Kit-GUI, Kachel in der TwoGG Toolbox oder `/markt admin`): Stände, Neu, Ankauf, Aufträge,
@@ -54,7 +54,7 @@ Aktuelle Version: **0.2.0+26.1.2**
 | TwoGG Roleplay | optional; dann gelten die Konten pro Charakter der Economy |
 | Seite | **Server und alle Clients** |
 
-1. `twogg-markt-0.2.0+26.1.2.jar` zusammen mit Kit, Economy und Fabric API in `mods/` auf dem Server und bei allen
+1. `twogg-markt-0.2.1+26.1.2.jar` zusammen mit Kit, Economy und Fabric API in `mods/` auf dem Server und bei allen
    Spielern ablegen.
 2. Beim ersten Start entsteht `config/twogg-markt/markt.json` mit der Weihnachtsmarkt-Vorlage.
 3. Die Marktdaten liegen in der Welt unter `<welt>/twogg-markt/`.
@@ -85,7 +85,7 @@ Dann aus dem Kreativ-Tab „TwoGG Markt“ **Standschilder** an die Stände, ein
 /markt event stop                  # vorzeitig: Siegerehrung jetzt
 ```
 
-Dazu **Losbude**, **Wichtelbaum**, **Adventskalender** und ein paar **versteckte Geschenke** aus dem Kreativ-Tab
+Dazu **Losbude** (Lose und Wichteln), **Adventskalender** und ein paar **versteckte Geschenke** aus dem Kreativ-Tab
 aufstellen. Feste Öffnungszeiten (`event.schedule`, z. B. `"Fr 18:00-21:00"`) starten den Markt automatisch.
 
 **Spieler:** `/markt` öffnet die Standübersicht (mieten, kaufen, eigener Stand, „Verdienen“), ein Rechtsklick aufs
@@ -122,7 +122,7 @@ Alle Werte stehen in `config/twogg-markt/markt.json` bzw. pro Stand in der Markt
 ```
 cd ../twogg-kit && ./gradlew publishToMavenLocal
 cd ../twogg-markt
-./gradlew build      # → build/libs/twogg-markt-0.2.0+26.1.2.jar
+./gradlew build      # → build/libs/twogg-markt-0.2.1+26.1.2.jar
 ./gradlew test       # Logik-Kern (MarketMathTest, EventTest)
 xvfb-run -a ./gradlew runClientGameTest   # Durchgang im echten Spiel mit Screenshots
 ```
