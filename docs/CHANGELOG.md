@@ -1,5 +1,20 @@
 # Changelog: TwoGG Markt
 
+## 0.2.0+26.1.2 (15.11.2026)
+
+**Hologramme und Weihnachtsmarkt-Event**
+
+- Hologramme über jedem Stand (Vanilla-TextDisplay, für alle sichtbar): Name, Status, Preis bzw. Besitzer und
+  Angebote, im Event die Stimmen.
+- Event mit Öffnungszeiten oder Start per Befehl/Verwaltung: Eröffnung mit Titel und Glocken, Bossbar, Ankündigungen,
+  Siegerehrung, Abbruch mit Rückgabe.
+- Mitmachen: Losbude, Wichtelbaum, Geschenkesuche, Adventskalender (neue Blöcke).
+- Wettbewerb: Abstimmung schönster Stand, Bestenlisten (Umsatz, Aufträge, Räumdienst, Geschenke), Preise für Platz 1–3,
+  Feuerwerk, Bestenliste-Tafel als Hologramm.
+- Atmosphäre: Weihnachtslieder als Glockenspiel, TwoGG-Atmos-Preset im Marktgelände, Schneefall, Lichterkette.
+- Neue Seiten „Event“ in Standübersicht und Marktverwaltung, Regel „Hologramme“.
+- 22 JUnit-Tests, Client-Test mit 32 Screenshots.
+
 ## 0.1.0+26.1.2 (15.11.2026)
 
 Erste Fassung für den Weihnachtsmarkt auf Winterland.

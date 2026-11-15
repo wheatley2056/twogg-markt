@@ -31,6 +31,10 @@ public final class BuyerService {
             p.sendOverlayMessage(Component.literal("Der Ankauf ist geschlossen.").withStyle(ChatFormatting.GRAY));
             return;
         }
+        if (MarktRuntime.config().event.onlyDuringEvent && !EventService.running()) {
+            p.sendOverlayMessage(Component.literal("Der Ankauf hat nur geöffnet, solange der Weihnachtsmarkt läuft.").withStyle(ChatFormatting.GRAY));
+            return;
+        }
         Pay.settle(p);
         Sessions.open(p, "buyer", pos, ModContent.BUYER, null);
         send(p, "", false);

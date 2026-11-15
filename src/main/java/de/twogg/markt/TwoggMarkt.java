@@ -3,7 +3,10 @@ package de.twogg.markt;
 import de.twogg.markt.content.ModContent;
 import de.twogg.markt.net.Payloads;
 import de.twogg.markt.net.Views;
+import de.twogg.markt.server.ActivityService;
 import de.twogg.markt.server.AdminService;
+import de.twogg.markt.server.EventService;
+import de.twogg.markt.server.Holograms;
 import de.twogg.markt.server.BoardService;
 import de.twogg.markt.server.BuyerService;
 import de.twogg.markt.server.MarktCommands;
@@ -44,18 +47,22 @@ public class TwoggMarkt implements ModInitializer {
         PayloadTypeRegistry.serverboundPlay().register(Payloads.Action.TYPE, Payloads.Action.CODEC);
         ServerPlayNetworking.registerGlobalReceiver(Payloads.Action.TYPE, (p, ctx) -> handle(ctx.player(), p.json()));
         Protection.register();
+        Holograms.register();
 
         ServerLifecycleEvents.SERVER_STARTED.register(MarktRuntime::start);
         ServerLifecycleEvents.SERVER_STOPPING.register(s -> MarktRuntime.stop());
         ServerLifecycleEvents.AFTER_SAVE.register((s, flush, force) -> MarktRuntime.save());
         ServerTickEvents.END_SERVER_TICK.register(s -> MarktRuntime.tick());
         ServerPlayConnectionEvents.JOIN.register((handler, sender, s) -> {
-            if (MarktRuntime.running()) Pay.settle(handler.getPlayer());
+            if (!MarktRuntime.running()) return;
+            Pay.settle(handler.getPlayer());
+            EventService.join(handler.getPlayer());
         });
         ServerPlayConnectionEvents.DISCONNECT.register((handler, s) -> {
             Sessions.forget(handler.getPlayer().getUUID());
             Outlines.forget(handler.getPlayer().getUUID());
             Protection.forget(handler.getPlayer().getUUID());
+            EventService.forget(handler.getPlayer().getUUID());
         });
         CommandRegistrationCallback.EVENT.register((d, reg, env) -> MarktCommands.register(d));
         LOGGER.info("TwoGG Markt geladen");
@@ -77,6 +84,7 @@ public class TwoggMarkt implements ModInitializer {
                 case "buyer" -> BuyerService.handle(player, act);
                 case "board" -> BoardService.handle(player, act);
                 case "admin" -> AdminService.handle(player, act);
+                case "lottery", "advent", "wichtel" -> ActivityService.handle(player, act);
                 default -> { }
             }
         } catch (RuntimeException e) {

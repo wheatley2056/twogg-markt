@@ -117,4 +117,53 @@ public final class MarketMath {
         if (t.endsWith("_")) t = t.substring(0, t.length() - 1);
         return t.length() > 32 ? t.substring(0, 32) : t;
     }
+
+    /**
+     * Losziehung: {@code places} verschiedene Gewinner, Chance proportional zur Zahl der Lose. Weniger Teilnehmer als
+     * Plätze → entsprechend weniger Gewinner.
+     */
+    public static List<String> drawLottery(java.util.Map<String, Integer> tickets, int places, Random rnd) {
+        java.util.Map<String, Integer> left = new java.util.TreeMap<>(tickets);
+        left.values().removeIf(v -> v == null || v <= 0);
+        List<String> out = new ArrayList<>();
+        while (out.size() < places && !left.isEmpty()) {
+            int total = 0;
+            for (int v : left.values()) total += v;
+            int r = rnd.nextInt(total);
+            for (var e : left.entrySet()) {
+                r -= e.getValue();
+                if (r < 0) {
+                    out.add(e.getKey());
+                    left.remove(e.getKey());
+                    break;
+                }
+            }
+        }
+        return out;
+    }
+
+    /**
+     * Wichteln: Index des Empfängers für jedes Geschenk (Geber an Stelle i). Niemand bekommt sein eigenes, solange es
+     * mindestens zwei Teilnehmer gibt (zufällige Reihenfolge, dann eins weiterreichen).
+     */
+    public static int[] wichtel(int n, Random rnd) {
+        int[] to = new int[n];
+        if (n <= 1) {
+            if (n == 1) to[0] = 0;
+            return to;
+        }
+        List<Integer> order = new ArrayList<>();
+        for (int i = 0; i < n; i++) order.add(i);
+        java.util.Collections.shuffle(order, rnd);
+        for (int k = 0; k < n; k++) to[order.get(k)] = order.get((k + 1) % n);
+        return to;
+    }
+
+    /** Die besten {@code n} Einträge (größter Wert zuerst, bei Gleichstand nach Schlüssel), nur Werte > 0. */
+    public static List<java.util.Map.Entry<String, Long>> top(java.util.Map<String, Long> values, int n) {
+        List<java.util.Map.Entry<String, Long>> l = new ArrayList<>();
+        for (var e : values.entrySet()) if (e.getValue() != null && e.getValue() > 0) l.add(java.util.Map.entry(e.getKey(), e.getValue()));
+        l.sort((a, b) -> b.getValue().equals(a.getValue()) ? a.getKey().compareTo(b.getKey()) : Long.compare(b.getValue(), a.getValue()));
+        return l.size() > n ? l.subList(0, n) : l;
+    }
 }

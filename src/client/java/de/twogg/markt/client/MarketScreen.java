@@ -14,7 +14,9 @@ import java.util.List;
 
 /** {@code /markt} und Standschild: alle Stände mit Preisen, mieten/kaufen, der eigene Stand, Verdienst-Infos. */
 public class MarketScreen extends MarktScreen {
-    private enum Page { STALLS, MINE, INFO }
+    private enum Page { STALLS, MINE, EVENT, INFO }
+
+    private int board;
 
     private Page page = Page.STALLS;
     private String selected = "";
@@ -81,10 +83,12 @@ public class MarketScreen extends MarktScreen {
         addNav(0, new KitNav(0, 0, 0, KitIcon.MAP, "Stände", () -> String.valueOf(view.plots.size()), () -> page == Page.STALLS, () -> go(Page.STALLS)));
         addNav(1, new KitNav(0, 0, 0, KitIcon.BOX, "Mein Stand", () -> mine().isEmpty() ? "" : String.valueOf(mine().size()),
                 () -> page == Page.MINE, () -> go(Page.MINE)));
-        addNav(2, new KitNav(0, 0, 0, KitIcon.BOLT, "Verdienen", () -> "", () -> page == Page.INFO, () -> go(Page.INFO)));
+        addNav(2, new KitNav(0, 0, 0, KitIcon.BOLT, "Event", () -> eventRunning() ? "●" : "", () -> page == Page.EVENT, () -> go(Page.EVENT)));
+        addNav(3, new KitNav(0, 0, 0, KitIcon.PLUS, "Verdienen", () -> "", () -> page == Page.INFO, () -> go(Page.INFO)));
         addFooterButton(KitButton.primary(0, 0, 70, "Fertig", b -> onClose()));
         switch (page) {
             case STALLS -> buildStalls();
+            case EVENT -> buildEvent();
             case MINE -> buildMine();
             default -> { }
         }
@@ -119,6 +123,15 @@ public class MarketScreen extends MarktScreen {
             periods = Math.max(1, Math.min(periods, p.bookable));
         }
         if (canRent || canBuy) payToggle(dx + dw - 60, by - 24, 60);
+        if (eventRunning() && view.event.vote && !free && !p.mine && !p.helper && !"LOCKED".equals(p.status)) {
+            boolean mine = p.name.equals(view.event.myVote);
+            KitButton v = addRenderableWidget(KitButton.primary(dx, by, dw, mine ? "★ Deine Stimme" : "★ Für diesen Stand stimmen", b -> {
+                Views.Action a = Views.Action.of("vote");
+                a.plot = p.id;
+                send(a);
+            }).accent(accent()));
+            v.active = !mine;
+        }
         int bw = canRent && canBuy ? (dw - 4) / 2 : dw;
         int bx = dx;
         if (canRent) {
@@ -242,6 +255,7 @@ public class MarketScreen extends MarktScreen {
             case STALLS -> drawStalls(g, x, y, w);
             case MINE -> drawMine(g, x, y, w);
             case INFO -> drawInfo(g, x, y, w);
+            case EVENT -> drawEvent(g, x, y, w);
         }
         footer(g);
     }
@@ -353,6 +367,81 @@ public class MarketScreen extends MarktScreen {
         } else {
             KitDraw.wrapped(g, Component.literal("Du hilfst am Stand von " + p.ownerName + ". Kasse leeren und kündigen kann nur "
                     + p.ownerName + "."), col, y, x + w - col, KitColors.TEXT_SOFT);
+        }
+    }
+
+    private boolean eventRunning() {
+        return view.event != null && ("OPENING".equals(view.event.phase) || "OPEN".equals(view.event.phase));
+    }
+
+    private void buildEvent() {
+        if (view.event == null || view.event.boards.isEmpty()) return;
+        int x = cx + PAD, w = cw - 2 * PAD, col = x + w / 2 + 6, y = cy + PAD;
+        int n = view.event.boards.size();
+        board = Math.floorMod(board, n);
+        addRenderableWidget(KitButton.icon(x + w - 32, y - 2, 14, KitIcon.ARROW_LEFT, "Vorige Liste", b -> { board--; rebuildWidgets(); }));
+        addRenderableWidget(KitButton.icon(x + w - 14, y - 2, 14, KitIcon.ARROW_RIGHT, "Nächste Liste", b -> { board++; rebuildWidgets(); }));
+    }
+
+    private void drawEvent(GuiGraphicsExtractor g, int x, int y, int w) {
+        Views.EventInfo e = view.event;
+        if (e == null) return;
+        int col = x + w / 2 + 6, lw = col - x - 10;
+        boolean run = eventRunning();
+        KitDraw.drawTitle(g, KitDraw.fit(run ? "Geöffnet!" : "FINALE".equals(e.phase) ? "Siegerehrung" : "Geschlossen", lw), x, y - 2,
+                run ? KitColors.GREEN_TEXT : KitColors.TEXT);
+        int ty = y + 18;
+        if (run) {
+            text(g, KitDraw.fit("Noch " + duration(e.remaining) + " · Markt #" + e.round, lw), x, ty, KitColors.TEXT_SOFT);
+            ty += 10;
+            g.fill(x, ty, x + lw, ty + 3, KitColors.OUTLINE);
+            g.fill(x, ty, x + (int) (lw * Math.min(1.0, e.remaining / (double) e.total)), ty + 3, accent());
+            ty += 8;
+        } else if (!e.next.isEmpty()) {
+            text(g, KitDraw.fit("Nächste Öffnung: " + e.next, lw), x, ty, KitColors.TEXT_SOFT);
+            ty += 12;
+        }
+        KitDraw.label(g, "Öffnungszeiten", x, ty);
+        ty += 11;
+        if (e.schedule.isEmpty()) {
+            text(g, "werden angekündigt", x, ty, KitColors.FAINT);
+            ty += 10;
+        }
+        for (int i = 0; i < e.schedule.size() && i < 3; i++) {
+            text(g, KitDraw.fit(e.schedule.get(i), lw), x, ty, KitColors.TEXT);
+            ty += 10;
+        }
+        ty += 4;
+        KitDraw.label(g, "Mitmachen", x, ty);
+        ty += 11;
+        String[] lines = {
+                e.lottery ? "Losbude: " + e.myTickets + " Lose · Topf " + money(e.pot) : "",
+                e.vote ? (e.myVote.isEmpty() ? "Schönster Stand: noch keine Stimme" : "Deine Stimme: " + e.myVote) : "",
+                e.wichteln ? (e.wichtelGift.isEmpty() ? "Wichteln: noch kein Geschenk" : "Wichteln: " + e.wichtelGift) : "",
+                e.giftReward > 0 ? "Geschenkesuche: je " + money(e.giftReward) : ""};
+        for (String l : lines) {
+            if (l.isEmpty() || ty > cy + ch - PAD - 9) continue;
+            text(g, KitDraw.fit(l, lw), x, ty, KitColors.TEXT_SOFT);
+            ty += 10;
+        }
+        // rechts: Bestenliste oder letztes Ergebnis
+        if (!run && !"FINALE".equals(e.phase) && !e.lastResults.isEmpty()) {
+            KitDraw.label(g, "Letztes Event", col, y);
+            int ry = y + 12;
+            for (int i = 1; i < e.lastResults.size() && ry <= cy + ch - PAD - 9; i++) {
+                text(g, KitDraw.fit(e.lastResults.get(i).trim(), x + w - col), col, ry, KitColors.TEXT_SOFT);
+                ry += 10;
+            }
+            return;
+        }
+        if (e.boards.isEmpty()) return;
+        Views.Board b = e.boards.get(Math.floorMod(board, e.boards.size()));
+        KitDraw.label(g, KitDraw.fit(b.title, x + w - col - 40), col, y);
+        int ry = y + 14;
+        if (b.lines.isEmpty()) text(g, "noch niemand", col, ry, KitColors.FAINT);
+        for (String l : b.lines) {
+            text(g, KitDraw.fit(l, x + w - col), col, ry, ry == y + 14 ? KitColors.AMBER_TEXT : KitColors.TEXT);
+            ry += 11;
         }
     }
 

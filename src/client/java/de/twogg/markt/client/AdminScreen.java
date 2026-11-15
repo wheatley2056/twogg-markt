@@ -18,10 +18,10 @@ import java.util.List;
  * Aufträge, Räumzonen und Regeln. Jede Aktion prüft der Server.
  */
 public class AdminScreen extends MarktScreen {
-    private enum Page { STALLS, NEW, BUYER, JOBS, ZONES, RULES }
+    private enum Page { STALLS, NEW, EVENT, BUYER, JOBS, ZONES, RULES }
 
-    private static final String[] NAMES = {"Stände", "Neu", "Ankauf", "Aufträge", "Räumzonen", "Regeln"};
-    private static final KitIcon[] ICONS = {KitIcon.MAP, KitIcon.PLUS, KitIcon.BOX, KitIcon.GRID, KitIcon.CURSOR, KitIcon.GEAR};
+    private static final String[] NAMES = {"Stände", "Neu", "Event", "Ankauf", "Aufträge", "Räumzonen", "Regeln"};
+    private static final KitIcon[] ICONS = {KitIcon.MAP, KitIcon.PLUS, KitIcon.BOLT, KitIcon.BOX, KitIcon.GRID, KitIcon.CURSOR, KitIcon.GEAR};
     private static final String[] MODES = {"BOTH", "RENT", "BUY", "LOCKED"};
     private static final String[] MODE_NAMES = {"Miete + Kauf", "nur Miete", "nur Kauf", "gesperrt"};
 
@@ -30,6 +30,7 @@ public class AdminScreen extends MarktScreen {
     private String nameText = "", rentText = "", buyText = "", periodsText = "", noteText = "";
     private String newName = "", newRent = "", newBuy = "";
     private int rulesPage;
+    private String minutesText = "", atmosText = null;
     private String priceText = "", bundleText = "", demandText = "";
     private String selBuyer = "", selJob = "", selZone = "";
     private final String[] settingText = new String[16];
@@ -123,6 +124,7 @@ public class AdminScreen extends MarktScreen {
         switch (page) {
             case STALLS -> buildStalls(x, y, w);
             case NEW -> buildNew(x, y, w);
+            case EVENT -> buildEvent(x, y, w);
             case BUYER -> buildBuyer(x, y, w);
             case JOBS -> buildJobs(x, y, w);
             case ZONES -> buildZones(x, y, w);
@@ -133,9 +135,10 @@ public class AdminScreen extends MarktScreen {
     private String count(int idx) {
         return switch (idx) {
             case 0 -> String.valueOf(view.plots.size());
-            case 2 -> String.valueOf(view.buyerItems.size());
-            case 3 -> String.valueOf(view.jobs.size());
-            case 4 -> String.valueOf(view.zones.size());
+            case 2 -> view.event != null && ("OPEN".equals(view.event.phase) || "OPENING".equals(view.event.phase)) ? "●" : "";
+            case 3 -> String.valueOf(view.buyerItems.size());
+            case 4 -> String.valueOf(view.jobs.size());
+            case 5 -> String.valueOf(view.zones.size());
             default -> "";
         };
     }
@@ -200,6 +203,77 @@ public class AdminScreen extends MarktScreen {
             }
         } else {
             confirm(dx, by, half, "Stand löschen", "del:" + p.id, () -> send(act("plot_delete")));
+        }
+    }
+
+    private static final String[][] EVENT_TOGGLES = {{"music", "Musik"}, {"bossbar", "Bossbar"}, {"onlyDuringEvent", "Handel nur im Event"},
+            {"weatherSnow", "Schneefall"}, {"fireworks", "Feuerwerk"}};
+
+    private boolean eventFlag(String key) {
+        Views.EventInfo e = view.event;
+        if (e == null) return false;
+        return switch (key) {
+            case "music" -> e.music;
+            case "bossbar" -> e.bossbar;
+            case "onlyDuringEvent" -> e.onlyDuringEvent;
+            case "weatherSnow" -> e.weatherSnow;
+            case "fireworks" -> e.fireworks;
+            default -> false;
+        };
+    }
+
+    private void buildEvent(int x, int y, int w) {
+        Views.EventInfo e = view.event;
+        if (e == null) return;
+        boolean run = "OPEN".equals(e.phase) || "OPENING".equals(e.phase);
+        int ry = y + 14;
+        input(x, ry, 60, String.valueOf(e.defaultMinutes), minutesText, 4, t -> minutesText = t, "min");
+        addRenderableWidget(KitButton.primary(x + 64, ry, 60, "Start", b -> {
+            Views.Action a = Views.Action.of("event_start");
+            a.count = Math.max(0, parseInt(minutesText));
+            send(a);
+        }).accent(accent())).active = !run;
+        addRenderableWidget(KitButton.second(x + 128, ry, 100, "Siegerehrung", b -> send("event_stop"))).active = run;
+        KitButton abort = confirm(x + 232, ry, 76, "Abbrechen", "abort", () -> send("event_abort"));
+        abort.active = !"CLOSED".equals(e.phase);
+        ry += 24;
+        addRenderableWidget(KitButton.second(x, ry, 96, "Gelände setzen", b -> send("area_set"))).active = view.selection != null && view.selection.complete;
+        addRenderableWidget(KitButton.second(x + 100, ry, 76, "Gelände weg", b -> send("area_clear"))).active = !e.area.isEmpty();
+        addRenderableWidget(KitButton.second(x + 180, ry, 70, "Tafel hier", b -> send("leaderboard_here")));
+        addRenderableWidget(KitButton.second(x + 254, ry, 64, "Tafel weg", b -> send("leaderboard_remove"))).active = !e.leaderboard.isEmpty();
+        int ty = y + 84, colW = (w - 8) / 2;
+        for (int i = 0; i < EVENT_TOGGLES.length; i++) {
+            String key = EVENT_TOGGLES[i][0];
+            addRenderableWidget(new KitToggle(x + (i % 2) * (colW + 8) + colW - KitToggle.W, ty + (i / 2) * 14, Component.literal(EVENT_TOGGLES[i][1]),
+                    () -> eventFlag(key), on -> {
+                Views.Action a = Views.Action.of("setting");
+                a.id = key;
+                a.flag = on;
+                send(a);
+            }).accent(accent()));
+        }
+        if (atmosText == null) atmosText = e.atmosPreset;
+        int ax = x + colW + 8, ayy = ty + 28 + 4;
+        input(ax, ayy, colW - 30, "Atmos-Preset", atmosText, 32, t -> atmosText = t);
+        addRenderableWidget(KitButton.second(ax + colW - 26, ayy, 26, "OK", b -> {
+            Views.Action a = Views.Action.of("atmos");
+            a.text = atmosText;
+            send(a);
+        }));
+    }
+
+    private void drawEvent(GuiGraphicsExtractor g, int x, int y, int w) {
+        Views.EventInfo e = view.event;
+        if (e == null) return;
+        KitDraw.label(g, KitDraw.fit("Weihnachtsmarkt #" + e.round + " · " + e.status + (e.next.isEmpty() ? "" : " · nächste Öffnung " + e.next), w), x, y);
+        int ty = y + 62;
+        text(g, KitDraw.fit("Gelände: " + (e.area.isEmpty() ? "ganzer Server (Planer-Auswahl → „Gelände setzen“)" : e.area), w), x, ty, KitColors.TEXT_SOFT);
+        text(g, KitDraw.fit("Bestenliste-Tafel: " + (e.leaderboard.isEmpty() ? "keine" : e.leaderboard) + " · Lose " + e.ticketsTotal
+                + " · Topf " + money(e.pot) + " · Wichtel " + e.wichtelCount + " · Atmos " + (e.atmosLoaded ? "da" : "nicht installiert"), w),
+                x, ty + 10, KitColors.MUTED);
+        int colW = (w - 8) / 2;
+        for (int i = 0; i < EVENT_TOGGLES.length; i++) {
+            text(g, EVENT_TOGGLES[i][1], x + (i % 2) * (colW + 8), y + 84 + (i / 2) * 14 + 2, KitColors.TEXT_SOFT);
         }
     }
 
@@ -343,7 +417,7 @@ public class AdminScreen extends MarktScreen {
     private static final String[][] TOGGLES = {
             {"protectFree", "Freie Stände schützen"}, {"allowCash", "Bargeld erlaubt"}, {"resetOnRelease", "Bei Freiwerden zurücksetzen"},
             {"buyerEnabled", "Ankauf offen"}, {"buyerPayCash", "Ankauf zahlt bar"}, {"jobsEnabled", "Auftragsbrett"},
-            {"playerJobs", "Spieleraufträge"}, {"snowEnabled", "Räumdienst"}};
+            {"playerJobs", "Spieleraufträge"}, {"snowEnabled", "Räumdienst"}, {"holograms", "Hologramme"}};
     private static final String[][] NUMBERS = {
             {"periodMinutes", "Zeitraum (Min.)"}, {"maxPerPlayer", "Stände pro Spieler"}, {"maxHelpers", "Helfer pro Stand"},
             {"feePercent", "Marktgebühr %"}, {"buybackPercent", "Rückkauf %"}, {"rentRefundPercent", "Erstattung Miete %"},
@@ -362,6 +436,7 @@ public class AdminScreen extends MarktScreen {
             case "jobsEnabled" -> s.jobsEnabled;
             case "playerJobs" -> s.playerJobs;
             case "snowEnabled" -> s.snowEnabled;
+            case "holograms" -> s.holograms;
             default -> false;
         };
     }
@@ -462,6 +537,7 @@ public class AdminScreen extends MarktScreen {
         switch (page) {
             case STALLS -> drawStalls(g, x, y, w);
             case NEW -> drawNew(g, x, y, w);
+            case EVENT -> drawEvent(g, x, y, w);
             case BUYER -> drawBuyer(g, x, y, w);
             case JOBS -> drawJobs(g, x, y, w);
             case ZONES -> drawZones(g, x, y, w);

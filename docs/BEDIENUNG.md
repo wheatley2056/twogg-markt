@@ -104,6 +104,58 @@ der Zähler. Nur im Überlebensmodus. Selbst gesetzter Schnee zählt nicht. Nach
 Kann der Markt nicht auszahlen (Spieler offline oder ohne aktiven Charakter), merkt er den Betrag vor und zahlt ihn
 beim nächsten Login oder beim Öffnen eines Markt-Fensters aus. Die Fußzeile der Fenster zeigt „vorgemerkt …“.
 
+### Hologramme
+
+Über jedem Stand schwebt eine Schrift: Name, „frei“ mit Miete und Kaufpreis bzw. „Stand von …“, Beschreibung und
+Angebote (geöffnet/geschlossen). Während des Events steht dort auch die Zahl der Stimmen. Die Hologramme aktualisieren
+sich alle 5 Sekunden und sind für alle sichtbar, auch ohne Mod. Ausschalten: Regel „Hologramme“.
+
+## Weihnachtsmarkt-Event
+
+### Ablauf
+
+| Phase | Was passiert |
+|---|---|
+| geschlossen | Stände lassen sich mieten. Mit `event.onlyDuringEvent` verkaufen Theken, Ankauf und Auftragsbrett nur im Event. |
+| Ankündigung | Bei festen Öffnungszeiten 15, 5 und 1 Minute vorher im Chat |
+| **Eröffnung** | Titel „Weihnachtsmarkt – ist eröffnet!“, Glocken, Bossbar, Schneefall; 60 Sekunden |
+| **geöffnet** | Bossbar mit Restzeit, Weihnachtslieder (Glockenspiel) und Atmos-Stimmung im Marktgelände, Losbude, Wichteln, Geschenkesuche, Abstimmung; 5 Minuten vor Schluss eine Erinnerung |
+| **Siegerehrung** | Losziehung, Wichtelgeschenke werden verteilt, Preise je Kategorie, Ergebnisse im Chat und auf der Tafel, Feuerwerk; 90 Sekunden, dann schließt der Markt |
+
+Gestartet wird per `/markt event start [minuten]`, in der Marktverwaltung (Seite **Event**) oder automatisch nach
+`event.schedule`. Jedes Fenster der Öffnungszeiten startet nur einmal (auch wenn ein Admin es vorher beendet).
+
+### Mitmachen
+
+| Aktion | Wie |
+|---|---|
+| **Losbude** | Lose kaufen (0,5 WLC = 5 €, höchstens 10). Bei der Siegerehrung werden 80 % des Topfs ausgeschüttet: 50 / 30 / 20 % an drei verschiedene Gewinner, Chance je nach Zahl der Lose. Der Rest bleibt beim Markt (wird vernichtet). |
+| **Wichtelbaum** | Den Stapel in der Hand unter den Baum legen (einer pro Spieler, zurücknehmen bis zur Siegerehrung). Bei der Siegerehrung bekommt jeder ein fremdes Geschenk ins Abholfach (abholen am Baum oder am Auftragsbrett). |
+| **Geschenkesuche** | Admins verstecken „Versteckte Geschenke“. Rechtsklick: 0,5 WLC, einmal pro Geschenk und Spieler und Event. Zählt für die Bestenliste. |
+| **Adventskalender** | 1.–24. Dezember ein Türchen pro Tag und Spieler (Coins und/oder Items laut `event.adventDays`). Läuft unabhängig vom Event. Verpasste Tage bleiben zu. |
+| **Abstimmen** | „★ Für diesen Stand stimmen“ in der Standübersicht oder „★ Abstimmen“ an der Theke. Eine Stimme pro Spieler, umentscheiden geht, nicht für den eigenen Stand. |
+
+### Bestenliste und Preise
+
+Kategorien: **Schönster Stand** (Stimmen, Preis an den Besitzer), **Bester Umsatz** (Verkäufe an der eigenen Theke),
+**Fleißigste Helfer** (erledigte Aufträge), **Räumdienst** (geräumte Schneeblöcke), **Geschenkesuche**. Gezählt
+wird nur während des Events. Platz 1–3 bekommen `event.prizes` (10 / 5 / 2,5 WLC). Wer offline ist, bekommt den
+Preis beim nächsten Login. Die Seite **Event** in `/markt` zeigt Restzeit, Öffnungszeiten, eigene Lose, Stimme,
+Wichtelgeschenk und die Bestenlisten (Pfeile blättern); nach dem Event das letzte Ergebnis.
+
+Die **Bestenliste-Tafel** (`/markt event tafel hier`) ist ein Hologramm, das alle 10 Sekunden die Kategorie wechselt
+und nach dem Event die Ergebnisse zeigt.
+
+### Atmosphäre
+
+- **Marktgelände** (`/markt gelaende setzen` mit Planer-Auswahl): Nur dort laufen Musik und Atmos-Stimmung (plus
+  8 Blöcke Rand). Ohne Gelände gilt der ganze Server.
+- **Musik:** O Tannenbaum, Stille Nacht, Jingle Bells als Glockenspiel (gemeinfrei), mit Pausen. Lautstärke über die
+  Klangkategorie „Musikblöcke/Plattenspieler“ des Spielers.
+- **TwoGG Atmos** (optional): Preset `event.atmosPreset` (Standard `draussen_klar`) im Gelände.
+- **Schneefall** während des Events, **Feuerwerk** bei der Siegerehrung (über dem Siegerstand und im Gelände).
+- **Lichterkette:** Deko-Block mit wechselnden Farben, leuchtet.
+
 ## Für Admins (OP-Stufe 2)
 
 ### Stände einzeichnen
@@ -128,6 +180,7 @@ beim nächsten Login oder beim Öffnen eines Markt-Fensters aus. Die Fußzeile d
 | **Ankauf** | Posten wählen → Preis (Coins pro Bündel), Bündel (Stück), Bedarf (Bündel pro Tag) → **Ändern** / **Entfernen**. **Neu aus Hand** legt einen Posten für das Item in der Hand an. |
 | **Aufträge** | Alle Aufträge (★ = von Spielern). **Neue Marktaufträge** würfelt neu, **Auftrag entfernen** (Spieleraufträge: Belohnung geht zurück) |
 | **Räumzonen** | Liste, **Zone löschen** |
+| **Event** | Start (Minuten), Siegerehrung jetzt, Abbrechen (Lose und Geschenke zurück), Gelände setzen/weg, Tafel hier/weg, Schalter Musik, Bossbar, Handel nur im Event, Schneefall, Feuerwerk, Atmos-Preset |
 | **Regeln** | Schalter und Zahlen aus `markt.json`, sofort gespeichert. **Werte 1/2** blättert, **Neu laden** liest die Datei neu. |
 
 ### Befehle
@@ -152,6 +205,9 @@ beim nächsten Login oder beim Öffnen eines Markt-Fensters aus. Die Fußzeile d
 | `/markt stand tp <id>` / `loeschen <id>` | OP 2 | Teleport / Stand löschen |
 | `/markt zone neu <name>` / `loeschen <id>` / `liste` | OP 2 | Räumzonen |
 | `/markt auftraege neu` | OP 2 | Marktaufträge neu würfeln |
+| `/markt event start [minuten]` / `stop` / `abbrechen` / `status` | OP 2 | Event starten, Siegerehrung jetzt, ohne Preise abbrechen, Stand |
+| `/markt event tafel hier` / `weg` | OP 2 | Bestenliste-Hologramm |
+| `/markt gelaende setzen` / `weg` | OP 2 | Marktgelände aus der Planer-Auswahl |
 | `/markt reload` / `speichern` | OP 2 | Einstellungen neu lesen / Weltdaten speichern |
 
 Admins dürfen in allen Ständen bauen.
@@ -161,7 +217,8 @@ Admins dürfen in allen Ständen bauen.
 | Block/Item | Wer stellt auf | Abbauen |
 |---|---|---|
 | Verkaufstheke | Spieler im eigenen Stand | Besitzer und Helfer (Holz) |
-| Standschild, Ankaufstelle, Auftragsbrett | Admins | nur im Kreativmodus (wie das Bankterminal) |
+| Standschild, Ankaufstelle, Auftragsbrett, Losbude, Adventskalender, Wichtelbaum, Verstecktes Geschenk | Admins | nur im Kreativmodus (wie das Bankterminal) |
+| Lichterkette | jeder (Deko) | normal |
 | Marktplaner | – | Item, nur für Admins nutzbar |
 
 Es gibt keine Rezepte. Weitere Theken kaufen Spieler unter „Mein Stand“ (`shop.counterPrice`, 20 €).

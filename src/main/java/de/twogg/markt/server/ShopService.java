@@ -41,6 +41,10 @@ public final class ShopService {
             p.sendOverlayMessage(Component.literal("Der Stand „" + plot.name + "“ ist gerade nicht vergeben.").withStyle(ChatFormatting.GRAY));
             return;
         }
+        if (MarktRuntime.config().event.onlyDuringEvent && !EventService.running() && !plot.member(p.getUUID().toString(), now)) {
+            p.sendOverlayMessage(Component.literal("Die Stände verkaufen nur, solange der Weihnachtsmarkt geöffnet ist.").withStyle(ChatFormatting.GRAY));
+            return;
+        }
         Pay.settle(p);
         Sessions.open(p, "shop", pos, ModContent.COUNTER, plot.id);
         send(p, plot, "", false);
@@ -60,6 +64,7 @@ public final class ShopService {
         v.maxPrice = MarketMath.tenths(c.shop.maxPrice);
         v.maxOffers = c.shop.maxOffers;
         v.counterPrice = MarketMath.priceTenths(c.shop.counterPrice, MarktRuntime.rate());
+        v.event = EventService.info(p, false);
         var reg = p.level().registryAccess();
         List<Container> storage = Inv.storage((ServerLevel) p.level(), plot.box);
         for (Offer o : plot.offers) {
@@ -155,6 +160,11 @@ public final class ShopService {
                     msg = "Angebot geändert: " + o.count + "× für " + MarktRuntime.fmt(o.price) + ".";
                 }
             }
+            case "vote" -> {
+                String[] r = EventService.vote(p, plot.id);
+                msg = r[0];
+                error = r[1] != null;
+            }
             case "toggle" -> {
                 if (!member) { msg = "Das ist nicht dein Stand."; error = true; break; }
                 plot.shopOpen = !plot.shopOpen;
@@ -196,6 +206,7 @@ public final class ShopService {
         for (ItemStack s : Inv.take(storage, Inv.same(proto), need)) Inv.give(p, s);
         long fee = MarketMath.fee(total, MarktRuntime.config().shop.feePercent);
         plot.till += total - fee;
+        EventService.recordSale(plot.owner, plot.ownerName, total);
         plot.salesTotal += total;
         o.sold += times;
         MarktRuntime.markDirty();

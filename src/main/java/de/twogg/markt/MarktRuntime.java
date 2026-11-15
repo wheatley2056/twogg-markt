@@ -7,6 +7,8 @@ import de.twogg.markt.core.MarktData;
 import de.twogg.markt.data.Store;
 import de.twogg.markt.server.BoardService;
 import de.twogg.markt.server.BuyerService;
+import de.twogg.markt.server.EventService;
+import de.twogg.markt.server.Holograms;
 import de.twogg.markt.server.Outlines;
 import de.twogg.markt.server.StallService;
 import net.minecraft.server.MinecraftServer;
@@ -87,13 +89,16 @@ public final class MarktRuntime {
     public static void tick() {
         if (server == null) return;
         ticks++;
+        EventService.musicTick();
         if (ticks % 10 == 0) Outlines.tick(server);
+        if (ticks % 20 == 0) EventService.tick();
         if (ticks % 100 == 0) {
             rollDay();
             StallService.checkExpiry();
             BoardService.refreshIfDue(false);
             BoardService.expirePlayerJobs();
             BuyerService.decay();
+            Holograms.tick();
         }
         if (dirty && ticks % 600 == 0) save();
     }

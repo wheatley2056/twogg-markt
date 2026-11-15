@@ -209,3 +209,80 @@ if __name__ == "__main__":
     planner()
     icon()
     print("Texturen geschrieben nach", os.path.normpath(ROOT))
+
+
+# ---------------------------------------------------------------- 0.2.0: Event-Blöcke
+
+def lottery():
+    rnd = random.Random(6)
+    side = awning(planks(rnd, [(150, 40, 44), (170, 50, 52), (140, 36, 40)]))
+    front = awning(planks(rnd, [(150, 40, 44), (170, 50, 52), (140, 36, 40)]))
+    d = ImageDraw.Draw(front)
+    # Losrad
+    d.ellipse([4, 6, 11, 13], outline=GOLD, fill=(240, 220, 160))
+    d.line([(7, 6), (8, 13)], fill=GOLD_D)
+    d.line([(4, 9), (11, 10)], fill=GOLD_D)
+    d.point([(13, 8), (13, 9), (12, 8)], fill=WHITE)
+    top = snowcap(planks(rnd, [(150, 40, 44), (170, 50, 52), (140, 36, 40)]), 2)
+    save(front, BLOCK, "lottery_booth_front.png")
+    save(side, BLOCK, "lottery_booth_side.png")
+    save(top, BLOCK, "lottery_booth_top.png")
+
+
+def advent():
+    im = Image.new("RGBA", (16, 16), GREEN_D + (255,))
+    d = ImageDraw.Draw(im)
+    d.rectangle([0, 0, 15, 15], outline=GOLD_D)
+    rnd = random.Random(7)
+    for gy in range(4):
+        for gx in range(4):
+            x0, y0 = 1 + gx * 4 - (1 if gx == 3 else 0), 1 + gy * 4 - (1 if gy == 3 else 0)
+            c = [(196, 48, 48), (232, 182, 72), (236, 232, 222), (90, 140, 220)][rnd.randint(0, 3)]
+            d.rectangle([x0, y0, x0 + 2, y0 + 2], fill=c)
+    save(im, BLOCK, "advent_calendar.png")
+
+
+def tree():
+    im = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    d.polygon([(8, 0), (15, 13), (0, 13)], fill=GREEN)
+    d.polygon([(8, 2), (13, 11), (3, 11)], fill=(64, 140, 82))
+    d.rectangle([7, 13, 8, 15], fill=DARK)
+    for x, y, c in [(8, 0, GOLD), (6, 6, RED), (10, 8, GOLD), (5, 10, (90, 140, 220)), (11, 11, RED), (8, 10, WHITE)]:
+        im.putpixel((x, y), c + (255,))
+    save(im, BLOCK, "wichtel_tree.png")
+
+
+def gift():
+    im = Image.new("RGBA", (16, 16), RED + (255,))
+    d = ImageDraw.Draw(im)
+    d.rectangle([7, 0, 8, 15], fill=GOLD)
+    d.rectangle([0, 7, 15, 8], fill=GOLD)
+    d.rectangle([0, 0, 15, 15], outline=RED_D)
+    save(im, BLOCK, "hidden_gift.png")
+
+
+def lights():
+    # Animierte Textur: 4 Bilder untereinander, Lämpchen wechseln die Farbe
+    colors = [(255, 220, 90), (120, 220, 255), (255, 110, 110), (140, 255, 140)]
+    im = Image.new("RGBA", (16, 64), (0, 0, 0, 0))
+    for f in range(4):
+        y0 = f * 16
+        for x in range(16):
+            y = y0 + 3 + (1 if 4 <= x % 8 <= 5 else 0)
+            im.putpixel((x, y), (40, 50, 40, 255))
+        for i, x in enumerate(range(1, 16, 4)):
+            c = colors[(i + f) % 4]
+            for dx, dy in [(0, 0), (1, 0), (0, 1), (1, 1)]:
+                im.putpixel((x + dx, y0 + 5 + dy), c + (255,))
+    save(im, BLOCK, "string_lights.png")
+    with open(os.path.join(BLOCK, "string_lights.png.mcmeta"), "w") as f:
+        f.write('{"animation": {"frametime": 10}}\n')
+
+
+if __name__ == "__main__":
+    lottery()
+    advent()
+    tree()
+    gift()
+    lights()

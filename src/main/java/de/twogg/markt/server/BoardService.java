@@ -42,6 +42,10 @@ public final class BoardService {
             p.sendOverlayMessage(Component.literal("Am Auftragsbrett hängt gerade nichts.").withStyle(ChatFormatting.GRAY));
             return;
         }
+        if (MarktRuntime.config().event.onlyDuringEvent && !EventService.running()) {
+            p.sendOverlayMessage(Component.literal("Das Auftragsbrett gilt nur, solange der Weihnachtsmarkt geöffnet ist.").withStyle(ChatFormatting.GRAY));
+            return;
+        }
         Pay.settle(p);
         Sessions.open(p, "board", pos, ModContent.BOARD, null);
         send(p, "", false);
@@ -214,6 +218,7 @@ public final class BoardService {
             }
         }
         j.doneBy.add(me);
+        EventService.recordJob(p);
         if (!j.system && j.remaining() <= 0) MarktRuntime.data().jobs.remove(j);
         MarktRuntime.markDirty();
         Pay.payout(p, j.reward, false, "markt:auftrag", "Auftrag: " + j.title);

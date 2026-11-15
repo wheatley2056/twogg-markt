@@ -143,6 +143,30 @@ public final class MarktCommands {
                             for (var z : zones) c.getSource().sendSuccess(() -> Component.literal(z.id + " – " + z.name + " · " + z.box), false);
                             return zones.size();
                         })))
+                .then(literal("event").requires(admin)
+                        .then(literal("start").executes(c -> admin(c, Views.Action.of("event_start")))
+                                .then(argument("minuten", IntegerArgumentType.integer(1, 24 * 60)).executes(c -> {
+                                    Views.Action a = Views.Action.of("event_start");
+                                    a.count = IntegerArgumentType.getInteger(c, "minuten");
+                                    return admin(c, a);
+                                })))
+                        .then(literal("stop").executes(c -> admin(c, Views.Action.of("event_stop"))))
+                        .then(literal("abbrechen").executes(c -> admin(c, Views.Action.of("event_abort"))))
+                        .then(literal("status").executes(c -> {
+                            ServerPlayer p = player(c);
+                            if (p == null) return 0;
+                            var i = EventService.info(p, true);
+                            c.getSource().sendSuccess(() -> Component.literal("Weihnachtsmarkt #" + i.round + ": " + i.status
+                                    + (i.next.isEmpty() ? "" : " · nächste Öffnung " + i.next) + " · Lose " + i.ticketsTotal
+                                    + " · Wichtelgeschenke " + i.wichtelCount), false);
+                            return 1;
+                        }))
+                        .then(literal("tafel")
+                                .then(literal("hier").executes(c -> admin(c, Views.Action.of("leaderboard_here"))))
+                                .then(literal("weg").executes(c -> admin(c, Views.Action.of("leaderboard_remove"))))))
+                .then(literal("gelaende").requires(admin)
+                        .then(literal("setzen").executes(c -> admin(c, Views.Action.of("area_set"))))
+                        .then(literal("weg").executes(c -> admin(c, Views.Action.of("area_clear")))))
                 .then(literal("auftraege").requires(admin)
                         .then(literal("neu").executes(c -> admin(c, Views.Action.of("jobs_reroll")))))
                 .then(literal("reload").requires(admin).executes(c -> admin(c, Views.Action.of("reload"))))

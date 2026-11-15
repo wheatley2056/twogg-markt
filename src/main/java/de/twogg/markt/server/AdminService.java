@@ -112,6 +112,7 @@ public final class AdminService {
         st.rentRefundPercent = c.stalls.rentRefundPercent;
         st.counterPrice = c.shop.counterPrice;
         st.resetOnRelease = c.stalls.resetOnRelease;
+        st.holograms = c.stalls.holograms;
         st.protectFree = c.stalls.protectFree;
         st.allowCash = c.stalls.allowCash;
         st.buyerEnabled = c.buyer.enabled;
@@ -125,6 +126,7 @@ public final class AdminService {
         st.snowDailyMax = c.snow.dailyMax;
         st.snowBlocksPerPay = c.snow.blocksPerPay;
         v.settings = st;
+        v.event = EventService.info(p, true);
         ItemStack hand = p.getMainHandItem();
         if (!hand.isEmpty()) {
             v.hand = Stacks.id(hand);
@@ -207,6 +209,7 @@ public final class AdminService {
             case "plot_delete" -> {
                 Plot plot = plot(act);
                 if (plot.active(MarktRuntime.now())) StallService.release(plot, "von der Marktleitung aufgelöst");
+                Holograms.removePlot(plot);
                 d.plots.remove(plot.id);
                 Snapshots.delete(plot.id);
                 return "Stand „" + plot.name + "“ gelöscht.";
@@ -322,10 +325,51 @@ public final class AdminService {
                 if (!j.system && j.remaining() > 0) Pay.later(j.poster, j.posterName, j.reward * j.remaining(), "Auftrag entfernt: " + j.title);
                 return "Auftrag entfernt" + (j.system ? "." : ", Belohnung geht an " + j.posterName + " zurück.");
             }
+            case "atmos" -> {
+                c.event.atmosPreset = act.text == null ? "" : act.text.trim();
+                MarktRuntime.saveConfig();
+                return c.event.atmosPreset.isEmpty() ? "Atmos-Stimmung aus." : "Atmos-Preset „" + c.event.atmosPreset + "“ gespeichert.";
+            }
             case "setting" -> {
                 String r = setting(c, act.id == null ? "" : act.id, act.value, act.flag);
                 MarktRuntime.saveConfig();
                 return r;
+            }
+            case "event_start" -> {
+                int min = act.count > 0 ? act.count : c.event.defaultMinutes;
+                return EventService.start(MarktRuntime.now() + min * MarketMath.MINUTE, null, p);
+            }
+            case "event_stop" -> {
+                if (!EventService.running()) throw err("Der Markt ist nicht geöffnet.");
+                EventService.finale();
+                return "Siegerehrung läuft – danach schließt der Markt.";
+            }
+            case "event_abort" -> {
+                if (d.event.phase == de.twogg.markt.core.MarktEvent.Phase.CLOSED) throw err("Es läuft kein Event.");
+                EventService.abort();
+                return "Event abgebrochen, Lose und Wichtelgeschenke gehen zurück.";
+            }
+            case "area_set" -> {
+                Selections.Sel s = Selections.get(p);
+                if (s == null || !s.complete()) throw err("Erst mit dem Marktplaner zwei Ecken setzen.");
+                d.area = s.box();
+                Selections.clear(p);
+                return "Marktgelände gesetzt (" + d.area.size() + "). Musik und Stimmung gelten dort.";
+            }
+            case "area_clear" -> {
+                d.area = null;
+                return "Marktgelände entfernt – Musik und Stimmung gelten jetzt überall.";
+            }
+            case "leaderboard_here" -> {
+                Holograms.removeLeaderboard();
+                var bp = p.blockPosition().above(2);
+                d.leaderboard = Box.of(p.level().dimension().identifier().toString(), bp.getX(), bp.getY(), bp.getZ(), bp.getX(), bp.getY(), bp.getZ());
+                Holograms.tick();
+                return "Bestenliste-Tafel über dir aufgestellt.";
+            }
+            case "leaderboard_remove" -> {
+                Holograms.removeLeaderboard();
+                return "Bestenliste-Tafel entfernt.";
             }
             case "reload" -> {
                 if (!MarktRuntime.reload()) throw err("Einstellungen fehlerhaft, nichts geändert (siehe Log).");
@@ -402,6 +446,20 @@ public final class AdminService {
             case "jobsEnabled" -> c.jobs.enabled = flag;
             case "playerJobs" -> c.jobs.playerJobs = flag;
             case "snowEnabled" -> c.snow.enabled = flag;
+            case "holograms" -> c.stalls.holograms = flag;
+            case "eventEnabled" -> c.event.enabled = flag;
+            case "music" -> c.event.music = flag;
+            case "bossbar" -> c.event.bossbar = flag;
+            case "onlyDuringEvent" -> c.event.onlyDuringEvent = flag;
+            case "weatherSnow" -> c.event.weatherSnow = flag;
+            case "fireworks" -> c.event.fireworks = flag;
+            case "lottery" -> c.event.lottery = flag;
+            case "wichteln" -> c.event.wichteln = flag;
+            case "vote" -> c.event.vote = flag;
+            case "advent" -> c.event.advent = flag;
+            case "ticketPrice" -> c.event.ticketPrice = v;
+            case "giftReward" -> c.event.giftReward = v;
+            case "defaultMinutes" -> c.event.defaultMinutes = (int) v;
             default -> throw err("Unbekannte Einstellung " + key + ".");
         }
         c.sanitize();

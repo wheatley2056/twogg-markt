@@ -18,6 +18,7 @@ public final class MarktConfig {
     public Buyer buyer = new Buyer();
     public Jobs jobs = new Jobs();
     public Snow snow = new Snow();
+    public Event event = new Event();
 
     public static final class Stalls {
         /** Länge eines Mietzeitraums in Echtzeit-Minuten (1440 = ein Tag). */
@@ -43,6 +44,10 @@ public final class MarktConfig {
         public int maxVolume = 32 * 32 * 24;
         /** Hinweis in der Aktionsleiste beim Betreten eines Stands. */
         public boolean enterHint = true;
+        /** Schwebende Schrift über jedem Stand (Name, Status, Preis bzw. Besitzer und Angebote). */
+        public boolean holograms = true;
+        /** Höhe des Hologramms über der Oberkante des Stands in Blöcken. */
+        public double hologramOffset = 0.6;
     }
 
     public static final class Shop {
@@ -134,6 +139,79 @@ public final class MarktConfig {
         public double dailyMax = 3.0;
     }
 
+    public static final class Event {
+        public boolean enabled = true;
+        /**
+         * Öffnungszeiten, z. B. "Fr 18:00-21:00", "Sa,So 16:00-20:00", "täglich 18:00-20:00", "24.12. 16:00-19:00".
+         * Leer (Standard): Der Markt öffnet nur per /markt event start.
+         */
+        public List<String> schedule = new ArrayList<>();
+        /** Dauer bei /markt event start ohne Angabe. */
+        public int defaultMinutes = 120;
+        public int openingSeconds = 60;
+        public int finaleSeconds = 90;
+        /** Theke, Ankauf und Auftragsbrett nur während des Events offen. */
+        public boolean onlyDuringEvent = false;
+        public boolean bossbar = true;
+        /** Ankündigung so viele Minuten vor dem Start nach Öffnungszeiten. */
+        public List<Integer> announceMinutes = new ArrayList<>(List.of(15, 5, 1));
+
+        // Losbude
+        public boolean lottery = true;
+        /** Preis eines Loses in €. */
+        public double ticketPrice = 5.0;
+        public int maxTickets = 10;
+        /** So viel Prozent des Topfs werden ausgeschüttet, der Rest wird vernichtet. */
+        public double potPayoutPercent = 80.0;
+        /** Aufteilung der Ausschüttung auf Platz 1, 2, 3 … in Prozent. */
+        public List<Double> lotteryShares = new ArrayList<>(List.of(50.0, 30.0, 20.0));
+
+        // Geschenkesuche
+        public double giftReward = 0.5;
+
+        // Wichteln
+        public boolean wichteln = true;
+
+        // Adventskalender (1.–24. Dezember)
+        public boolean advent = true;
+        public List<AdventDay> adventDays = new ArrayList<>();
+
+        // Wettbewerb
+        public boolean vote = true;
+        /** Preise in Coins für Platz 1, 2, 3 in jeder Kategorie. */
+        public List<Double> prizes = new ArrayList<>(List.of(10.0, 5.0, 2.5));
+
+        // Atmosphäre
+        /** TwoGG-Atmos-Preset für Spieler im Marktgelände während des Events; leer = aus. */
+        public String atmosPreset = "draussen_klar";
+        public boolean music = true;
+        public float musicVolume = 0.6f;
+        /** Pause zwischen zwei Liedern in Sekunden. */
+        public int musicPauseSeconds = 40;
+        /** Tempo: Ticks pro Achtelnote. */
+        public int musicTicksPerEighth = 4;
+        public boolean weatherSnow = true;
+        public boolean fireworks = true;
+    }
+
+    public static final class AdventDay {
+        public int day;
+        public double coins;
+        public String item = "";
+        public int count = 1;
+        public String text = "";
+
+        public AdventDay() {}
+
+        public AdventDay(int day, double coins, String item, int count, String text) {
+            this.day = day;
+            this.coins = coins;
+            this.item = item;
+            this.count = count;
+            this.text = text;
+        }
+    }
+
     /** Vorlage mit Weihnachtsmarkt-Werten für Winterland (Kurs 10 €: 1 WLC ≈ 10 €, Stundenlohn 1,5 WLC). */
     public static MarktConfig defaults() {
         MarktConfig c = new MarktConfig();
@@ -170,6 +248,19 @@ public final class MarktConfig {
         j.add(new JobTemplate("Papier für Geschenke", "minecraft:paper", 24, 1.0));
         j.add(new JobTemplate("Äpfel für Bratäpfel", "minecraft:apple", 12, 1.5));
         j.add(new JobTemplate("Kohle für die Maronenröster", "minecraft:charcoal", 16, 1.5));
+
+        List<AdventDay> a = c.event.adventDays;
+        String[][] items = {{"minecraft:cookie", "8"}, {"minecraft:candle", "2"}, {"minecraft:pumpkin_pie", "2"}, {"minecraft:lantern", "2"},
+                {"minecraft:honey_bottle", "1"}, {"minecraft:sweet_berries", "16"}, {"minecraft:firework_rocket", "4"}, {"minecraft:cake", "1"}};
+        for (int d = 1; d <= 24; d++) {
+            if (d == 6) a.add(new AdventDay(d, 3.0, "minecraft:cookie", 12, "Nikolaus!"));
+            else if (d == 24) a.add(new AdventDay(d, 10.0, "minecraft:cake", 1, "Frohe Weihnachten!"));
+            else if (d % 3 == 0) a.add(new AdventDay(d, 1.5, "", 0, ""));
+            else {
+                String[] it = items[d % items.length];
+                a.add(new AdventDay(d, 0.5, it[0], Integer.parseInt(it[1]), ""));
+            }
+        }
         return c;
     }
 
@@ -180,6 +271,31 @@ public final class MarktConfig {
         if (buyer == null) buyer = new Buyer();
         if (jobs == null) jobs = new Jobs();
         if (snow == null) snow = new Snow();
+        if (event == null) event = new Event();
+        Event e = event;
+        if (e.schedule == null) e.schedule = new ArrayList<>();
+        if (e.announceMinutes == null) e.announceMinutes = new ArrayList<>();
+        if (e.lotteryShares == null || e.lotteryShares.isEmpty()) e.lotteryShares = new ArrayList<>(List.of(100.0));
+        if (e.prizes == null) e.prizes = new ArrayList<>();
+        if (e.adventDays == null) e.adventDays = new ArrayList<>();
+        e.adventDays.removeIf(d -> d == null || d.day < 1 || d.day > 24);
+        for (AdventDay d : e.adventDays) {
+            if (d.item == null) d.item = "";
+            if (d.text == null) d.text = "";
+            d.coins = Math.max(0, d.coins);
+            d.count = Math.max(0, Math.min(64 * 9, d.count));
+        }
+        if (e.atmosPreset == null) e.atmosPreset = "";
+        e.defaultMinutes = Math.max(1, e.defaultMinutes);
+        e.openingSeconds = Math.max(0, e.openingSeconds);
+        e.finaleSeconds = Math.max(5, e.finaleSeconds);
+        e.ticketPrice = Math.max(0, e.ticketPrice);
+        e.maxTickets = Math.max(1, e.maxTickets);
+        e.potPayoutPercent = clamp(e.potPayoutPercent, 0, 100);
+        e.giftReward = Math.max(0, e.giftReward);
+        e.musicVolume = (float) clamp(e.musicVolume, 0, 4);
+        e.musicPauseSeconds = Math.max(0, e.musicPauseSeconds);
+        e.musicTicksPerEighth = Math.max(1, Math.min(20, e.musicTicksPerEighth));
         if (title == null || title.isBlank()) title = "Weihnachtsmarkt";
         if (subtitle == null) subtitle = "";
         if (accent == null) accent = "#EE5A4F";
@@ -223,6 +339,11 @@ public final class MarktConfig {
         snow.blocksPerPay = Math.max(1, snow.blocksPerPay);
         snow.pay = Math.max(0, snow.pay);
         snow.dailyMax = Math.max(0, snow.dailyMax);
+    }
+
+    public AdventDay advent(int day) {
+        for (AdventDay d : event.adventDays) if (d.day == day) return d;
+        return null;
     }
 
     public BuyerItem buyerItem(String item) {

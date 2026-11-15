@@ -5,9 +5,11 @@ Spieler **mieten** sie für einen Zeitraum oder **kaufen** sie und verkaufen an 
 Spieler. Dazu kommen Nebenverdienste neben der eigentlichen Arbeit auf Winterland: **Ankauf**, **Auftragsbrett** und
 **Räumdienst**. Bezahlt wird mit [TwoGG Economy](../twogg-economy) (Konto oder Bargeld, Preise folgen dem Wertkurs).
 
-Aktuelle Version: **0.1.0+26.1.2**
+Aktuelle Version: **0.2.0+26.1.2**
 
 ## Features
+
+**Seit 0.2.0:** Hologramme über jedem Stand und ein eigenes **Weihnachtsmarkt-Event** (siehe unten).
 
 - **Stände einzeichnen:** Mit dem **Marktplaner** zwei Ecken setzen (Linksklick, Rechtsklick), dann in der
   Marktverwaltung „Stand anlegen“ oder `/markt stand neu <Name>`. Hält ein Admin den Planer, sieht er alle Stände als
@@ -28,6 +30,13 @@ Aktuelle Version: **0.1.0+26.1.2**
   jeder kann jeden einmal erledigen. Spieler hängen **eigene Aufträge** aus – die Belohnung wird hinterlegt, die Ware
   landet im Abholfach des Auftraggebers.
 - **Räumdienst:** In Räumzonen (Gassen, Plätze) zahlt der Markt fürs Schneeschippen, bis zum Tageslimit.
+- **Hologramme:** Über jedem Stand schwebt Name, Status und Preis (frei) bzw. Besitzer und Angebote (vergeben),
+  während des Events auch die Stimmen. Vanilla-Textanzeigen – sichtbar für alle, aktualisieren sich selbst.
+- **Weihnachtsmarkt-Event:** Öffnungszeiten oder Start per Befehl, Eröffnung mit Titel und Glocken, Bossbar mit
+  Restzeit, Weihnachtslieder (Glockenspiel) und Atmos-Stimmung im Marktgelände, Schneefall. Mitmachen: **Losbude**,
+  **Wichtelbaum**, **Geschenkesuche**, **Adventskalender** (1.–24. Dezember). Wettbewerb: **schönster Stand**
+  (Abstimmung), bester Umsatz, fleißigste Helfer, Räumdienst, Geschenkesuche – mit **Siegerehrung**, Preisen,
+  Feuerwerk und einer **Bestenliste-Tafel** als Hologramm.
 - **Marktverwaltung** (Kit-GUI, Kachel in der TwoGG Toolbox oder `/markt admin`): Stände, Neu, Ankauf, Aufträge,
   Räumzonen, Regeln. Alles auch per `/markt …`-Befehl.
 
@@ -45,7 +54,7 @@ Aktuelle Version: **0.1.0+26.1.2**
 | TwoGG Roleplay | optional; dann gelten die Konten pro Charakter der Economy |
 | Seite | **Server und alle Clients** |
 
-1. `twogg-markt-0.1.0+26.1.2.jar` zusammen mit Kit, Economy und Fabric API in `mods/` auf dem Server und bei allen
+1. `twogg-markt-0.2.0+26.1.2.jar` zusammen mit Kit, Economy und Fabric API in `mods/` auf dem Server und bei allen
    Spielern ablegen.
 2. Beim ersten Start entsteht `config/twogg-markt/markt.json` mit der Weihnachtsmarkt-Vorlage.
 3. Die Marktdaten liegen in der Welt unter `<welt>/twogg-markt/`.
@@ -66,6 +75,18 @@ Aktuelle Version: **0.1.0+26.1.2**
 
 Dann aus dem Kreativ-Tab „TwoGG Markt“ **Standschilder** an die Stände, eine **Ankaufstelle** und ein
 **Auftragsbrett** auf den Markt stellen.
+
+**Event ausrichten:**
+
+```
+/markt gelaende setzen             # Planer-Auswahl = Marktgelände (Musik, Stimmung, Feuerwerk)
+/markt event tafel hier            # Bestenliste-Hologramm über dir
+/markt event start 120             # Markt für 120 Minuten eröffnen (Siegerehrung danach automatisch)
+/markt event stop                  # vorzeitig: Siegerehrung jetzt
+```
+
+Dazu **Losbude**, **Wichtelbaum**, **Adventskalender** und ein paar **versteckte Geschenke** aus dem Kreativ-Tab
+aufstellen. Feste Öffnungszeiten (`event.schedule`, z. B. `"Fr 18:00-21:00"`) starten den Markt automatisch.
 
 **Spieler:** `/markt` öffnet die Standübersicht (mieten, kaufen, eigener Stand, „Verdienen“), ein Rechtsklick aufs
 Standschild ebenso. `/markt zeigen` umrandet die Stände in der Nähe für 30 Sekunden.
@@ -90,6 +111,9 @@ Standschild ebenso. `/markt zeigen` umrandet die Stände in der Nähe für 30 Se
 | Marktauftrag | 0,5 bis 2 WLC, vier gleichzeitig, jeder erledigt jeden einmal, täglich neue |
 | Räumdienst | 0,1 WLC je 8 geräumte Schneeblöcke, höchstens 3 WLC pro Tag |
 | Eigener Stand | was die Kunden zahlen, minus 5 % Marktgebühr |
+| Geschenkesuche (Event) | 0,5 WLC je gefundenem Geschenk |
+| Siegerehrung (Event) | 10 / 5 / 2,5 WLC für Platz 1–3 in jeder Kategorie, Losbude: 80 % des Topfs |
+| Adventskalender | 0,5–10 WLC oder Items pro Tag |
 
 Alle Werte stehen in `config/twogg-markt/markt.json` bzw. pro Stand in der Marktverwaltung.
 
@@ -98,8 +122,8 @@ Alle Werte stehen in `config/twogg-markt/markt.json` bzw. pro Stand in der Markt
 ```
 cd ../twogg-kit && ./gradlew publishToMavenLocal
 cd ../twogg-markt
-./gradlew build      # → build/libs/twogg-markt-0.1.0+26.1.2.jar
-./gradlew test       # Logik-Kern (MarketMathTest)
+./gradlew build      # → build/libs/twogg-markt-0.2.0+26.1.2.jar
+./gradlew test       # Logik-Kern (MarketMathTest, EventTest)
 xvfb-run -a ./gradlew runClientGameTest   # Durchgang im echten Spiel mit Screenshots
 ```
 

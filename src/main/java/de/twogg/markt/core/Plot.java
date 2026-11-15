@@ -47,6 +47,8 @@ public final class Plot {
     public long till;
     public long salesTotal;
     public int nextOffer = 1;
+    /** UUID des Hologramms über dem Stand (TextDisplay), leer = noch keins. */
+    public String hologram = "";
 
     public boolean hasOwner() {
         return owner != null && !owner.isEmpty();

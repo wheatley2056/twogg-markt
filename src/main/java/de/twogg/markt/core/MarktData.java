@@ -31,6 +31,17 @@ public final class MarktData {
     /** Abholfach: gelieferte Ware für Spieleraufträge, als serialisierte Stapel. */
     public Map<String, List<JsonElement>> pickup = new HashMap<>();
 
+    /** Weihnachtsmarkt-Event. */
+    public MarktEvent event = new MarktEvent();
+    /** Marktgelände (Musik, Atmosphäre); null = ganzer Server. */
+    public Box area;
+    /** Bestenliste-Tafel: Ort und Hologramm. */
+    public Box leaderboard;
+    public String leaderboardHolo = "";
+    /** Adventskalender: Jahr und geöffnete Türchen pro Spieler. */
+    public int adventYear;
+    public Map<String, List<Integer>> advent = new HashMap<>();
+
     public static final class Zone {
         public String id = "";
         public String name = "";
@@ -58,6 +69,10 @@ public final class MarktData {
         if (pending == null) pending = new HashMap<>();
         if (pickup == null) pickup = new HashMap<>();
         if (day == null) day = "";
+        if (event == null) event = new MarktEvent();
+        event.sanitize();
+        if (advent == null) advent = new HashMap<>();
+        if (leaderboardHolo == null) leaderboardHolo = "";
         plots.values().removeIf(p -> p == null || p.box == null);
         for (Map.Entry<String, Plot> e : plots.entrySet()) {
             Plot p = e.getValue();
@@ -70,6 +85,7 @@ public final class MarktData {
             if (p.helpers == null) p.helpers = new LinkedHashMap<>();
             if (p.offers == null) p.offers = new ArrayList<>();
             p.offers.removeIf(o -> o == null || o.item == null);
+            if (p.hologram == null) p.hologram = "";
             p.maxPeriods = Math.max(1, p.maxPeriods);
             p.rentPrice = Math.max(0, p.rentPrice);
             p.buyPrice = Math.max(0, p.buyPrice);

@@ -74,6 +74,47 @@ public final class Views {
         public Selection selection;
         public List<ZoneLine> zones = new ArrayList<>();
         public Settings settings;
+
+        // Event (Standübersicht, Losbude, Wichteln, Admin) und Adventskalender
+        public EventInfo event;
+        public List<AdventDoor> advent = new ArrayList<>();
+        public int adventToday;
+    }
+
+    public static final class EventInfo {
+        public String phase = "CLOSED";
+        public String status = "";
+        public long remaining, total;
+        public int round;
+        public List<String> schedule = new ArrayList<>();
+        public String next = "";
+        public boolean lottery, wichteln, vote, advent;
+        public int myTickets, maxTickets, ticketsTotal, players;
+        public long ticketPrice, pot, potPayout;
+        public String myVote = "";
+        public List<Board> boards = new ArrayList<>();
+        public List<String> lastResults = new ArrayList<>();
+        public String wichtelGift = "";
+        public int wichtelCount;
+        public String area = "";
+        public String leaderboard = "";
+        public String atmosPreset = "";
+        public boolean atmosLoaded, music, bossbar, onlyDuringEvent, weatherSnow, fireworks;
+        public int defaultMinutes;
+        public long giftReward;
+    }
+
+    public static final class Board {
+        public String title = "";
+        public List<String> lines = new ArrayList<>();
+    }
+
+    public static final class AdventDoor {
+        public int day;
+        /** OPEN (heute, noch zu), DONE (schon geöffnet), MISSED (vorbei), LOCKED (kommt noch). */
+        public String state = "LOCKED";
+        public String text = "";
+        public String item = "";
     }
 
     public static final class PlotLine {
@@ -139,7 +180,7 @@ public final class Views {
     public static final class Settings {
         public int periodMinutes, maxPerPlayer, maxHelpers, maxOffers;
         public double feePercent, buybackPercent, rentRefundPercent, counterPrice;
-        public boolean resetOnRelease, protectFree, allowCash, buyerEnabled, jobsEnabled, playerJobs, snowEnabled, buyerPayCash;
+        public boolean holograms, resetOnRelease, protectFree, allowCash, buyerEnabled, jobsEnabled, playerJobs, snowEnabled, buyerPayCash;
         public int jobsActive, jobsSlots;
         public double snowPay, snowDailyMax;
         public int snowBlocksPerPay;

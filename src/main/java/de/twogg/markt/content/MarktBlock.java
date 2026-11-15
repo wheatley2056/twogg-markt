@@ -57,6 +57,7 @@ public class MarktBlock extends HorizontalDirectionalBlock {
 
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
+        if (onUse == null) return InteractionResult.PASS;   // reine Deko (Lichterkette)
         if (!level.isClientSide() && player instanceof ServerPlayer sp) onUse.accept(sp, pos);
         return InteractionResult.SUCCESS;
     }

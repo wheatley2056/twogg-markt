@@ -30,7 +30,11 @@ de.twogg.markt
 │   ├── Job               Auftrag (Markt oder Spieler)
 │   ├── MarktConfig       Einstellungen + Weihnachtsmarkt-Vorlage + sanitize
 │   ├── MarktData         Weltdaten + sanitize, Hilfen (plotAt, zoneAt, addPending)
-│   └── MarketMath        €→Coins, Mietzeiträume, Erstattung, Gebühr, Ankaufpreis, Abklingen, Ziehen, Format
+│   ├── MarktEvent        Event-Zustand (Phase, Statistik, Stimmen, Lose, Wichtelgeschenke, Ergebnisse)
+│   ├── Schedule          Öffnungszeiten parsen, aktives und nächstes Fenster
+│   ├── Melodies          gemeinfreie Lieder als Notenblock-Notenfolgen
+│   └── MarketMath        €→Coins, Mietzeiträume, Erstattung, Gebühr, Ankaufpreis, Abklingen, Ziehen, Losziehung,
+│                         Wichtel-Zuordnung (niemand bekommt sein eigenes), Rangliste, Format
 ├── data/
 │   ├── Store             JSON lesen/schreiben (atomar), kaputte Weltdaten wegsichern
 │   └── Stacks            ItemStack ↔ JSON über ItemStack.CODEC (mit Registry-Kontext)
@@ -38,6 +42,8 @@ de.twogg.markt
 │   ├── ModContent        Blöcke market_counter, stall_sign, buyer_station, job_board; Item market_planner; Kreativ-Tab
 │   ├── MarktBlock        drehbarer Block, Rechtsklick → Service
 │   └── PlannerItem       Rechtsklick = Ecke 2 (Ecke 1 über AttackBlockCallback)
+├── mixin/                Invoker für private Setter von Display/TextDisplay (Hologramme)
+├── compat/AtmosCompat    TwoGG Atmos per Reflection (optional)
 ├── net/
 │   ├── Payloads          twogg_markt:view (S2C), twogg_markt:action (C2S), JSON bis 262 144 Zeichen
 │   └── Views             View (ein Typ für alle Fenster, Feld screen), Zeilen-Klassen, Action
@@ -54,12 +60,16 @@ de.twogg.markt
     ├── Outlines          Umriss-Partikel, Hinweis beim Betreten
     ├── Selections        Planer-Auswahl pro Admin (im Speicher)
     ├── Snapshots         Leerzustand sichern/herstellen
+    ├── Holograms         TextDisplays über Ständen und Bestenliste-Tafel, Aufräumen verwaister beim Laden
+    ├── EventService      Phasen, Öffnungszeiten, Bossbar, Musik, Atmos, Statistik, Abstimmung, Siegerehrung, Feuerwerk
+    ├── ActivityService   Fenster „lottery“, „advent“, „wichtel“; versteckte Geschenke
+    ├── Levels            Dimension aus ID
     ├── AdminService      Fenster „admin“ und alle Admin-Aktionen (auch für /markt-Befehle)
     └── MarktCommands     /markt …
 de.twogg.markt.client     (src/client)
 ├── TwoggMarktClient      Empfänger, Toolbox-Kachel „Markt“ (adminOnly)
 ├── MarktScreen           Basis: receive (öffnen oder aktualisieren), Felder mit Einheit, Blättern, Bestätigungs-Knopf
-└── MarketScreen, ShopScreen, BuyerScreen, BoardScreen, AdminScreen
+└── MarketScreen, ShopScreen, BuyerScreen, BoardScreen, ActivityScreen, AdminScreen
 ```
 
 ## Geldfluss
@@ -92,6 +102,10 @@ stützen den Kurs, Nebenverdienste drücken ihn leicht.
 | shop | `refresh`, `close`, `buy` (id, count, cash), `offer_add` (amount, count; Ware aus der Hand), `offer_edit`, `offer_remove`, `toggle`, `collect` |
 | buyer | `refresh`, `close`, `sell` (id = Item-ID, flag = alle) |
 | board | `refresh`, `close`, `deliver` (id), `post` (count, amount, text, cash; Item aus der Hand), `cancel`, `pickup` |
+| lottery | `refresh`, `close`, `buy` (count, cash) |
+| advent | `refresh`, `close`, `open` (heutiges Türchen) |
+| wichtel | `refresh`, `close`, `give` (Stapel aus der Hand), `take`, `pickup` |
+| market, shop | zusätzlich `vote` |
 | admin | `open`, `refresh`, `close`, `sel_expand`, `sel_clear`, `plot_create`, `plot_*`, `zone_create`, `zone_delete`, `buyer_add`/`_edit`/`_remove`, `jobs_reroll`, `job_remove`, `setting`, `reload` |
 
 Absicherung: Block-Fenster gelten nur mit offener Sitzung am selben Block (≤ 8 Blöcke, Block noch da). Ein spätes
@@ -116,8 +130,10 @@ Ausnahmen; Ausnahmen in Aktionen werden geloggt und nicht weitergereicht.
 
 | Alle | Was |
 |---|---|
+| 1 Tick | Musik |
 | 10 Ticks | Umrisse (Planer, `/markt zeigen`), Hinweis beim Betreten |
-| 100 Ticks | Tageswechsel, Ablauf und Warnungen, neue Marktaufträge, Ablauf von Spieleraufträgen, Ankauf-Abklingen |
+| 20 Ticks | Event-Phasen, Öffnungszeiten, Ankündigungen, Bossbar, Atmos |
+| 100 Ticks | Hologramme, Tageswechsel, Ablauf und Warnungen, neue Marktaufträge, Ablauf von Spieleraufträgen, Ankauf-Abklingen |
 | 600 Ticks | Speichern, wenn sich etwas geändert hat |
 
 Alles läuft im Server-Thread.

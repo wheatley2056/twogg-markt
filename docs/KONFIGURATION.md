@@ -47,6 +47,8 @@ Werte, leere Listeneinträge, Prozente außerhalb 0–100).
 | `allowCash` | boolean | `true` | Bezahlen mit Bargeld erlaubt |
 | `maxVolume` | int | `24576` | Größter Stand beim Einzeichnen in Blöcken (32 × 32 × 24) |
 | `enterHint` | boolean | `true` | Hinweis über der Hotbar beim Betreten eines Stands |
+| `holograms` | boolean | `true` | Schwebende Schrift über jedem Stand |
+| `hologramOffset` | double | `0.6` | Höhe über der Oberkante des Stands |
 
 ### `shop`
 
@@ -118,6 +120,36 @@ Vorlagen mit unbekannter Item-ID werden beim Ziehen übersprungen.
 | `pay` | double | `0.1` | Lohn pro Paket in Coins |
 | `dailyMax` | double | `3.0` | Höchstens so viel pro Spieler und Tag |
 
+### `event`
+
+| Feld | Typ | Standard | Bedeutung |
+|---|---|---|---|
+| `enabled` | boolean | `true` | Automatischer Start nach Öffnungszeiten |
+| `schedule` | Liste | leer | Öffnungszeiten: `"Fr 18:00-21:00"`, `"Sa,So 16:00-20:00"`, `"Mo-Mi 12:00-13:00"`, `"täglich 18:00-20:00"`, `"24.12. 16:00-19:00"`. Ende vor Beginn = über Mitternacht. Fehlerhafte Einträge werden ignoriert. Uhrzeit des Servers. |
+| `defaultMinutes` | int | `120` | Dauer bei `/markt event start` ohne Angabe |
+| `openingSeconds` / `finaleSeconds` | int | `60` / `90` | Länge von Eröffnung und Siegerehrung |
+| `onlyDuringEvent` | boolean | `false` | Theken (für Kunden), Ankauf und Auftragsbrett nur im Event |
+| `bossbar` | boolean | `true` | Bossbar mit Restzeit |
+| `announceMinutes` | Liste | `[15, 5, 1]` | Ankündigungen vor dem Start nach Öffnungszeiten |
+| `lottery` | boolean | `true` | Losbude |
+| `ticketPrice` | double | `5.0` | Preis eines Loses in € |
+| `maxTickets` | int | `10` | Lose pro Spieler und Event |
+| `potPayoutPercent` | double | `80` | Anteil des Topfs, der ausgeschüttet wird |
+| `lotteryShares` | Liste | `[50, 30, 20]` | Aufteilung auf Platz 1, 2, 3 … in % |
+| `giftReward` | double | `0.5` | Coins pro gefundenem Geschenk |
+| `wichteln` | boolean | `true` | Wichtelbaum |
+| `advent` | boolean | `true` | Adventskalender |
+| `adventDays` | Liste | 24 Tage | `day` (1–24), `coins`, `item`, `count`, `text` |
+| `vote` | boolean | `true` | Abstimmung „schönster Stand“ |
+| `prizes` | Liste | `[10, 5, 2.5]` | Coins für Platz 1, 2, 3 in jeder Kategorie |
+| `atmosPreset` | String | `"draussen_klar"` | TwoGG-Atmos-Preset im Marktgelände; leer = aus |
+| `music` | boolean | `true` | Weihnachtslieder im Gelände |
+| `musicVolume` | float | `0.6` | Lautstärke |
+| `musicPauseSeconds` | int | `40` | Pause zwischen Liedern |
+| `musicTicksPerEighth` | int | `4` | Tempo (Ticks pro Achtel) |
+| `weatherSnow` | boolean | `true` | Niederschlag während des Events (Schnee in kalten Biomen) |
+| `fireworks` | boolean | `true` | Feuerwerk bei der Siegerehrung |
+
 ## Weltdaten `<welt>/twogg-markt/markt.json`
 
 Klasse `de.twogg.markt.core.MarktData`. Beträge in **Zehntel-Coins** (`long`), Zeiten in ms seit Epoch.
@@ -132,7 +164,12 @@ Klasse `de.twogg.markt.core.MarktData`. Beträge in **Zehntel-Coins** (`long`), 
 | `sold`, `soldUpdated` | Ankauf: verkaufte Bündel pro Item (klingen ab) |
 | `day`, `daily` | Tageszähler pro Spieler (Ankauf je Item, Schnee); werden bei Datumswechsel (Serverzeit) geleert |
 | `pending` | Vorgemerkte Auszahlungen pro UUID: `amount`, `name`, `reasons` |
-| `pickup` | Abholfächer pro UUID: Liste von ItemStacks als JSON |
+| `pickup` | Abholfächer pro UUID: Liste von ItemStacks als JSON (Aufträge, Wichteln) |
+| `event` | `phase` (`CLOSED`, `OPENING`, `OPEN`, `FINALE`), `round`, `startedAt`, `endsAt`, `phaseUntil`, `windowKey`, `stats` (UUID → `name`, `sales`, `snow`, `jobs`, `gifts`), `votes` (UUID → Stand), `tickets`, `pot`, `wichtel`, `giftsFound`, `lastResults`, `lastEnded` |
+| `area` | Marktgelände (Box) oder null |
+| `leaderboard`, `leaderboardHolo` | Ort und UUID der Bestenliste-Tafel |
+| `adventYear`, `advent` | Jahr und geöffnete Türchen pro Spieler |
+| `plots.*.hologram` | UUID des Hologramms über dem Stand |
 
 Ist die Datei unlesbar, wird sie als `markt.json.broken-<zeit>` weggesichert, der Markt startet leer und das Log zeigt
 einen deutlichen Fehlerblock. Dann: Server stoppen, Datei reparieren, als `markt.json` zurücklegen, neu starten.
@@ -158,6 +195,9 @@ Alle Buchungen laufen über die API von TwoGG Economy und stehen in deren Journa
 | `markt:auftrag` | BURN beim Aushängen, MINT bei Erledigung oder Rückgabe | Auftragsbrett |
 | `markt:raeumdienst` | MINT | Räumdienst |
 | `markt:gutschrift` | MINT | Vorgemerkte Beträge beim Login |
+| `markt:lose` | BURN / CASH_BURN | Lose kaufen |
+| `markt:event` | MINT | Lospreise, Siegerpreise |
+| `markt:geschenk`, `markt:advent` | MINT | Geschenkesuche, Adventskalender |
 
 Die Marktgebühr erscheint nicht eigens: Der Käufer zahlt den vollen Preis (BURN), in die Kasse kommt der Betrag ohne
 Gebühr (später MINT). Die Differenz verlässt den Umlauf.

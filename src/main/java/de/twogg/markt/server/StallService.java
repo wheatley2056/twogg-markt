@@ -78,6 +78,7 @@ public final class StallService {
         for (Plot plot : list) v.plots.add(line(plot, me, now));
         v.maxPerPlayer = MarktRuntime.config().stalls.maxPerPlayer;
         v.ownedCount = owned(me, now);
+        v.event = EventService.info(p, false);
         Send.send(p, v);
     }
 
@@ -174,6 +175,10 @@ public final class StallService {
             case "helper_remove" -> helperRemove(p, plot, act.name);
             case "shop_toggle" -> shopToggle(p, plot);
             case "buy_counter" -> buyCounter(p, plot, act.cash);
+            case "vote" -> {
+                String[] vr = EventService.vote(p, plot.id);
+                yield new Result(vr[0], vr[1] != null, "");
+            }
             default -> new Result("", false, "");
         };
         send(p, r.msg, r.error, r.page);

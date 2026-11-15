@@ -21,7 +21,7 @@
 ```
 cd ../twogg-kit && ./gradlew publishToMavenLocal
 cd ../twogg-markt
-./gradlew build          # build/libs/twogg-markt-0.1.0+26.1.2.jar (+ -sources.jar)
+./gradlew build          # build/libs/twogg-markt-0.2.0+26.1.2.jar (+ -sources.jar)
 ```
 
 Neue Economy-Version: Jar aus `../twogg-economy/build/libs/` nach `libs/` kopieren und `economy_version` in
@@ -33,7 +33,9 @@ Neue Economy-Version: Jar aus `../twogg-economy/build/libs/` nach `libs/` kopier
 ./gradlew test
 ```
 
-`MarketMathTest` (13 Tests): €→Coins beim Kurs, Verlängern, buchbare Zeiträume, Erstattung, Gebühr, Ankaufpreis und
+`MarketMathTest` (13 Tests) und `EventTest` (9 Tests: Öffnungszeiten mit Wochentagen, Datum, über Mitternacht und
+Fehlern, gewichtete Losziehung, Wichteln ohne eigenes Geschenk, Rangliste, Melodien im Notenblock-Bereich,
+Event-Zustand, Adventskalender-Vorlage). `MarketMathTest`: €→Coins beim Kurs, Verlängern, buchbare Zeiträume, Erstattung, Gebühr, Ankaufpreis und
 Abklingen, Ziehen der Marktaufträge, Formatierung, `Box`, Status und Rechte eines Stands, `sanitize` von Einstellungen
 und Weltdaten.
 
@@ -48,8 +50,11 @@ xvfb-run -a -s "-screen 0 1280x720x24" ./gradlew runClientGameTest
 zweiten Spieler (FakePlayer) kaufen, leert die Kasse, prüft den Bauschutz (Fremder kann im Stand nicht abbauen,
 außerhalb schon), verkauft am Ankauf, liefert einen Marktauftrag, hängt einen eigenen Auftrag aus, lässt ihn vom zweiten
 Spieler erledigen, holt die Ware ab, räumt Schnee in einer Räumzone, lässt die Miete ablaufen, kauft als Kunde bar an
-einer fremden Theke und blättert durch alle Seiten der Marktverwaltung. Jeder Schritt wird auf dem Server geprüft
-(Kontostände, Bargeld, Kasse, Inventare). 23 Screenshots unter `build/run/clientGameTest/screenshots/`.
+einer fremden Theke, prüft die Hologramme über beiden Ständen, startet ein Event (Losbude über die Oberfläche, zweiter
+Spieler kauft Lose, Geschenk finden, Wichtelgeschenke von beiden, Abstimmen, Adventskalender, Event-Seite,
+Bestenliste-Tafel) und prüft die Siegerehrung (Topf ausgeschüttet, Wichtelgeschenke getauscht, Preise auf dem Konto
+bzw. vorgemerkt). Danach alle Seiten der Marktverwaltung. Jeder Schritt wird auf dem Server geprüft
+(Kontostände, Bargeld, Kasse, Inventare). 32 Screenshots unter `build/run/clientGameTest/screenshots/`.
 
 Kit-Knöpfe sind `AbstractButton`; der Test drückt sie über eine eigene Hilfe (`press`), Eingabefelder findet er über
 den Hinweistext (`type`).

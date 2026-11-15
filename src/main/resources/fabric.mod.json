@@ -13,6 +13,7 @@
     "main": ["de.twogg.markt.TwoggMarkt"],
     "client": ["de.twogg.markt.client.TwoggMarktClient"]
   },
+  "mixins": ["twogg_markt.mixins.json"],
   "depends": {
     "fabricloader": ">=0.17.0",
     "minecraft": "~26.1.2",
@@ -21,6 +22,7 @@
     "twogg_kit": ">=1.3.0",
     "twogg_economy": ">=0.2.3"
   },
+  "suggests": { "atmos": "*" },
   "custom": {
     "twogg": { "companion": true }
   }

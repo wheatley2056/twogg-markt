@@ -83,6 +83,11 @@ public class ShopScreen extends MarktScreen {
         }
         int by = cy + ch - PAD - 20;
         Views.OfferLine o = offer(selected);
+        if (!manage && !view.member && view.event != null && view.event.vote
+                && ("OPENING".equals(view.event.phase) || "OPEN".equals(view.event.phase))) {
+            boolean voted = view.stall != null && view.stall.name.equals(view.event.myVote);
+            addHeaderButton(KitButton.second(0, 0, 90, voted ? "★ Gestimmt" : "★ Abstimmen", b -> send("vote"))).active = !voted;
+        }
         if (!manage) {
             if (o == null || view.member) return;
             addRenderableWidget(KitButton.icon(x, by, 20, KitIcon.MINUS, "Weniger", b -> { times = Math.max(1, times - 1); rebuildWidgets(); }));

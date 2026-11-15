@@ -4,5 +4,10 @@
   "block.twogg_markt.buyer_station": "Buying Station",
   "block.twogg_markt.job_board": "Job Board",
   "item.twogg_markt.market_planner": "Market Planner",
-  "itemGroup.twogg_markt": "TwoGG Market"
+  "itemGroup.twogg_markt": "TwoGG Market",
+  "block.twogg_markt.lottery_booth": "Lottery Booth",
+  "block.twogg_markt.advent_calendar": "Advent Calendar",
+  "block.twogg_markt.wichtel_tree": "Secret Santa Tree",
+  "block.twogg_markt.hidden_gift": "Hidden Gift",
+  "block.twogg_markt.string_lights": "String Lights"
 }

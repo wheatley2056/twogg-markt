@@ -51,6 +51,7 @@ public final class SnowService {
         MarktData.Zone zone = MarktRuntime.data().zoneAt(dim, pos.getX(), pos.getY(), pos.getZ());
         if (zone == null) return;
         if (PLACED.remove(GlobalPos.of(level.dimension(), pos.immutable()))) return;
+        EventService.recordSnow(p);
         MarktData.Daily d = MarktRuntime.data().daily(p.getUUID().toString());
         long pay = MarketMath.tenths(cfg.pay), max = MarketMath.tenths(cfg.dailyMax);
         if (pay <= 0 || d.snowPaid + pay > max) {

@@ -57,6 +57,7 @@ abstract class MarktScreen extends KitScreen {
             case "buyer" -> new BuyerScreen(v);
             case "board" -> new BoardScreen(v);
             case "admin" -> new AdminScreen(mc.screen instanceof AdminScreen ? null : mc.screen, v);
+            case "lottery", "advent", "wichtel" -> new ActivityScreen(v);
             default -> null;
         };
         if (s != null) mc.setScreen(s);
