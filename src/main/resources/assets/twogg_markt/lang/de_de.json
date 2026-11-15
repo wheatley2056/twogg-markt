@@ -1,0 +1,8 @@
+{
+  "block.twogg_markt.market_counter": "Verkaufstheke",
+  "block.twogg_markt.stall_sign": "Standschild",
+  "block.twogg_markt.buyer_station": "Ankaufstelle",
+  "block.twogg_markt.job_board": "Auftragsbrett",
+  "item.twogg_markt.market_planner": "Marktplaner",
+  "itemGroup.twogg_markt": "TwoGG Markt"
+}

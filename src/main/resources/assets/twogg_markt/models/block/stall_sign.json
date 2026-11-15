@@ -1,0 +1,151 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "twogg_markt:block/stall_sign",
+    "board": "twogg_markt:block/stall_sign",
+    "post": "twogg_markt:block/stall_sign_post"
+  },
+  "elements": [
+    {
+      "from": [
+        7,
+        0,
+        7
+      ],
+      "to": [
+        9,
+        10,
+        9
+      ],
+      "faces": {
+        "north": {
+          "texture": "#post",
+          "uv": [
+            7,
+            6,
+            9,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#post",
+          "uv": [
+            7,
+            6,
+            9,
+            16
+          ]
+        },
+        "east": {
+          "texture": "#post",
+          "uv": [
+            7,
+            6,
+            9,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#post",
+          "uv": [
+            7,
+            6,
+            9,
+            16
+          ]
+        },
+        "down": {
+          "texture": "#post",
+          "uv": [
+            7,
+            7,
+            9,
+            9
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        1,
+        9,
+        6.5
+      ],
+      "to": [
+        15,
+        16,
+        9.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#board",
+          "uv": [
+            1,
+            4,
+            15,
+            11
+          ]
+        },
+        "south": {
+          "texture": "#board",
+          "uv": [
+            1,
+            4,
+            15,
+            11
+          ]
+        },
+        "east": {
+          "texture": "#board",
+          "uv": [
+            0,
+            4,
+            3,
+            11
+          ]
+        },
+        "west": {
+          "texture": "#board",
+          "uv": [
+            0,
+            4,
+            3,
+            11
+          ]
+        },
+        "up": {
+          "texture": "#board",
+          "uv": [
+            1,
+            0,
+            15,
+            3
+          ]
+        },
+        "down": {
+          "texture": "#board",
+          "uv": [
+            1,
+            13,
+            15,
+            16
+          ]
+        }
+      }
+    }
+  ],
+  "display": {
+    "gui": {
+      "rotation": [
+        30,
+        225,
+        0
+      ],
+      "scale": [
+        0.625,
+        0.625,
+        0.625
+      ]
+    }
+  }
+}

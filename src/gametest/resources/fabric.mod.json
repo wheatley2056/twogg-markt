@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "id": "twogg_markt_test",
+  "version": "1.0.0",
+  "name": "TwoGG Markt Client-Test",
+  "environment": "*",
+  "entrypoints": { "fabric-client-gametest": ["de.twogg.markt.test.MarktClientTest"] },
+  "depends": { "twogg_markt": "*" }
+}

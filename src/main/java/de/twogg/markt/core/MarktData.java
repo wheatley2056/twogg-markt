@@ -1,0 +1,113 @@
+package de.twogg.markt.core;
+
+import com.google.gson.JsonElement;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+/** Weltdaten des Markts ({@code <welt>/twogg-markt/markt.json}). */
+public final class MarktData {
+    public int version = 1;
+    public Map<String, Plot> plots = new LinkedHashMap<>();
+    /** Räumdienst-Zonen: ID → Bereich. */
+    public Map<String, Zone> zones = new LinkedHashMap<>();
+    public List<Job> jobs = new ArrayList<>();
+    public long lastJobRefresh;
+    public int nextJob = 1;
+
+    /** Ankauf: verkaufte Bündel pro Item, klingt mit der Zeit ab (siehe {@link MarketMath#decay}). */
+    public Map<String, Double> sold = new HashMap<>();
+    public long soldUpdated;
+
+    /** Tageszähler pro Spieler (Ankauf je Item, Schnee). Werden bei Tageswechsel geleert. */
+    public String day = "";
+    public Map<String, Daily> daily = new HashMap<>();
+
+    /** Offene Auszahlungen pro Spieler (Kasse bei Ablauf, Erstattungen): werden beim nächsten Login gezahlt. */
+    public Map<String, Pending> pending = new HashMap<>();
+    /** Abholfach: gelieferte Ware für Spieleraufträge, als serialisierte Stapel. */
+    public Map<String, List<JsonElement>> pickup = new HashMap<>();
+
+    public static final class Zone {
+        public String id = "";
+        public String name = "";
+        public Box box = new Box();
+    }
+
+    public static final class Daily {
+        public Map<String, Integer> bought = new HashMap<>();
+        public int snowBlocks;
+        public long snowPaid;
+    }
+
+    public static final class Pending {
+        public long amount;
+        public String name = "";
+        public List<String> reasons = new ArrayList<>();
+    }
+
+    public void sanitize() {
+        if (plots == null) plots = new LinkedHashMap<>();
+        if (zones == null) zones = new LinkedHashMap<>();
+        if (jobs == null) jobs = new ArrayList<>();
+        if (sold == null) sold = new HashMap<>();
+        if (daily == null) daily = new HashMap<>();
+        if (pending == null) pending = new HashMap<>();
+        if (pickup == null) pickup = new HashMap<>();
+        if (day == null) day = "";
+        plots.values().removeIf(p -> p == null || p.box == null);
+        for (Map.Entry<String, Plot> e : plots.entrySet()) {
+            Plot p = e.getValue();
+            p.id = e.getKey();
+            if (p.name == null || p.name.isBlank()) p.name = p.id;
+            if (p.note == null) p.note = "";
+            if (p.mode == null) p.mode = Plot.Mode.BOTH;
+            if (p.owner == null) p.owner = "";
+            if (p.ownerName == null) p.ownerName = "";
+            if (p.helpers == null) p.helpers = new LinkedHashMap<>();
+            if (p.offers == null) p.offers = new ArrayList<>();
+            p.offers.removeIf(o -> o == null || o.item == null);
+            p.maxPeriods = Math.max(1, p.maxPeriods);
+            p.rentPrice = Math.max(0, p.rentPrice);
+            p.buyPrice = Math.max(0, p.buyPrice);
+        }
+        zones.values().removeIf(z -> z == null || z.box == null);
+        jobs.removeIf(j -> j == null || j.item == null || j.item.isBlank());
+        for (Job j : jobs) {
+            if (j.doneBy == null) j.doneBy = new ArrayList<>();
+            if (j.poster == null) j.poster = "";
+            if (j.posterName == null) j.posterName = "";
+            if (j.title == null) j.title = "";
+        }
+    }
+
+    public Plot plotAt(String dim, int x, int y, int z) {
+        for (Plot p : plots.values()) if (p.box.contains(dim, x, y, z)) return p;
+        return null;
+    }
+
+    public Zone zoneAt(String dim, int x, int y, int z) {
+        for (Zone zn : zones.values()) if (zn.box.contains(dim, x, y, z)) return zn;
+        return null;
+    }
+
+    public Daily daily(String uuid) {
+        return daily.computeIfAbsent(uuid, k -> new Daily());
+    }
+
+    public void addPending(String uuid, String name, long amount, String reason) {
+        if (amount <= 0) return;
+        Pending p = pending.computeIfAbsent(uuid, k -> new Pending());
+        p.amount += amount;
+        if (name != null && !name.isBlank()) p.name = name;
+        if (p.reasons.size() < 20) p.reasons.add(reason);
+    }
+
+    public Job job(String id) {
+        for (Job j : jobs) if (j.id.equals(id)) return j;
+        return null;
+    }
+}

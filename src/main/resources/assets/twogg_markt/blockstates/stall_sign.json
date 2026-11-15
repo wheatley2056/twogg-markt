@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "twogg_markt:block/stall_sign"
+    },
+    "facing=east": {
+      "model": "twogg_markt:block/stall_sign",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "twogg_markt:block/stall_sign",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "twogg_markt:block/stall_sign",
+      "y": 270
+    }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/orientable",
+  "textures": {
+    "top": "twogg_markt:block/buyer_station_top",
+    "front": "twogg_markt:block/buyer_station_front",
+    "side": "twogg_markt:block/buyer_station_side"
+  }
+}

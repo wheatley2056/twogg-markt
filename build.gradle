@@ -1,0 +1,70 @@
+plugins {
+    id 'net.fabricmc.fabric-loom' version "${loom_version}"
+}
+
+version = project.mod_version
+group = project.maven_group
+base { archivesName = project.archives_base_name }
+
+loom {
+    splitEnvironmentSourceSets()
+    mods {
+        "twogg_markt" {
+            sourceSet sourceSets.main
+            sourceSet sourceSets.client
+        }
+    }
+    runs {
+        server { runDir = 'run-server' }
+    }
+}
+
+fabricApi {
+    configureTests {
+        createSourceSet = true
+        modId = "twogg_markt_test"
+        enableGameTests = false
+        enableClientGameTests = true
+        eula = true
+    }
+}
+
+repositories {
+    mavenLocal()   // TwoGG Kit (./gradlew publishToMavenLocal im twogg-kit-Projekt)
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+
+    // Gemeinsame TwoGG-Oberfläche – eigene Mod (twogg-kit-*.jar), Pflicht-Abhängigkeit
+    implementation "de.twogg.kit:twogg-kit:${project.kit_version}"
+
+    // TwoGG Economy ist Pflicht (Konten, Bargeld, Kurs). Gebaut wird gegen das Jar in libs/,
+    // zur Laufzeit liegt es als eigene Mod im mods-Ordner. Im Entwicklungslauf (runClient, Client-Test) mitladen.
+    implementation files("libs/twogg-economy-${project.economy_version}.jar")
+
+    testImplementation platform('org.junit:junit-bom:5.11.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+processResources {
+    inputs.property "version", project.version
+    filesMatching("fabric.mod.json") { expand "version": inputs.properties.version }
+}
+
+tasks.withType(JavaCompile).configureEach { it.options.release = 25; it.options.encoding = 'UTF-8' }
+
+java {
+    withSourcesJar()
+    sourceCompatibility = JavaVersion.VERSION_25
+    targetCompatibility = JavaVersion.VERSION_25
+}
+
+test { useJUnitPlatform() }
+
+afterEvaluate {
+    tasks.matching { it.name == "runClientGameTest" }.configureEach { jvmArgs "-Xmx2500M" }
+}

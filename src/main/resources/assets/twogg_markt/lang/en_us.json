@@ -1,0 +1,8 @@
+{
+  "block.twogg_markt.market_counter": "Market Counter",
+  "block.twogg_markt.stall_sign": "Stall Sign",
+  "block.twogg_markt.buyer_station": "Buying Station",
+  "block.twogg_markt.job_board": "Job Board",
+  "item.twogg_markt.market_planner": "Market Planner",
+  "itemGroup.twogg_markt": "TwoGG Market"
+}
