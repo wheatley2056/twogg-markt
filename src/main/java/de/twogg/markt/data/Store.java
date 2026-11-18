@@ -44,6 +44,24 @@ public final class Store {
             return c;
         } catch (IOException | RuntimeException e) {
             TwoggMarkt.LOGGER.error("config/twogg-markt/markt.json ist fehlerhaft ({}). Es gelten die Standardwerte, die Datei bleibt unverändert.", e.toString());
+            backupBroken(f);
+            return null;
+        }
+    }
+
+    /**
+     * Kopie einer fehlerhaften Datei ablegen ({@code markt.json.broken-<Zeit>}). Speichert danach jemand im Admin-Fenster,
+     * überschreibt das die Datei mit den Standardwerten – die Kopie hält die Handarbeit fest.
+     */
+    static Path backupBroken(Path f) {
+        try {
+            if (!Files.exists(f)) return null;
+            Path b = f.resolveSibling(f.getFileName() + ".broken-" + new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date()));
+            Files.copy(f, b, StandardCopyOption.REPLACE_EXISTING);
+            TwoggMarkt.LOGGER.warn("Kopie der fehlerhaften Datei: {}", b.getFileName());
+            return b;
+        } catch (IOException e) {
+            TwoggMarkt.LOGGER.warn("Kopie von {} nicht angelegt: {}", f.getFileName(), e.toString());
             return null;
         }
     }

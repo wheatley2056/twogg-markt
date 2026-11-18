@@ -54,6 +54,12 @@ public final class MarktClientTest implements FabricClientGameTest {
             sp.getServer().runCommand("weather clear");
             sp.getServer().runCommand("gamerule show_advancement_messages false");
             sp.getServer().runCommand("gamemode survival @a");
+            // Seit Economy 0.3 läuft die Bank nur in einem Kit-Event – ohne Event schlägt jede Buchung fehl
+            sp.getServer().runCommand("event schnellstart Markt-Test");
+            ctx.waitTicks(10);
+            if (!sp.getServer().computeOnServer(s -> de.twogg.economy.api.Economy.available())) {
+                throw new AssertionError("Event-Schnellstart hat die Economy nicht aktiviert");
+            }
             BlockPos base = ctx.computeOnClient(mc -> mc.player.blockPosition());
             // Ebene Fläche bauen: Boden aus Fichtenbrettern, darüber Luft
             sp.getServer().runOnServer(server -> {
