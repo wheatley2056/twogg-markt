@@ -30,7 +30,10 @@ public final class Pay {
                 ? (cash ? Economy.giveCash(p, tenths, source, reason) : Economy.pay(p, tenths, source, reason))
                 : TxResult.fail("Economy läuft nicht");
         if (!r.ok() && cash && Economy.available()) r = Economy.pay(p, tenths, source, reason);
-        if (r.ok()) return true;
+        if (r.ok()) {
+            MarktRuntime.saveSoon();
+            return true;
+        }
         MarktRuntime.data().addPending(p.getUUID().toString(), p.getGameProfile().name(), tenths, reason);
         MarktRuntime.markDirty();
         p.sendSystemMessage(Component.literal(MarktRuntime.fmt(tenths) + " vorgemerkt (" + r.message()
@@ -53,7 +56,7 @@ public final class Pay {
         TxResult r = Economy.pay(p, pend.amount, "markt:gutschrift", reason);
         if (!r.ok()) return;
         MarktRuntime.data().pending.remove(p.getUUID().toString());
-        MarktRuntime.markDirty();
+        MarktRuntime.saveSoon();
         p.sendSystemMessage(Component.literal("Markt: " + MarktRuntime.fmt(pend.amount) + " gutgeschrieben – "
                 + String.join(", ", pend.reasons)).withStyle(ChatFormatting.GOLD));
     }

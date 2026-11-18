@@ -1,5 +1,17 @@
 # Changelog: TwoGG Markt
 
+## 0.2.2+26.1.2 (18.11.2026)
+
+- Behoben: Nach einer Auszahlung (Standkasse, Ankauf, Aufträge, Geschenke, Gutschriften beim Login) wird der Markt
+  sofort gespeichert. Vorher lag das Geld schon bei der Bank, der Markt merkte sich die geleerte Kasse aber erst beim
+  nächsten Speichern (alle 30 s) – nach einem Absturz dazwischen wurde dieselbe Kasse ein zweites Mal ausgezahlt.
+- Behoben: Ist `config/twogg-markt/markt.json` fehlerhaft, liegt jetzt eine Kopie `markt.json.broken-<Zeit>` daneben.
+  Speichern im Admin-Fenster hätte die Handarbeit sonst mit den Standardwerten überschrieben.
+- Behoben: „Kasse leeren“ an der Theke meldete „bar ausgezahlt“, obwohl Bargeld für Stände abgeschaltet war oder der
+  Betrag nur vorgemerkt wurde; ist Bargeld aus, geht der Betrag jetzt aufs Konto.
+- Spieltest startet ein Kit-Event (seit Economy 0.3 bucht die Bank nur in einem laufenden Event).
+- Gebaut gegen TwoGG Kit 1.4.2.
+
 ## 0.2.1+26.1.2 (15.11.2026)
 
 - Behoben: Hitboxen von Standschild, Auftragsbrett und Adventskalender drehen jetzt mit der Blickrichtung (vorher

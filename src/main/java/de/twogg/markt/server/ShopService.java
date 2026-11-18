@@ -178,8 +178,12 @@ public final class ShopService {
                     long v = plot.till;
                     plot.till = 0;
                     MarktRuntime.markDirty();
-                    Pay.payout(p, v, act.cash, "markt:kasse", "Standkasse " + plot.name);
-                    msg = MarktRuntime.fmt(v) + " aus der Kasse " + (act.cash ? "bar ausgezahlt." : "aufs Konto.");
+                    boolean cash = act.cash && MarktRuntime.config().stalls.allowCash;
+                    if (Pay.payout(p, v, cash, "markt:kasse", "Standkasse " + plot.name)) {
+                        msg = MarktRuntime.fmt(v) + " aus der Kasse " + (cash ? "bar ausgezahlt." : "aufs Konto.");
+                    } else {
+                        msg = MarktRuntime.fmt(v) + " aus der Kasse vorgemerkt.";
+                    }
                 }
             }
             default -> msg = "";

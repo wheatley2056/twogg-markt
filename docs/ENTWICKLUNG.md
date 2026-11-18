@@ -21,7 +21,7 @@
 ```
 cd ../twogg-kit && ./gradlew publishToMavenLocal
 cd ../twogg-markt
-./gradlew build          # build/libs/twogg-markt-0.2.1+26.1.2.jar (+ -sources.jar)
+./gradlew build          # build/libs/twogg-markt-0.2.2+26.1.2.jar (+ -sources.jar)
 ```
 
 Neue Economy-Version: Jar aus `../twogg-economy/build/libs/` nach `libs/` kopieren und `economy_version` in

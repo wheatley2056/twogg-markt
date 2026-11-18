@@ -290,9 +290,9 @@ public final class StallService {
         long v = plot.till;
         plot.till = 0;
         MarktRuntime.markDirty();
-        Pay.payout(p, v, false, "markt:kasse", "Standkasse " + plot.name);
+        boolean paid = Pay.payout(p, v, false, "markt:kasse", "Standkasse " + plot.name);
         coin(p);
-        return Result.ok(MarktRuntime.fmt(v) + " aus der Kasse aufs Konto.");
+        return Result.ok(MarktRuntime.fmt(v) + (paid ? " aus der Kasse aufs Konto." : " aus der Kasse vorgemerkt."));
     }
 
     static Result helperAdd(ServerPlayer p, Plot plot, String name) {
