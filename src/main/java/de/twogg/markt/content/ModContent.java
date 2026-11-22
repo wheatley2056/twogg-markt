@@ -78,6 +78,7 @@ public final class ModContent {
                         out.accept(LOTTERY_ITEM);
                         out.accept(ADVENT_ITEM);
                         out.accept(GIFT_ITEM);
+                        if (de.twogg.markt.content.guide.GuideBook.ITEM != null) out.accept(de.twogg.markt.content.guide.GuideBook.ITEM);
                     })
                     .build());
 

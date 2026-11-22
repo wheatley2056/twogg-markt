@@ -2,13 +2,16 @@
 
 ## 0.3.0+26.1.2 (22.11.2026)
 
-- **Markt-Handbuch:** echtes beschriebenes Buch zum Durchblättern mit Titelseite, anklickbarem Inhaltsverzeichnis und
-  acht Kapiteln (Stand, Theke, Geld ohne Stand, Bezahlen, Weihnachtsmarkt, Befehle, Tipps). Zahlen kommen live aus der
-  Config. Beim ersten Betreten einmal ins Inventar (`guide.giveOnJoin`), sonst `/markt handbuch`. Eigenes Item-Bild
-  über `item_model` (`twogg_markt:handbuch`), auf Vanilla-Clients ein normales Buch; passt aufs Lesepult.
-- Technisch: `content/guide/` (`BookPaginator` setzt den Text auf 14 Zeilen à 114 px, `GuideBook`, `GuideService`),
-  Text `data/twogg_markt/handbuch/de_de.txt`, Weltdaten `guideGiven`, Unit-Test `BookPaginatorTest`, Spieltest
-  `HandbuchClientTest` (Bilder der Seiten).
+- **Markt-Handbuch:** eigenes Buch (Item `twogg_markt:handbuch`) mit Doppelseiten, Ledereinband und Pergament:
+  Titelseite, anklickbares Inhaltsverzeichnis, farbige Lesezeichen je Kapitel, acht Kapitel (Willkommen, Stand, Theke,
+  Geld ohne Stand, Bezahlen, Weihnachtsmarkt, Befehle, Tipps) mit 14 Bildern aus dem Spiel (Klick vergrößert).
+  Blättern mit Pfeilen, Tasten oder Mausrad, Seitenumblättern-Klang. Zahlen kommen live aus der Server-Config. Beim
+  ersten Betreten einmal ins Inventar (`guide.giveOnJoin`), sonst `/markt handbuch` oder Kreativ-Tab.
+- Spieltest-Bilder sind jetzt sauber (keine Meldungen/Chat, Weltbilder ohne HUD) – daraus macht
+  `tools/handbuch_bilder.py` die Bilder des Handbuchs.
+- Technisch: `content/guide/` (`HandbookLayout` setzt Text und Bilder mit der echten Schrift auf die Seiten,
+  `GuideBook`, `GuideService`), `client/HandbookScreen`, Ansicht `handbuch` mit den Werten, Weltdaten `guideGiven`,
+  Unit-Test `HandbookLayoutTest`, Spieltest `HandbuchClientTest`.
 
 ## 0.2.2+26.1.2 (18.11.2026)
 

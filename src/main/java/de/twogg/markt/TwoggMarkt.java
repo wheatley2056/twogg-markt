@@ -43,6 +43,7 @@ public class TwoggMarkt implements ModInitializer {
     @Override
     public void onInitialize() {
         ModContent.init();
+        de.twogg.markt.content.guide.GuideBook.init();
         PayloadTypeRegistry.clientboundPlay().register(Payloads.View.TYPE, Payloads.View.CODEC);
         PayloadTypeRegistry.serverboundPlay().register(Payloads.Action.TYPE, Payloads.Action.CODEC);
         ServerPlayNetworking.registerGlobalReceiver(Payloads.Action.TYPE, (p, ctx) -> handle(ctx.player(), p.json()));

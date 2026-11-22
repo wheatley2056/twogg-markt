@@ -47,6 +47,10 @@ abstract class MarktScreen extends KitScreen {
         }
         if (v == null || v.screen == null) return;
         Minecraft mc = Minecraft.getInstance();
+        if ("handbuch".equals(v.screen)) {
+            mc.setScreen(new HandbookScreen(v.guide));
+            return;
+        }
         if (mc.screen instanceof MarktScreen open && open.screenId().equals(v.screen) && open.sameContext(v)) {
             open.update(v);
             return;

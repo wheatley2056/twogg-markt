@@ -17,13 +17,17 @@ Preise für Stände und die Theke stehen in **€** und werden zum aktuellen Wer
 
 ### Markt-Handbuch (seit 0.3.0)
 
-Ein echtes Buch zum Durchblättern: Titelseite, **Inhaltsverzeichnis zum Anklicken** (springt auf die Seite) und Kapitel
-zu Stand, Theke, Ankauf, Auftragsbrett, Räumdienst, Bezahlen, Weihnachtsmarkt, Befehlen und Tipps. Die Zahlen darin
-(Gebühr, Preise, Grenzen) kommen aus der aktuellen Config des Servers. Jeder bekommt es beim ersten Betreten einmal
-(`guide.giveOnJoin`), `/markt handbuch` gibt jederzeit ein neues. Rechtsklick liest, aufs **Lesepult** gelegt lesen es
-alle. Ohne Mod auf dem Client ist es ein normales beschriebenes Buch, mit Mod hat es ein eigenes Bild. Den Text
-pflegt man in `src/main/resources/data/twogg_markt/handbuch/de_de.txt` (Auszeichnung: `# Kapitel`, `## Abschnitt`,
-`- Punkt`, Platzhalter wie `{fee}`).
+Ein eigenes Buch (Item `twogg_markt:handbuch`): Rechtsklick öffnet eine **Doppelseite** mit Ledereinband und Pergament.
+Links die Titelseite, rechts das **Inhaltsverzeichnis zum Anklicken**; danach Kapitel zu Stand, Theke, Geld ohne Stand,
+Bezahlen, Weihnachtsmarkt, Befehlen und Tipps – mit **Bildern aus dem Spiel** (Klick vergrößert ein Bild). Am rechten
+Rand stecken farbige **Lesezeichen** je Kapitel. Blättern: „◀ zurück“ / „weiter ▶“, Pfeiltasten, A/D, Bild ↑/↓ oder
+Mausrad; Pos1 springt zum Anfang. Die Zahlen im Text (Gebühr, Preise, Grenzen) schickt der Server aus der aktuellen
+Config mit. Jeder bekommt es beim ersten Betreten einmal (`guide.giveOnJoin`), `/markt handbuch` gibt jederzeit ein
+neues; auch im Kreativ-Tab.
+
+Text: `src/main/resources/assets/twogg_markt/handbuch/de_de.txt` (Auszeichnung `# Kapitel`, `## Abschnitt`, `- Punkt`,
+`![bild] Unterschrift`, Platzhalter wie `{fee}`). Bilder: `textures/gui/handbuch/<bild>.png` (16:9, 384 × 216), erzeugt von
+`tools/handbuch_bilder.py` aus den Screenshots des Spieltests (`./gradlew runClientGameTest`, dann das Skript).
 
 ### Markt öffnen
 

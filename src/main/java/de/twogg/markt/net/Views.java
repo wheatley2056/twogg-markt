@@ -36,6 +36,8 @@ public final class Views {
         public String page = "";
         public String periodName = "Tag";
         public String periodNamePlural = "Tage";
+        /** Markt-Handbuch (seit 0.3.0): Werte für die Platzhalter im Text. */
+        public java.util.Map<String, String> guide;
 
         // market + admin
         public List<PlotLine> plots = new ArrayList<>();

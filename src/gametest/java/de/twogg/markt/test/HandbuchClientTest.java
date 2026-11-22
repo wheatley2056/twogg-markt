@@ -1,18 +1,17 @@
 package de.twogg.markt.test;
 
+import de.twogg.markt.client.HandbookScreen;
 import de.twogg.markt.content.guide.GuideBook;
 import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
-import net.minecraft.client.gui.screens.inventory.BookViewScreen;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 
 /**
- * Markt-Handbuch (seit 0.3.0): beim ersten Betreten im Inventar, /markt handbuch gibt ein weiteres, das Buch öffnet sich
- * als echtes Buch (Seiten blättern, Inhaltsverzeichnis springt per Klick). Bilder: Titel, Inhalt, Kapitelseiten, Item.
+ * Markt-Handbuch (seit 0.3.0, eigenes Buch): beim ersten Betreten im Inventar, /markt handbuch gibt ein weiteres,
+ * Rechtsklick öffnet das eigene Buch; Blättern, Inhaltsverzeichnis, Lesezeichen und Bild-Zoom. Bilder jeder Doppelseite.
  */
 public final class HandbuchClientTest implements FabricClientGameTest {
 
@@ -24,40 +23,46 @@ public final class HandbuchClientTest implements FabricClientGameTest {
             int onJoin = sp.getServer().computeOnServer(s -> count(s.getPlayerList().getPlayers().get(0)));
             check(onJoin == 1, "Beim ersten Betreten: Handbuch im Inventar – " + onJoin);
 
-            sp.getServer().runCommand("markt handbuch");
+            sp.getServer().runCommand("execute as @p run markt handbuch");
             ctx.waitTicks(5);
             int after = sp.getServer().computeOnServer(s -> count(s.getPlayerList().getPlayers().get(0)));
             check(after == 2, "/markt handbuch gibt ein weiteres – " + after);
 
-            int pages = sp.getServer().computeOnServer(s -> {
-                ServerPlayer p = s.getPlayerList().getPlayers().get(0);
-                ItemStack book = first(p);
-                p.setItemInHand(InteractionHand.MAIN_HAND, book.copy());
-                var content = book.get(DataComponents.WRITTEN_BOOK_CONTENT);
-                return content == null ? 0 : content.pages().size();
-            });
-            check(pages >= 10, "Buch hat genug Seiten – " + pages);
-            ctx.waitTicks(5);
-            ctx.takeScreenshot("handbuch-0-item");
-
-            // wie Rechtsklick: Server öffnet das Buch beim Client
+            // Rechtsklick mit dem Buch in der Hand (wie ein Spieler)
             sp.getServer().runOnServer(s -> {
                 ServerPlayer p = s.getPlayerList().getPlayers().get(0);
-                p.openItemGui(p.getMainHandItem(), InteractionHand.MAIN_HAND);
+                p.setItemInHand(InteractionHand.MAIN_HAND, GuideBook.create());
+                p.getMainHandItem().use(p.level(), p, InteractionHand.MAIN_HAND);
             });
             ctx.waitTicks(20);
-            boolean open = ctx.computeOnClient(mc -> mc.screen instanceof BookViewScreen);
-            check(open, "Buch öffnet sich als Buchansicht");
-            ctx.takeScreenshot("handbuch-1-titel");
-            ctx.runOnClient(mc -> ((BookViewScreen) mc.screen).setPage(1));
+            boolean open = ctx.computeOnClient(mc -> mc.screen instanceof HandbookScreen);
+            check(open, "Rechtsklick öffnet das eigene Buch");
+            int pages = ctx.computeOnClient(mc -> ((HandbookScreen) mc.screen).pages());
+            check(pages >= 12, "Buch hat genug Seiten – " + pages);
+            ctx.takeScreenshot("handbuch-01-titel-inhalt");
+
+            // Blättern mit der Pfeiltaste
+            ctx.getInput().pressKey(org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT);
             ctx.waitTicks(5);
-            ctx.takeScreenshot("handbuch-2-inhalt");
-            for (int page : new int[] {2, 3, 5, 8}) {
-                if (page < pages) {
-                    ctx.runOnClient(mc -> ((BookViewScreen) mc.screen).setPage(page));
-                    ctx.waitTicks(5);
-                    ctx.takeScreenshot("handbuch-3-seite-" + (page + 1));
-                }
+            int s1 = ctx.computeOnClient(mc -> ((HandbookScreen) mc.screen).spread());
+            check(s1 == 1, "Pfeiltaste blättert weiter – Doppelseite " + s1);
+            ctx.takeScreenshot("handbuch-02-kapitel-1");
+
+            // Kapitel über das Lesezeichen
+            String chapter = ctx.computeOnClient(mc -> ((HandbookScreen) mc.screen).chapters().get(5));
+            int target = ctx.computeOnClient(mc -> ((HandbookScreen) mc.screen).chapterPage(chapter));
+            ctx.runOnClient(mc -> ((HandbookScreen) mc.screen).goTo(target));
+            ctx.waitTicks(5);
+            int s2 = ctx.computeOnClient(mc -> ((HandbookScreen) mc.screen).spread());
+            check(s2 == target / 2, "Sprung zu „" + chapter + "“ – Doppelseite " + s2);
+            ctx.takeScreenshot("handbuch-03-weihnachtsmarkt");
+
+            int total = (pages + 1) / 2;
+            for (int sp2 = 2; sp2 < total; sp2 += 2) {
+                int page = sp2 * 2;
+                ctx.runOnClient(mc -> ((HandbookScreen) mc.screen).goTo(page));
+                ctx.waitTicks(4);
+                ctx.takeScreenshot("handbuch-04-doppelseite-" + sp2);
             }
             ctx.runOnClient(mc -> mc.setScreen(null));
         }
@@ -71,15 +76,6 @@ public final class HandbuchClientTest implements FabricClientGameTest {
             }
         }
         return n;
-    }
-
-    private static ItemStack first(ServerPlayer p) {
-        for (ItemStack s : p.getInventory().getNonEquipmentItems()) {
-            if (GuideBook.is(s)) {
-                return s;
-            }
-        }
-        return ItemStack.EMPTY;
     }
 
     private static void check(boolean ok, String what) {

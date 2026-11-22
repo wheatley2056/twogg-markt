@@ -95,19 +95,19 @@ public final class MarktClientTest implements FabricClientGameTest {
                     ModContent.STALL_SIGN.defaultBlockState().setValue(HorizontalDirectionalBlock.FACING, Direction.NORTH)));
             ctx.waitTicks(20);
             sp.getClientLevel().waitForChunksRender();
-            ctx.takeScreenshot("markt-01-schild");
+            shot(ctx, "markt-01-schild");
 
             // 2) Standschild per Rechtsklick → Marktfenster mit dem Stand vorgewählt
             ctx.getInput().pressKey(options -> options.keyUse);
             ctx.waitFor(mc -> mc.screen != null && mc.screen.getClass().getSimpleName().equals("MarketScreen"), 100);
             ctx.waitTicks(10);
-            ctx.takeScreenshot("markt-02-staende");
+            shot(ctx, "markt-02-staende");
             long bal0 = sp.getServer().computeOnServer(server -> Economy.balance(player(server)));
             sp.getServer().runOnServer(server -> Economy.pay(player(server), Money.ofCoins(50), "test", "Startkapital"));
             ctx.waitTicks(2);
             press(ctx, "Mieten", true);
             ctx.waitTicks(15);
-            ctx.takeScreenshot("markt-03-gemietet");
+            shot(ctx, "markt-03-gemietet");
             boolean rented = sp.getServer().computeOnServer(server -> {
                 Plot p = MarktRuntime.data().plots.get("gluehweinbude");
                 return p.isOwner(player(server).getUUID().toString(), MarktRuntime.now()) && p.status(MarktRuntime.now()) == Plot.Status.RENTED;
@@ -119,10 +119,10 @@ public final class MarktClientTest implements FabricClientGameTest {
             check(counters == 1, "Verkaufstheke nicht ins Inventar gelegt: " + counters);
             press(ctx, "Mein Stand", false);
             ctx.waitTicks(5);
-            ctx.takeScreenshot("markt-04-mein-stand");
+            shot(ctx, "markt-04-mein-stand");
             press(ctx, "Verdienen", false);
             ctx.waitTicks(5);
-            ctx.takeScreenshot("markt-05-verdienen");
+            shot(ctx, "markt-05-verdienen");
             press(ctx, "Fertig", false);
             ctx.waitFor(mc -> mc.screen == null, 100);
 
@@ -139,12 +139,12 @@ public final class MarktClientTest implements FabricClientGameTest {
             });
             ctx.waitFor(mc -> mc.screen != null && mc.screen.getClass().getSimpleName().equals("ShopScreen"), 100);
             ctx.waitTicks(5);
-            ctx.takeScreenshot("markt-06-theke-leer");
+            shot(ctx, "markt-06-theke-leer");
             type(ctx, "Preis", "2");
             type(ctx, "Stück", "4");
             press(ctx, "Anbieten", false);
             ctx.waitTicks(10);
-            ctx.takeScreenshot("markt-07-theke-angebot");
+            shot(ctx, "markt-07-theke-angebot");
             int offers = sp.getServer().computeOnServer(server -> MarktRuntime.data().plots.get("gluehweinbude").offers.size());
             check(offers == 1, "Angebot nicht angelegt: " + offers);
 
@@ -170,7 +170,7 @@ public final class MarktClientTest implements FabricClientGameTest {
             ctx.waitTicks(10);
             press(ctx, "Verwalten", false);
             ctx.waitTicks(5);
-            ctx.takeScreenshot("markt-08-theke-verwalten");
+            shot(ctx, "markt-08-theke-verwalten");
             long bal2 = sp.getServer().computeOnServer(server -> Economy.balance(player(server)));
             press(ctx, "Kasse leeren", false);
             ctx.waitTicks(10);
@@ -203,11 +203,11 @@ public final class MarktClientTest implements FabricClientGameTest {
             });
             ctx.waitFor(mc -> mc.screen != null && mc.screen.getClass().getSimpleName().equals("BuyerScreen"), 100);
             ctx.waitTicks(5);
-            ctx.takeScreenshot("markt-09-ankauf");
+            shot(ctx, "markt-09-ankauf");
             long bal4 = sp.getServer().computeOnServer(server -> Economy.balance(player(server)));
             press(ctx, "Alle", false);   // erste Zeile: Fichtenholz, 8 Stück für 0,2
             ctx.waitTicks(10);
-            ctx.takeScreenshot("markt-10-ankauf-verkauft");
+            shot(ctx, "markt-10-ankauf-verkauft");
             String sold = sp.getServer().computeOnServer(server -> player(server).getInventory().countItem(Items.SPRUCE_LOG)
                     + "/" + (Economy.balance(player(server)) - bal4));
             check(sold.equals("0/4"), "Ankauf 2 × 8 Fichtenstämme = 0,4 WLC: " + sold);
@@ -229,7 +229,7 @@ public final class MarktClientTest implements FabricClientGameTest {
             check(!job.isEmpty(), "Keine Marktaufträge am Brett");
             ctx.waitFor(mc -> mc.screen != null && mc.screen.getClass().getSimpleName().equals("BoardScreen"), 100);
             ctx.waitTicks(5);
-            ctx.takeScreenshot("markt-11-auftragsbrett");
+            shot(ctx, "markt-11-auftragsbrett");
             long bal5 = sp.getServer().computeOnServer(server -> Economy.balance(player(server)));
             press(ctx, "Liefern", false);
             ctx.waitTicks(10);
@@ -243,7 +243,7 @@ public final class MarktClientTest implements FabricClientGameTest {
             type(ctx, "Belohnung", "3");
             type(ctx, "Titel (optional)", "Laternen für meine Bude");
             ctx.waitTicks(2);
-            ctx.takeScreenshot("markt-12-aushaengen");
+            shot(ctx, "markt-12-aushaengen");
             press(ctx, "Auftrag aushängen", false);
             ctx.waitTicks(10);
             String posted = sp.getServer().computeOnServer(server -> {
@@ -253,7 +253,7 @@ public final class MarktClientTest implements FabricClientGameTest {
             check(posted.equals("Laternen für meine Bude/4/30/30"), "Spielerauftrag: " + posted);
             press(ctx, "Aufträge", false);
             ctx.waitTicks(5);
-            ctx.takeScreenshot("markt-13-auftraege");
+            shot(ctx, "markt-13-auftraege");
             // Kunde liefert die Laternen; die Ware landet im Abholfach
             String delivered = sp.getServer().computeOnServer(server -> {
                 FakePlayer f = FakePlayer.get(server.overworld(), new GameProfile(UUID.nameUUIDFromBytes("kunde".getBytes()), "Kunde"));
@@ -274,7 +274,7 @@ public final class MarktClientTest implements FabricClientGameTest {
             ctx.waitTicks(10);
             press(ctx, "Abholfach", false);
             ctx.waitTicks(5);
-            ctx.takeScreenshot("markt-14-abholfach");
+            shot(ctx, "markt-14-abholfach");
             press(ctx, "Alles abholen", false);
             ctx.waitTicks(10);
             int lanterns = sp.getServer().computeOnServer(server -> player(server).getInventory().countItem(Items.LANTERN));
@@ -338,10 +338,10 @@ public final class MarktClientTest implements FabricClientGameTest {
             ctx.waitTicks(2);
             press(ctx, "Mehr", false);    // Menge 2
             ctx.waitTicks(2);
-            ctx.takeScreenshot("markt-14b-theke-kaeufer");
+            shot(ctx, "markt-14b-theke-kaeufer");
             press(ctx, "Kaufen", true);
             ctx.waitTicks(10);
-            ctx.takeScreenshot("markt-14c-theke-gekauft");
+            shot(ctx, "markt-14c-theke-gekauft");
             String cashBuy = sp.getServer().computeOnServer(server -> player(server).getInventory().countItem(Items.COOKIE)
                     + "/" + Economy.cash(player(server)) + "/" + MarktRuntime.data().plots.get("gluehweinbude").till);
             // 2 × 3 Kekse für 2 × 1,5 = 3 WLC bar: 10 − 3 = 7 WLC Bargeld; Kasse 3 − 0,2 Gebühr = 2,8
@@ -388,16 +388,16 @@ public final class MarktClientTest implements FabricClientGameTest {
             });
             check(sp.getServer().computeOnServer(server -> MarktRuntime.data().event.running()), "Event läuft nicht: " + started);
             ctx.waitTicks(40);
-            ctx.takeScreenshot("markt-18-event-eroeffnung");
+            shot(ctx, "markt-18-event-eroeffnung");
             sp.getServer().runOnServer(server -> de.twogg.markt.server.ActivityService.openLottery(player(server), lottery));
             ctx.waitFor(mc -> mc.screen != null && mc.screen.getClass().getSimpleName().equals("ActivityScreen"), 100);
             ctx.waitTicks(5);
             press(ctx, "Mehr", false);
             ctx.waitTicks(2);
-            ctx.takeScreenshot("markt-19-losbude");
+            shot(ctx, "markt-19-losbude");
             press(ctx, "2 Lose kaufen", true);
             ctx.waitTicks(10);
-            ctx.takeScreenshot("markt-20-lose-gekauft");
+            shot(ctx, "markt-20-lose-gekauft");
             String lots = sp.getServer().computeOnServer(server -> {
                 var e = MarktRuntime.data().event;
                 FakePlayer f = FakePlayer.get(server.overworld(), new GameProfile(kunde, "Kunde"));
@@ -427,7 +427,7 @@ public final class MarktClientTest implements FabricClientGameTest {
             ctx.waitTicks(5);
             press(ctx, "Wichteln", false);
             ctx.waitTicks(3);
-            ctx.takeScreenshot("markt-21-wichteln");
+            shot(ctx, "markt-21-wichteln");
             press(ctx, "Geschenk abgeben", false);
             ctx.waitTicks(10);
             press(ctx, "Fertig", false);
@@ -456,7 +456,7 @@ public final class MarktClientTest implements FabricClientGameTest {
             });
             ctx.waitFor(mc -> mc.screen != null && mc.screen.getClass().getSimpleName().equals("ActivityScreen"), 100);
             ctx.waitTicks(5);
-            ctx.takeScreenshot("markt-22-adventskalender");
+            shot(ctx, "markt-22-adventskalender");
             press(ctx, "Fertig", false);
             ctx.waitFor(mc -> mc.screen == null, 100);
             ctx.runOnClient(mc -> mc.player.connection.sendCommand("markt"));
@@ -464,14 +464,14 @@ public final class MarktClientTest implements FabricClientGameTest {
             ctx.waitTicks(5);
             press(ctx, "Event", false);
             ctx.waitTicks(5);
-            ctx.takeScreenshot("markt-23-event-seite");
+            shot(ctx, "markt-23-event-seite");
             press(ctx, "Fertig", false);
             ctx.waitFor(mc -> mc.screen == null, 100);
             playerCommand(ctx, "markt event tafel hier");
             sp.getServer().runCommand("tp @p " + (base.getX() + 0.5) + " " + (base.getY() + 1) + " " + (base.getZ() - 7.5) + " 0 5");
             sp.getServer().runOnServer(server -> de.twogg.markt.server.Holograms.tick());
             ctx.waitTicks(30);
-            ctx.takeScreenshot("markt-24-hologramme");
+            shot(ctx, "markt-24-hologramme");
             // Siegerehrung
             String fin = sp.getServer().computeOnServer(server -> {
                 long before = Economy.balance(player(server));
@@ -489,18 +489,18 @@ public final class MarktClientTest implements FabricClientGameTest {
             // der Spieler gewinnt mindestens Geschenkesuche + einen Lospreis
             check(fin.startsWith("FINALE/0/true/true/true/true/"), "Siegerehrung: " + fin);
             ctx.waitTicks(20);
-            ctx.takeScreenshot("markt-25-siegerehrung");
+            shot(ctx, "markt-25-siegerehrung");
             sp.getServer().runOnServer(server -> de.twogg.markt.server.EventService.close());
 
             // 10) Marktverwaltung: alle Seiten
             ctx.runOnClient(mc -> mc.player.connection.sendCommand("markt admin"));
             ctx.waitFor(mc -> mc.screen instanceof AdminScreen, 100);
             ctx.waitTicks(10);
-            ctx.takeScreenshot("markt-15-admin-staende");
+            shot(ctx, "markt-15-admin-staende");
             for (String page : new String[]{"Neu", "Event", "Ankauf", "Aufträge", "Räumzonen", "Regeln"}) {
                 press(ctx, page, false);
                 ctx.waitTicks(5);
-                ctx.takeScreenshot("markt-16-admin-" + page.toLowerCase().replace("ä", "ae"));
+                shot(ctx, "markt-16-admin-" + page.toLowerCase().replace("ä", "ae"));
             }
             // Regel ändern: Marktgebühr über das Eingabefeld
             press(ctx, "Stände", false);
@@ -516,7 +516,7 @@ public final class MarktClientTest implements FabricClientGameTest {
             sp.getServer().runOnServer(server -> player(server).setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ModContent.PLANNER)));
             sp.getServer().runCommand("tp @p " + (base.getX() + 0.5) + " " + (base.getY() + 3) + " " + (base.getZ() - 4.5) + " 0 30");
             ctx.waitTicks(30);
-            ctx.takeScreenshot("markt-17-umrisse");
+            shot(ctx, "markt-17-umrisse");
         }
     }
 
@@ -524,6 +524,21 @@ public final class MarktClientTest implements FabricClientGameTest {
     private static void playerCommand(ClientGameTestContext ctx, String cmd) {
         ctx.runOnClient(mc -> mc.player.connection.sendCommand(cmd));
         ctx.waitTicks(5);
+    }
+
+    /**
+     * Sauberes Bild (auch fürs Markt-Handbuch, tools/handbuch_bilder.py): ohne Meldungen und Chat, Weltbilder ohne HUD.
+     */
+    private static void shot(ClientGameTestContext ctx, String name) {
+        boolean world = ctx.computeOnClient(mc -> mc.screen == null);
+        ctx.runOnClient(mc -> {
+            mc.getToastManager().clear();
+            mc.gui.getChat().clearMessages(false);
+            if (world) mc.options.hideGui = true;
+        });
+        ctx.waitTicks(3);
+        ctx.takeScreenshot(name);
+        if (world) ctx.runOnClient(mc -> mc.options.hideGui = false);
     }
 
     private static void check(boolean ok, String msg) {
