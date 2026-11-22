@@ -150,6 +150,12 @@ Vorlagen mit unbekannter Item-ID werden beim Ziehen übersprungen.
 | `weatherSnow` | boolean | `true` | Niederschlag während des Events (Schnee in kalten Biomen) |
 | `fireworks` | boolean | `true` | Feuerwerk bei der Siegerehrung |
 
+### `guide` (seit 0.3.0)
+
+| Feld | Standard | Bedeutung |
+|---|---|---|
+| `giveOnJoin` | `true` | Jeder Spieler bekommt beim ersten Betreten des Servers einmal das **Markt-Handbuch** (gemerkt in den Weltdaten unter `guideGiven`). `/markt handbuch` gibt es jederzeit erneut. |
+
 ## Weltdaten `<welt>/twogg-markt/markt.json`
 
 Klasse `de.twogg.markt.core.MarktData`. Beträge in **Zehntel-Coins** (`long`), Zeiten in ms seit Epoch.

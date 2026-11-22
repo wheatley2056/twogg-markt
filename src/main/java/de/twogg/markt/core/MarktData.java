@@ -41,6 +41,8 @@ public final class MarktData {
     /** Adventskalender: Jahr und geöffnete Türchen pro Spieler. */
     public int adventYear;
     public Map<String, List<Integer>> advent = new HashMap<>();
+    /** Spieler (UUID), die das Markt-Handbuch schon bekommen haben (seit 0.3.0). */
+    public java.util.Set<String> guideGiven = new java.util.HashSet<>();
 
     public static final class Zone {
         public String id = "";
@@ -72,6 +74,7 @@ public final class MarktData {
         if (event == null) event = new MarktEvent();
         event.sanitize();
         if (advent == null) advent = new HashMap<>();
+        if (guideGiven == null) guideGiven = new java.util.HashSet<>();
         if (leaderboardHolo == null) leaderboardHolo = "";
         plots.values().removeIf(p -> p == null || p.box == null);
         for (Map.Entry<String, Plot> e : plots.entrySet()) {

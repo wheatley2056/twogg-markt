@@ -15,6 +15,16 @@ Preise für Stände und die Theke stehen in **€** und werden zum aktuellen Wer
 
 ## Für Spieler
 
+### Markt-Handbuch (seit 0.3.0)
+
+Ein echtes Buch zum Durchblättern: Titelseite, **Inhaltsverzeichnis zum Anklicken** (springt auf die Seite) und Kapitel
+zu Stand, Theke, Ankauf, Auftragsbrett, Räumdienst, Bezahlen, Weihnachtsmarkt, Befehlen und Tipps. Die Zahlen darin
+(Gebühr, Preise, Grenzen) kommen aus der aktuellen Config des Servers. Jeder bekommt es beim ersten Betreten einmal
+(`guide.giveOnJoin`), `/markt handbuch` gibt jederzeit ein neues. Rechtsklick liest, aufs **Lesepult** gelegt lesen es
+alle. Ohne Mod auf dem Client ist es ein normales beschriebenes Buch, mit Mod hat es ein eigenes Bild. Den Text
+pflegt man in `src/main/resources/data/twogg_markt/handbuch/de_de.txt` (Auszeichnung: `# Kapitel`, `## Abschnitt`,
+`- Punkt`, Platzhalter wie `{fee}`).
+
 ### Markt öffnen
 
 | Weg | Was passiert |
@@ -188,6 +198,7 @@ und nach dem Event die Ergebnisse zeigt.
 |---|---|---|
 | `/markt` | alle | Standübersicht |
 | `/markt zeigen` | alle | Umrisse 30 Sekunden |
+| `/markt handbuch` | alle | Markt-Handbuch ins Inventar |
 | `/markt helfer add <spieler>` / `entfernen <name>` | alle (Besitzer) | Helfer im eigenen Stand |
 | `/markt admin` | OP 2 | Marktverwaltung |
 | `/markt planer` | OP 2 | Marktplaner ins Inventar |

@@ -1,5 +1,15 @@
 # Changelog: TwoGG Markt
 
+## 0.3.0+26.1.2 (22.11.2026)
+
+- **Markt-Handbuch:** echtes beschriebenes Buch zum Durchblättern mit Titelseite, anklickbarem Inhaltsverzeichnis und
+  acht Kapiteln (Stand, Theke, Geld ohne Stand, Bezahlen, Weihnachtsmarkt, Befehle, Tipps). Zahlen kommen live aus der
+  Config. Beim ersten Betreten einmal ins Inventar (`guide.giveOnJoin`), sonst `/markt handbuch`. Eigenes Item-Bild
+  über `item_model` (`twogg_markt:handbuch`), auf Vanilla-Clients ein normales Buch; passt aufs Lesepult.
+- Technisch: `content/guide/` (`BookPaginator` setzt den Text auf 14 Zeilen à 114 px, `GuideBook`, `GuideService`),
+  Text `data/twogg_markt/handbuch/de_de.txt`, Weltdaten `guideGiven`, Unit-Test `BookPaginatorTest`, Spieltest
+  `HandbuchClientTest` (Bilder der Seiten).
+
 ## 0.2.2+26.1.2 (18.11.2026)
 
 - Behoben: Nach einer Auszahlung (Standkasse, Ankauf, Aufträge, Geschenke, Gutschriften beim Login) wird der Markt

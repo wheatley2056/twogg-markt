@@ -54,6 +54,13 @@ public final class MarktCommands {
                     c.getSource().sendSuccess(() -> Component.literal("Stände in der Nähe sind 30 Sekunden lang umrandet: grün frei, gelb vermietet, blau verkauft, rot gesperrt."), false);
                     return 1;
                 }))
+                .then(literal("handbuch").executes(c -> {
+                    ServerPlayer p = player(c);
+                    if (p == null) return 0;
+                    de.twogg.markt.content.guide.GuideBook.give(p);
+                    c.getSource().sendSuccess(() -> Component.literal("Das Markt-Handbuch liegt in deinem Inventar – Rechtsklick zum Lesen."), false);
+                    return 1;
+                }))
                 .then(literal("helfer")
                         .then(literal("add").then(argument("spieler", EntityArgument.player()).executes(c -> helper(c, true))))
                         .then(literal("entfernen").then(argument("name", StringArgumentType.word()).executes(c -> helper(c, false)))))

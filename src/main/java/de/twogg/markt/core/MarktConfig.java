@@ -19,6 +19,13 @@ public final class MarktConfig {
     public Jobs jobs = new Jobs();
     public Snow snow = new Snow();
     public Event event = new Event();
+    /** Markt-Handbuch (seit 0.3.0): Buch zum Durchblättern. */
+    public Guide guide = new Guide();
+
+    public static final class Guide {
+        /** Jeder Spieler bekommt das Handbuch beim ersten Betreten des Servers (einmal). */
+        public boolean giveOnJoin = true;
+    }
 
     public static final class Stalls {
         /** Länge eines Mietzeitraums in Echtzeit-Minuten (1440 = ein Tag). */
@@ -272,6 +279,7 @@ public final class MarktConfig {
         if (jobs == null) jobs = new Jobs();
         if (snow == null) snow = new Snow();
         if (event == null) event = new Event();
+        if (guide == null) guide = new Guide();
         Event e = event;
         if (e.schedule == null) e.schedule = new ArrayList<>();
         if (e.announceMinutes == null) e.announceMinutes = new ArrayList<>();

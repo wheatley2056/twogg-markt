@@ -57,6 +57,7 @@ public class TwoggMarkt implements ModInitializer {
             if (!MarktRuntime.running()) return;
             Pay.settle(handler.getPlayer());
             EventService.join(handler.getPlayer());
+            de.twogg.markt.content.guide.GuideService.join(handler.getPlayer());
         });
         ServerPlayConnectionEvents.DISCONNECT.register((handler, s) -> {
             Sessions.forget(handler.getPlayer().getUUID());
