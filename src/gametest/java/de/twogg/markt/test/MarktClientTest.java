@@ -41,7 +41,8 @@ import java.util.UUID;
 /**
  * Durchgang im echten Spiel: Stand einzeichnen, mieten, Theke mit Angebot, Kauf durch einen zweiten (Fake-)Spieler,
  * Kasse leeren, Ankauf, Auftragsbrett (liefern und aushängen), Räumdienst, Bauschutz, Ablauf der Miete und alle
- * Seiten der Marktverwaltung – mit Screenshots und Prüfungen auf dem Server.
+ * Seiten der Marktverwaltung – mit Screenshots und Prüfungen auf dem Server. Kulisse ist eine verschneite
+ * Weihnachtsmarkt-Gasse ({@link MarktKulisse}); am Ende die Abnahme der Modelle in einem Schauraum (Tag/Nacht).
  */
 public final class MarktClientTest implements FabricClientGameTest {
     private static final String DIM = "minecraft:overworld";
@@ -61,16 +62,17 @@ public final class MarktClientTest implements FabricClientGameTest {
                 throw new AssertionError("Event-Schnellstart hat die Economy nicht aktiviert");
             }
             BlockPos base = ctx.computeOnClient(mc -> mc.player.blockPosition());
-            // Ebene Fläche bauen: Boden aus Fichtenbrettern, darüber Luft
-            sp.getServer().runOnServer(server -> {
-                ServerLevel l = server.overworld();
-                for (int x = -12; x <= 12; x++)
-                    for (int z = -4; z <= 16; z++) {
-                        l.setBlockAndUpdate(base.offset(x, -1, z), Blocks.SPRUCE_PLANKS.defaultBlockState());
-                        for (int y = 0; y < 6; y++) l.setBlockAndUpdate(base.offset(x, y, z), Blocks.AIR.defaultBlockState());
-                    }
-            });
+            // Winterlandschaft (Schneebiom, Schneedecke) und die Weihnachtsmarkt-Gasse als Kulisse für die Bilder
+            String x0 = String.valueOf(base.getX() - 48), x1 = String.valueOf(base.getX() + 48);
+            String z0 = String.valueOf(base.getZ() - 48), z1 = String.valueOf(base.getZ() + 48);
+            sp.getServer().runCommand("fillbiome " + x0 + " " + (base.getY() - 1) + " " + z0 + " " + x1 + " " + base.getY() + " " + z1
+                    + " minecraft:snowy_plains");
+            sp.getServer().runCommand("fill " + x0 + " " + base.getY() + " " + z0 + " " + x1 + " " + base.getY() + " " + z1
+                    + " minecraft:snow replace minecraft:air");
+            sp.getServer().runOnServer(server -> MarktKulisse.gasse(server.overworld(), base));
             sp.getServer().runCommand("tp @p " + (base.getX() + 0.5) + " " + base.getY() + " " + (base.getZ() + 0.5) + " 0 25");
+            ctx.waitTicks(20);
+            sp.getClientLevel().waitForChunksRender();
 
             // 1) Stand einzeichnen (wie mit dem Marktplaner: zwei Ecken) und anlegen
             BlockPos a = base.offset(-2, 0, 3), b = base.offset(2, 4, 7);
@@ -192,9 +194,10 @@ public final class MarktClientTest implements FabricClientGameTest {
                 return l.getBlockState(inside).is(Blocks.OAK_PLANKS) + "/" + l.getBlockState(outside).isAir();
             });
             check(prot.equals("true/true"), "Bauschutz (drinnen bleibt / draußen weg): " + prot);
+            sp.getServer().runOnServer(server -> server.overworld().setBlockAndUpdate(base.offset(0, 0, 5), Blocks.AIR.defaultBlockState()));
 
             // 6) Ankauf: 16 Fichtenstämme verkaufen
-            BlockPos buyer = base.offset(-4, 0, 0);
+            BlockPos buyer = base.offset(MarktKulisse.BUYER);
             sp.getServer().runOnServer(server -> {
                 server.overworld().setBlockAndUpdate(buyer, ModContent.BUYER.defaultBlockState());
                 ServerPlayer p = player(server);
@@ -215,7 +218,7 @@ public final class MarktClientTest implements FabricClientGameTest {
             ctx.waitFor(mc -> mc.screen == null, 100);
 
             // 7) Auftragsbrett: Marktauftrag liefern, eigenen Auftrag aushängen
-            BlockPos board = base.offset(-6, 0, 0);
+            BlockPos board = base.offset(MarktKulisse.BOARD);
             String job = sp.getServer().computeOnServer(server -> {
                 server.overworld().setBlockAndUpdate(board, ModContent.BOARD.defaultBlockState());
                 Job j = MarktRuntime.data().jobs.stream().filter(x -> x.system).findFirst().orElse(null);
@@ -377,7 +380,7 @@ public final class MarktClientTest implements FabricClientGameTest {
                     "Hologramme: " + holo);
 
             // 9d) Weihnachtsmarkt-Event: Start, Losbude, Geschenk, Wichteln, Abstimmen, Siegerehrung
-            BlockPos lottery = base.offset(-3, 0, -2), gift = base.offset(3, 0, -2), advent = base.offset(-7, 0, -2);
+            BlockPos lottery = base.offset(MarktKulisse.LOTTERY), gift = base.offset(MarktKulisse.GIFT), advent = base.offset(MarktKulisse.ADVENT);
             UUID kunde = UUID.nameUUIDFromBytes("kunde".getBytes());
             String started = sp.getServer().computeOnServer(server -> {
                 ServerLevel l = server.overworld();
@@ -387,8 +390,12 @@ public final class MarktClientTest implements FabricClientGameTest {
                 return de.twogg.markt.server.EventService.start(MarktRuntime.now() + 30 * 60_000L, null, player(server));
             });
             check(sp.getServer().computeOnServer(server -> MarktRuntime.data().event.running()), "Event läuft nicht: " + started);
+            sp.getServer().runCommand("weather clear");   // das Event lässt es schneien – für die Bilder klare Sicht
+            camera(sp, base, 7.5, 0, -6.5, 40, -2);
             ctx.waitTicks(40);
             shot(ctx, "markt-18-event-eroeffnung");
+            camera(sp, base, 0.5, 0, 0.5, 0, 25);
+            ctx.waitTicks(5);
             sp.getServer().runOnServer(server -> de.twogg.markt.server.ActivityService.openLottery(player(server), lottery));
             ctx.waitFor(mc -> mc.screen != null && mc.screen.getClass().getSimpleName().equals("ActivityScreen"), 100);
             ctx.waitTicks(5);
@@ -468,9 +475,11 @@ public final class MarktClientTest implements FabricClientGameTest {
             press(ctx, "Fertig", false);
             ctx.waitFor(mc -> mc.screen == null, 100);
             playerCommand(ctx, "markt event tafel hier");
-            sp.getServer().runCommand("tp @p " + (base.getX() + 0.5) + " " + (base.getY() + 1) + " " + (base.getZ() - 7.5) + " 0 5");
+            fly(sp);   // ab hier nur noch Prüfungen ohne Bauschutz/Räumdienst: Kamera schwebt
+            camera(sp, base, 0.5, 2, -7.5, 0, 6);
             sp.getServer().runOnServer(server -> de.twogg.markt.server.Holograms.tick());
             ctx.waitTicks(30);
+            sp.getClientLevel().waitForChunksRender();
             shot(ctx, "markt-24-hologramme");
             // Siegerehrung
             String fin = sp.getServer().computeOnServer(server -> {
@@ -512,12 +521,107 @@ public final class MarktClientTest implements FabricClientGameTest {
             press(ctx, "Fertig", false);
             ctx.waitFor(mc -> mc.screen == null, 100);
 
-            // 11) Planer in der Hand: Umrisse sichtbar
+            // 11) Planer in der Hand: Umrisse sichtbar (von oben, schwebend)
             sp.getServer().runOnServer(server -> player(server).setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ModContent.PLANNER)));
-            sp.getServer().runCommand("tp @p " + (base.getX() + 0.5) + " " + (base.getY() + 3) + " " + (base.getZ() - 4.5) + " 0 30");
+            fly(sp);
+            camera(sp, base, 5.5, 6.5, -3.5, 0, 42);
             ctx.waitTicks(30);
             shot(ctx, "markt-17-umrisse");
+
+            // 12) Abnahme der Modelle: jeder Block in mehreren Ausrichtungen, Tag und Nacht, aus drei Blickwinkeln
+            abnahme(ctx, sp, base);
         }
+    }
+
+    /**
+     * Schauraum mit allen Markt-Blöcken (Reihe A nach Norden, Reihe B gedreht) – Bilder bei Tag und Nacht, Nahaufnahmen
+     * und die Item-Ansicht im Inventar. Prüft, dass jeder Block mit seiner Ausrichtung steht.
+     */
+    private static void abnahme(ClientGameTestContext ctx, TestSingleplayerContext sp, BlockPos base) {
+        BlockPos c = sp.getServer().computeOnServer(server -> MarktKulisse.schauraum(server.overworld(), base));
+        String placed = sp.getServer().computeOnServer(server -> {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < 7; i++) {
+                var st = server.overworld().getBlockState(c.offset(-9 + i * 3, i == 6 ? 1 : 0, 5));
+                sb.append(st.getBlock() instanceof de.twogg.markt.content.MarktBlock ? st.getValue(HorizontalDirectionalBlock.FACING).getName().charAt(0) : '-');
+            }
+            sb.append('/');
+            for (int i = 0; i < 7; i++) {
+                var st = server.overworld().getBlockState(c.offset(9 - i * 3, i == 6 ? 1 : 0, -5));
+                sb.append(st.getBlock() instanceof de.twogg.markt.content.MarktBlock ? st.getValue(HorizontalDirectionalBlock.FACING).getName().charAt(0) : '-');
+            }
+            return sb.toString();
+        });
+        check(placed.equals("nnnnnnn/seswess"), "Schauraum (Ausrichtungen Reihe A/B): " + placed);
+        BlockPos rel = c.subtract(base);
+        String[] zeit = {"noon", "midnight"};
+        for (int t = 0; t < 2; t++) {
+            String tag = t == 0 ? "tag" : "nacht";
+            sp.getServer().runCommand("time set " + zeit[t]);
+            sp.getServer().runCommand("weather clear");
+            camera(sp, base, rel.getX() + 0.5, 2.5, rel.getZ() - 3.5, 0, 14);
+            ctx.waitTicks(30);
+            sp.getClientLevel().waitForChunksRender();
+            shot(ctx, "abnahme-" + tag + "-1-vorn");
+            camera(sp, base, rel.getX() + 0.5, 2.5, rel.getZ() + 3.5, 180, 14);
+            ctx.waitTicks(15);
+            shot(ctx, "abnahme-" + tag + "-2-gedreht");
+            camera(sp, base, rel.getX() - 14.5, 6, rel.getZ() + 0.5, -90, 30);
+            ctx.waitTicks(15);
+            shot(ctx, "abnahme-" + tag + "-3-seite");
+            if (t == 0) {
+                camera(sp, base, rel.getX() - 4.5, 1.2, rel.getZ() + 1.2, -10, 8);
+                ctx.waitTicks(15);
+                shot(ctx, "abnahme-tag-4-nah-links");
+                camera(sp, base, rel.getX() + 5.5, 1.2, rel.getZ() + 1.2, 10, 8);
+                ctx.waitTicks(15);
+                shot(ctx, "abnahme-tag-5-nah-rechts");
+                camera(sp, base, rel.getX() + 0.5, 1.2, rel.getZ() - 1.8, 180, 8);
+                ctx.waitTicks(15);
+                shot(ctx, "abnahme-tag-6-nah-gedreht");
+                // Nahaufnahme jedes Blocks (schräg von vorn rechts)
+                String[] namen = {"schild", "theke", "ankauf", "brett", "losbude", "geschenk", "advent"};
+                for (int i = 0; i < namen.length; i++) {
+                    double[] h = {1.2, 1.5, 1.6, 1.7, 1.7, 0.6, 2.1};
+                    camera(sp, base, rel.getX() - 9 + i * 3 + 0.5 - 1.1, h[i], rel.getZ() + 3.6, -32, i == 5 ? 35 : 18);
+                    ctx.waitTicks(8);
+                    shot(ctx, "abnahme-tag-7-nah-" + namen[i]);
+                }
+            }
+        }
+        // Item-Ansicht: alle Markt-Items im Inventar
+        sp.getServer().runCommand("time set noon");
+        sp.getServer().runOnServer(server -> {
+            ServerPlayer p = player(server);
+            p.getInventory().clearContent();
+            net.minecraft.world.item.Item[] items = {ModContent.STALL_SIGN_ITEM, ModContent.COUNTER_ITEM, ModContent.BUYER_ITEM,
+                    ModContent.BOARD_ITEM, ModContent.LOTTERY_ITEM, ModContent.GIFT_ITEM, ModContent.ADVENT_ITEM, ModContent.PLANNER};
+            for (int i = 0; i < items.length; i++) {
+                p.getInventory().setItem(i, new ItemStack(items[i]));
+                p.getInventory().setItem(9 + i, new ItemStack(items[i]));
+            }
+        });
+        sp.getServer().runCommand("gamemode survival @a");
+        ctx.waitTicks(5);
+        ctx.runOnClient(mc -> mc.setScreen(new net.minecraft.client.gui.screens.inventory.InventoryScreen(mc.player)));
+        ctx.waitTicks(10);
+        shot(ctx, "abnahme-gui");
+        ctx.runOnClient(mc -> mc.setScreen(null));
+    }
+
+    /** Spieler (= Kamera) an eine Stelle relativ zur Basis setzen. */
+    private static void camera(TestSingleplayerContext sp, BlockPos base, double x, double y, double z, float yaw, float pitch) {
+        sp.getServer().runCommand("tp @p " + (base.getX() + x) + " " + (base.getY() + y) + " " + (base.getZ() + z) + " " + yaw + " " + pitch);
+    }
+
+    /** Kreativmodus und Fliegen, damit die Kamera in der Luft stehen bleibt (nur noch für Bilder am Ende). */
+    private static void fly(TestSingleplayerContext sp) {
+        sp.getServer().runCommand("gamemode creative @a");
+        sp.getServer().runOnServer(server -> {
+            ServerPlayer p = player(server);
+            p.getAbilities().flying = true;
+            p.onUpdateAbilities();
+        });
     }
 
     /** Befehl als Spieler (die Admin-Befehle brauchen einen Spieler mit Auswahl). */

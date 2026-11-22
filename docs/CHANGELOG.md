@@ -7,8 +7,19 @@
   Geld ohne Stand, Bezahlen, Weihnachtsmarkt, Befehle, Tipps) mit 14 Bildern aus dem Spiel (Klick vergrößert).
   Blättern mit Pfeilen, Tasten oder Mausrad, Seitenumblättern-Klang. Zahlen kommen live aus der Server-Config. Beim
   ersten Betreten einmal ins Inventar (`guide.giveOnJoin`), sonst `/markt handbuch` oder Kreativ-Tab.
+- **Neue Modelle** für alle Markt-Blöcke, detailliert im Blockbench-Stil mit eigenen Texturen (32 Texel je Block):
+  Verkaufstheke mit Auslage (Apfelkiste, Lebkuchen, Preisschild), Tannengirlande und kleiner rot-weißer Markise mit
+  Lichterkette; Standschild mit Goldrahmen, Schneedach, Tannenzweig und Laterne; Ankaufstelle mit Messingwaage,
+  Holzkiste, Getreidesack und Preistafel unter einem Schneedach; Auftragsbrett als Pinnwand mit Zetteln, Nadeln,
+  Kopfschild „AUFTRÄGE“, Girlande und Satteldach; Losbude als kleine Bude mit Losrad, Losglas und gestreiftem Dach;
+  Adventskalender als Holzhäuschen für die Wand mit 24 nummerierten Türchen, Schneedach, Eiszapfen und Kamin;
+  verstecktes Geschenk mit Schleife, Anhänger und kleinem Zweitgeschenk. Leuchtende Lichter/Laternen auch nachts,
+  passende Item-Ansichten (GUI, Hand, Rahmen) und Partikel. Kollision und Umriss folgen den Modellen.
+- Erzeugt von `tools/modelle.py` (deterministisch; prüft auf Z-Fighting, ganze Texel, doppelte Elemente,
+  22,5°-Rotationen, Grenzen −16…32), Vorschau ohne Spiel mit `tools/modell_vorschau.py`. Ersetzt `tools/textures.py`.
 - Spieltest-Bilder sind jetzt sauber (keine Meldungen/Chat, Weltbilder ohne HUD) – daraus macht
-  `tools/handbuch_bilder.py` die Bilder des Handbuchs.
+  `tools/handbuch_bilder.py` die Bilder des Handbuchs. Kulisse ist eine verschneite Weihnachtsmarkt-Gasse
+  (`MarktKulisse`), am Ende eine Abnahme aller Modelle in verschiedenen Ausrichtungen bei Tag und Nacht.
 - Technisch: `content/guide/` (`HandbookLayout` setzt Text und Bilder mit der echten Schrift auf die Seiten,
   `GuideBook`, `GuideService`), `client/HandbookScreen`, Ansicht `handbuch` mit den Werten, Weltdaten `guideGiven`,
   Unit-Test `HandbookLayoutTest`, Spieltest `HandbuchClientTest`.

@@ -232,9 +232,15 @@ Admins dürfen in allen Ständen bauen.
 |---|---|---|
 | Verkaufstheke | Spieler im eigenen Stand | Besitzer und Helfer (Holz) |
 | Standschild, Ankaufstelle, Auftragsbrett, Losbude, Adventskalender, Verstecktes Geschenk | Admins | nur im Kreativmodus (wie das Bankterminal) |
+| Marktplaner | – | Item, nur für Admins nutzbar |
+
+Platz beim Aufstellen: Die Blöcke zeigen mit der Vorderseite zum Spieler, der sie setzt. Theke (Markise),
+Ankaufstelle (Preistafel), Auftragsbrett und Losbude (Dach) sind knapp zwei Blöcke hoch – darüber einen Block
+freilassen; anklicken kann man den unteren Teil. Der **Adventskalender** ist ein Häuschen für die Wand: vor eine Wand
+setzen (Rückseite an die Wand), er ist gut 1,5 Blöcke breit und 2 Blöcke hoch. Das **Geschenk** ist klein und lässt
+sich gut in Ecken, unter Tannen oder neben Kisten verstecken.
 
 Wichtelbaum und Lichterkette gab es nur in 0.2.0. Wurden sie schon gesetzt, verschwinden sie beim Laden der Welt
 (Minecraft ersetzt unbekannte Blöcke durch Luft).
-| Marktplaner | – | Item, nur für Admins nutzbar |
 
 Es gibt keine Rezepte. Weitere Theken kaufen Spieler unter „Mein Stand“ (`shop.counterPrice`, 20 €).
