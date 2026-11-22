@@ -75,14 +75,14 @@ public final class HandbookScreen extends Screen {
 
     @Override
     protected void init() {
-        bh = Math.min(height - 28, 250);
+        bh = Math.min(height - 34, 250);
         bw = bh * TEX_W / TEX_H;
         if (bw > width - 40) {
             bw = width - 40;
             bh = bw * TEX_H / TEX_W;
         }
         bx = (width - bw) / 2 - 6;
-        by = (height - bh) / 2 - 6;
+        by = (height - bh) / 2 - 9;
         int margin = Math.max(8, bw * 12 / TEX_W);
         leftX = bx + bw * 16 / TEX_W + margin;
         rightX = bx + bw * 258 / TEX_W + margin;
@@ -211,11 +211,12 @@ public final class HandbookScreen extends Screen {
         y += 10;
         center(g, Component.literal(values.getOrDefault("subtitle", "")), cx, y, GREEN);
         y += 16;
-        int iw = pageW - 16;
+        int iw = pageW - 36;
         int ih = HandbookLayout.imageHeight(iw);
         if (y + ih + 24 < top + pageH) {
-            g.fill(x + 7, y - 1, x + 9 + iw, y + ih + 1, 0xFF6B5641);
-            g.blit(RenderPipelines.GUI_TEXTURED, image("markt"), x + 8, y, 0f, 0f, iw, ih, IMG_W, IMG_H, IMG_W, IMG_H);
+            int ix = cx - iw / 2;
+            g.fill(ix - 1, y - 1, ix + iw + 1, y + ih + 1, 0xFF6B5641);
+            g.blit(RenderPipelines.GUI_TEXTURED, image("markt"), ix, y, 0f, 0f, iw, ih, IMG_W, IMG_H, IMG_W, IMG_H);
             y += ih + 8;
         }
         center(g, Component.literal("Umblättern: Pfeile unten,").withStyle(ChatFormatting.ITALIC), cx, y, FAINT);
@@ -274,7 +275,7 @@ public final class HandbookScreen extends Screen {
     }
 
     private void footer(GuiGraphicsExtractor g, int mx, int my) {
-        int y = by + bh - 4;
+        int y = by + bh + 5;
         boolean canBack = spread > 0, canFwd = 2 * spread + 2 < pages();
         arrow(g, "◀ zurück", bx + 14, y, canBack, mx, my, () -> goTo(2 * spread - 2));
         String fwd = "weiter ▶";
