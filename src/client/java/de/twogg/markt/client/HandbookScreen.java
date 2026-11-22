@@ -211,9 +211,9 @@ public final class HandbookScreen extends Screen {
         y += 10;
         center(g, Component.literal(values.getOrDefault("subtitle", "")), cx, y, GREEN);
         y += 16;
-        int iw = pageW - 36;
+        int iw = Math.min(pageW - 20, (top + pageH - y - 26) * 16 / 9);
         int ih = HandbookLayout.imageHeight(iw);
-        if (y + ih + 24 < top + pageH) {
+        if (iw > 40) {
             int ix = cx - iw / 2;
             g.fill(ix - 1, y - 1, ix + iw + 1, y + ih + 1, 0xFF6B5641);
             g.blit(RenderPipelines.GUI_TEXTURED, image("markt"), ix, y, 0f, 0f, iw, ih, IMG_W, IMG_H, IMG_W, IMG_H);
