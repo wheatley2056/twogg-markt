@@ -12,6 +12,8 @@ import java.util.Map;
 public final class MarktData {
     public int version = 1;
     public Map<String, Plot> plots = new LinkedHashMap<>();
+    /** Server-Läden (seit 0.4.0): ID → Laden. */
+    public Map<String, Laden> laeden = new LinkedHashMap<>();
     /** Räumdienst-Zonen: ID → Bereich. */
     public Map<String, Zone> zones = new LinkedHashMap<>();
     public List<Job> jobs = new ArrayList<>();
@@ -64,6 +66,11 @@ public final class MarktData {
 
     public void sanitize() {
         if (plots == null) plots = new LinkedHashMap<>();
+        if (laeden == null) laeden = new LinkedHashMap<>();
+        for (Laden l : laeden.values()) {
+            if (l.sells == null) l.sells = new ArrayList<>();
+            if (l.buys == null) l.buys = new ArrayList<>();
+        }
         if (zones == null) zones = new LinkedHashMap<>();
         if (jobs == null) jobs = new ArrayList<>();
         if (sold == null) sold = new HashMap<>();

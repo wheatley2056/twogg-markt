@@ -92,6 +92,15 @@ Konto (oder bar, `buyer.payCash`).
 - Gezählt werden nur unbeschädigte Stapel aus dem Hauptinventar; Namen und Daten sind egal.
 - Fällt ein Preis auf 0, kauft der Markt das Item an diesem Tag nicht mehr.
 
+### Laden (seit 0.4.0)
+
+Ein **Server-Laden** gehört keinem Spieler und braucht keinen Stand: feste Preise, unbegrenzter Vorrat. Er hat zwei
+Seiten: **Kaufen** (Ware wählen, Menge −/+, Konto/Bar, „Kaufen · Betrag“) und **Verkaufen** (was der Laden ankauft,
+„1×“ oder „Alle“, bis zur Tagesgrenze). Geöffnet wird er nicht über einen Block, sondern **per Befehl** – gedacht für
+NPCs: Im Storyteller eine Seite mit Auslöser „NPC angesprochen“ und der Aktion „Befehl“ (als Konsole)
+`markt laden oeffnen <id> {player}`. Das Fenster bleibt gültig, solange man höchstens 8 Blöcke von der Stelle entfernt
+ist, an der es aufging. Keine Marktgebühr; Ankauf zahlt wie die Ankaufstelle (`buyer.payCash`).
+
 ### Auftragsbrett
 
 | Seite | Inhalt |
@@ -222,6 +231,13 @@ und nach dem Event die Ergebnisse zeigt.
 | `/markt event start [minuten]` / `stop` / `abbrechen` / `status` | OP 2 | Event starten, Siegerehrung jetzt, ohne Preise abbrechen, Stand |
 | `/markt event tafel hier` / `weg` | OP 2 | Bestenliste-Hologramm |
 | `/markt gelaende setzen` / `weg` | OP 2 | Marktgelände aus der Planer-Auswahl |
+| `/markt laden neu <id> <name>` | OP 2 | Laden anlegen (ID: a–z, 0–9, _) |
+| `/markt laden verkauf <id> <preis> [stück] [item]` | OP 2 | Ware verkaufen: Preis in Coins pro Kauf; ohne Item die Ware in der Hand (mit allen Daten) |
+| `/markt laden ankauf <id> <preis> [stück] [tageslimit] [item]` | OP 2 | Ankauf: jedes unbeschädigte Item dieser Art, Preis pro Bündel, Tagesgrenze je Spieler (0 = keine) |
+| `/markt laden info <id>` / `liste` | OP 2 | Zeilen mit IDs (v1, a2 …), verkauft/angekauft |
+| `/markt laden entfernen <id> <zeile>` / `untertitel <id> <text>` | OP 2 | Zeile löschen / Untertitel im Fenster |
+| `/markt laden auf <id>` / `zu <id>` / `loeschen <id>` | OP 2 | Öffnen / schließen / löschen |
+| `/markt laden oeffnen <id> [spieler]` | OP 2, Konsole | Fenster für sich bzw. die Spieler öffnen (Storyteller: `{player}`) |
 | `/markt reload` / `speichern` | OP 2 | Einstellungen neu lesen / Weltdaten speichern |
 
 Admins dürfen in allen Ständen bauen.

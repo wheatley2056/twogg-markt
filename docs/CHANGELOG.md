@@ -1,5 +1,14 @@
 # Changelog: TwoGG Markt
 
+
+## 0.4.0+26.1.2 – 23.11.2026 – Server-Laden für NPCs
+
+- **Laden**: feste Preise, unbegrenzter Vorrat, Verkauf und Ankauf (mit Tagesgrenze je Spieler), Fenster mit den Seiten
+  Kaufen/Verkaufen (`LadenScreen`). Kein Block: `/markt laden oeffnen <id> <spieler>` – z. B. aus einer Storyteller-Seite
+  („NPC angesprochen“ → Befehl als Konsole), so wird jeder Storyteller-NPC mit eigenem Skin zum Händler.
+- Verwaltung per `/markt laden neu|verkauf|ankauf|info|liste|entfernen|untertitel|auf|zu|loeschen`; Ware aus der Hand
+  oder per Item-ID. Daten in `markt.json` → `laeden`.
+- Spieltest: Laden anlegen, per Konsole öffnen, 4 Fackeln kaufen, Kohle bis zur Tagesgrenze verkaufen.
 ## 0.3.0+26.1.2 (22.11.2026)
 
 - **Markt-Handbuch:** eigenes Buch (Item `twogg_markt:handbuch`) mit Doppelseiten, Ledereinband und Pergament:

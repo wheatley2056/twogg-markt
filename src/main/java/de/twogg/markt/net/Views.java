@@ -157,6 +157,8 @@ public final class Views {
         public int left;
         public int demand;
         public double sold;
+        /** Laden-Ankauf (seit 0.4.0): ID der Zeile; leer = Ankaufstelle (Item-ID aus {@link #item}). */
+        public String id = "";
     }
 
     public static final class JobLine {

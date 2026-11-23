@@ -176,6 +176,7 @@ public final class MarktCommands {
                         .then(literal("weg").executes(c -> admin(c, Views.Action.of("area_clear")))))
                 .then(literal("auftraege").requires(admin)
                         .then(literal("neu").executes(c -> admin(c, Views.Action.of("jobs_reroll")))))
+                .then(laden().requires(admin))
                 .then(literal("reload").requires(admin).executes(c -> admin(c, Views.Action.of("reload"))))
                 .then(literal("speichern").requires(admin).executes(c -> {
                     MarktRuntime.save();
@@ -197,6 +198,156 @@ public final class MarktCommands {
         a.plot = StringArgumentType.getString(c, "id");
         a.value = DoubleArgumentType.getDouble(c, "euro");
         return admin(c, a);
+    }
+
+    private static final SuggestionProvider<CommandSourceStack> LAEDEN =
+            (ctx, b) -> SharedSuggestionProvider.suggest(MarktRuntime.data().laeden.keySet(), b);
+
+    private static de.twogg.markt.core.Laden ladenArg(CommandContext<CommandSourceStack> c) {
+        String id = StringArgumentType.getString(c, "laden");
+        de.twogg.markt.core.Laden l = MarktRuntime.data().laeden.get(id);
+        if (l == null) c.getSource().sendFailure(Component.literal("Unbekannter Laden: " + id + " (/markt laden liste)"));
+        return l;
+    }
+
+    private static int say(CommandContext<CommandSourceStack> c, String msg) {
+        c.getSource().sendSuccess(() -> Component.literal(msg), false);
+        return 1;
+    }
+
+    /**
+     * {@code /markt laden …} (seit 0.4.0): Server-Läden mit festen Preisen für NPCs (z. B. Storyteller: Aktion
+     * „Befehl“ mit {@code markt laden oeffnen <id> {player}}).
+     */
+    private static com.mojang.brigadier.builder.LiteralArgumentBuilder<CommandSourceStack> laden() {
+        var id = argument("laden", StringArgumentType.word()).suggests(LAEDEN);
+        return literal("laden")
+                .then(literal("liste").executes(c -> {
+                    if (MarktRuntime.data().laeden.isEmpty()) return say(c, "Keine Läden. Anlegen: /markt laden neu <id> <name>");
+                    for (var l : MarktRuntime.data().laeden.values()) {
+                        say(c, l.id + " – " + l.name + (l.open ? "" : " (geschlossen)") + " · " + l.sells.size() + " Verkauf, " + l.buys.size() + " Ankauf");
+                    }
+                    return 1;
+                }))
+                .then(literal("neu").then(argument("laden", StringArgumentType.word())
+                        .then(argument("name", StringArgumentType.greedyString()).executes(c -> {
+                            String err = LadenService.create(StringArgumentType.getString(c, "laden"), StringArgumentType.getString(c, "name"));
+                            if (err != null) { c.getSource().sendFailure(Component.literal(err)); return 0; }
+                            return say(c, "Laden angelegt. Ware in die Hand: /markt laden verkauf|ankauf "
+                                    + StringArgumentType.getString(c, "laden") + " <preis> [stück]");
+                        }))))
+                .then(literal("info").then(id.executes(c -> {
+                    var l = ladenArg(c);
+                    if (l == null) return 0;
+                    say(c, l.id + " – " + l.name + (l.subtitle.isEmpty() ? "" : " · " + l.subtitle) + (l.open ? "" : " (geschlossen)"));
+                    for (var o : l.sells) say(c, " " + o.id + " Verkauf: " + o.count + "× " + o.name + " für " + MarktRuntime.fmt(o.price) + " · " + o.sold + "× verkauft");
+                    for (var b : l.buys) say(c, " " + b.id + " Ankauf: " + b.count + "× " + b.name + " für " + MarktRuntime.fmt(b.price)
+                            + (b.dailyLimit > 0 ? " · " + b.dailyLimit + "/Tag" : "") + " · " + b.bought + "× angekauft");
+                    return 1;
+                })))
+                .then(literal("verkauf").then(argument("laden", StringArgumentType.word()).suggests(LAEDEN)
+                        .then(argument("preis", DoubleArgumentType.doubleArg(0.1, 1_000_000))
+                                .executes(c -> sellCmd(c, 1))
+                                .then(argument("stueck", IntegerArgumentType.integer(1, 576)).executes(c -> sellCmd(c, IntegerArgumentType.getInteger(c, "stueck")))
+                                        .then(argument("item", StringArgumentType.greedyString()).executes(c -> sellItemCmd(c)))))))
+                .then(literal("ankauf").then(argument("laden", StringArgumentType.word()).suggests(LAEDEN)
+                        .then(argument("preis", DoubleArgumentType.doubleArg(0.1, 1_000_000))
+                                .executes(c -> buyCmd(c, 1, 0))
+                                .then(argument("stueck", IntegerArgumentType.integer(1, 576))
+                                        .executes(c -> buyCmd(c, IntegerArgumentType.getInteger(c, "stueck"), 0))
+                                        .then(argument("tageslimit", IntegerArgumentType.integer(0, 10000))
+                                                .executes(c -> buyCmd(c, IntegerArgumentType.getInteger(c, "stueck"), IntegerArgumentType.getInteger(c, "tageslimit")))
+                                                .then(argument("item", StringArgumentType.greedyString()).executes(c -> buyItemCmd(c))))))))
+                .then(literal("entfernen").then(argument("laden", StringArgumentType.word()).suggests(LAEDEN)
+                        .then(argument("zeile", StringArgumentType.word()).executes(c -> {
+                            var l = ladenArg(c);
+                            if (l == null) return 0;
+                            String z = StringArgumentType.getString(c, "zeile");
+                            if (!LadenService.remove(l, z)) { c.getSource().sendFailure(Component.literal("Keine Zeile " + z + " (/markt laden info " + l.id + ")")); return 0; }
+                            return say(c, "Zeile " + z + " entfernt.");
+                        }))))
+                .then(literal("untertitel").then(argument("laden", StringArgumentType.word()).suggests(LAEDEN)
+                        .then(argument("text", StringArgumentType.greedyString()).executes(c -> {
+                            var l = ladenArg(c);
+                            if (l == null) return 0;
+                            l.subtitle = StringArgumentType.getString(c, "text");
+                            MarktRuntime.markDirty();
+                            return say(c, "Untertitel gesetzt.");
+                        }))))
+                .then(literal("auf").then(argument("laden", StringArgumentType.word()).suggests(LAEDEN).executes(c -> openState(c, true))))
+                .then(literal("zu").then(argument("laden", StringArgumentType.word()).suggests(LAEDEN).executes(c -> openState(c, false))))
+                .then(literal("loeschen").then(argument("laden", StringArgumentType.word()).suggests(LAEDEN).executes(c -> {
+                    var l = ladenArg(c);
+                    if (l == null) return 0;
+                    MarktRuntime.data().laeden.remove(l.id);
+                    MarktRuntime.markDirty();
+                    return say(c, "Laden " + l.id + " gelöscht.");
+                })))
+                .then(literal("oeffnen").then(argument("laden", StringArgumentType.word()).suggests(LAEDEN)
+                        .executes(c -> {
+                            ServerPlayer p = player(c);
+                            return p == null ? 0 : openFor(c, List.of(p));
+                        })
+                        .then(argument("spieler", EntityArgument.players()).executes(c -> openFor(c, EntityArgument.getPlayers(c, "spieler"))))));
+    }
+
+    private static int sellCmd(CommandContext<CommandSourceStack> c, int count) {
+        ServerPlayer p = player(c);
+        var l = ladenArg(c);
+        if (p == null || l == null) return 0;
+        return say(c, LadenService.addSell(p, l, DoubleArgumentType.getDouble(c, "preis"), count));
+    }
+
+    private static ItemStack itemArg(CommandContext<CommandSourceStack> c) {
+        String id = StringArgumentType.getString(c, "item").trim();
+        var item = de.twogg.markt.data.Stacks.item(id.contains(":") ? id : "minecraft:" + id);
+        if (item == null) {
+            c.getSource().sendFailure(Component.literal("Unbekanntes Item: " + id));
+            return ItemStack.EMPTY;
+        }
+        return new ItemStack(item);
+    }
+
+    private static int sellItemCmd(CommandContext<CommandSourceStack> c) {
+        var l = ladenArg(c);
+        ItemStack st = itemArg(c);
+        if (l == null || st.isEmpty()) return 0;
+        return say(c, LadenService.addSell(c.getSource().registryAccess(), st, l, DoubleArgumentType.getDouble(c, "preis"),
+                IntegerArgumentType.getInteger(c, "stueck")));
+    }
+
+    private static int buyItemCmd(CommandContext<CommandSourceStack> c) {
+        var l = ladenArg(c);
+        ItemStack st = itemArg(c);
+        if (l == null || st.isEmpty()) return 0;
+        return say(c, LadenService.addBuy(c.getSource().registryAccess(), st, l, DoubleArgumentType.getDouble(c, "preis"),
+                IntegerArgumentType.getInteger(c, "stueck"), IntegerArgumentType.getInteger(c, "tageslimit")));
+    }
+
+    private static int buyCmd(CommandContext<CommandSourceStack> c, int count, int limit) {
+        ServerPlayer p = player(c);
+        var l = ladenArg(c);
+        if (p == null || l == null) return 0;
+        return say(c, LadenService.addBuy(p, l, DoubleArgumentType.getDouble(c, "preis"), count, limit));
+    }
+
+    private static int openState(CommandContext<CommandSourceStack> c, boolean open) {
+        var l = ladenArg(c);
+        if (l == null) return 0;
+        l.open = open;
+        MarktRuntime.markDirty();
+        return say(c, l.name + (open ? " ist geöffnet." : " ist geschlossen."));
+    }
+
+    private static int openFor(CommandContext<CommandSourceStack> c, java.util.Collection<ServerPlayer> to) {
+        String id = StringArgumentType.getString(c, "laden");
+        int n = 0;
+        for (ServerPlayer p : to) {
+            String err = LadenService.open(p, id);
+            if (err != null) { c.getSource().sendFailure(Component.literal(err)); return 0; }
+            n++;
+        }
+        return n;
     }
 
     private static ServerPlayer player(CommandContext<CommandSourceStack> c) {

@@ -59,6 +59,7 @@ abstract class MarktScreen extends KitScreen {
             case "market" -> new MarketScreen(v);
             case "shop" -> new ShopScreen(v);
             case "buyer" -> new BuyerScreen(v);
+            case "laden" -> new LadenScreen(v);
             case "board" -> new BoardScreen(v);
             case "admin" -> new AdminScreen(mc.screen instanceof AdminScreen ? null : mc.screen, v);
             case "lottery", "advent" -> new ActivityScreen(v);

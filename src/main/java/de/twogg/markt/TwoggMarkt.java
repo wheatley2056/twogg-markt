@@ -9,6 +9,7 @@ import de.twogg.markt.server.EventService;
 import de.twogg.markt.server.Holograms;
 import de.twogg.markt.server.BoardService;
 import de.twogg.markt.server.BuyerService;
+import de.twogg.markt.server.LadenService;
 import de.twogg.markt.server.MarktCommands;
 import de.twogg.markt.server.Outlines;
 import de.twogg.markt.server.Pay;
@@ -84,6 +85,7 @@ public class TwoggMarkt implements ModInitializer {
                 case "market" -> StallService.handle(player, act);
                 case "shop" -> ShopService.handle(player, act);
                 case "buyer" -> BuyerService.handle(player, act);
+                case LadenService.SCREEN -> LadenService.handle(player, act);
                 case "board" -> BoardService.handle(player, act);
                 case "admin" -> AdminService.handle(player, act);
                 case "lottery", "advent" -> ActivityService.handle(player, act);

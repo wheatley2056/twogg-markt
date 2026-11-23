@@ -528,9 +528,55 @@ public final class MarktClientTest implements FabricClientGameTest {
             ctx.waitTicks(30);
             shot(ctx, "markt-17-umrisse");
 
-            // 12) Abnahme der Modelle: jeder Block in mehreren Ausrichtungen, Tag und Nacht, aus drei Blickwinkeln
+            // 12) Server-Laden (0.4.0): per Befehl anlegen, Ware aus der Hand, Fenster per /markt laden oeffnen
+            laden(ctx, sp);
+
+            // 13) Abnahme der Modelle: jeder Block in mehreren Ausrichtungen, Tag und Nacht, aus drei Blickwinkeln
             abnahme(ctx, sp, base);
         }
+    }
+
+    private static void laden(ClientGameTestContext ctx, TestSingleplayerContext sp) {
+        sp.getServer().runCommand("gamemode survival @a");
+        sp.getServer().runCommand("markt laden neu lager Materiallager");
+        sp.getServer().runCommand("markt laden untertitel lager Brandt · Station 7");
+        sp.getServer().runOnServer(server -> player(server).setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(net.minecraft.world.item.Items.TORCH)));
+        sp.getServer().runCommand("execute as @p run markt laden verkauf lager 0.5 4");
+        sp.getServer().runOnServer(server -> player(server).setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(net.minecraft.world.item.Items.COAL)));
+        sp.getServer().runCommand("execute as @p run markt laden ankauf lager 1.2 8 2");
+        sp.getServer().runOnServer(server -> {
+            ServerPlayer p = player(server);
+            p.getInventory().clearContent();
+            p.getInventory().add(new ItemStack(net.minecraft.world.item.Items.COAL, 20));
+            Economy.pay(p, Money.ofCoins(10), "test", "Laden");
+        });
+        String lines = sp.getServer().computeOnServer(server -> {
+            var l = MarktRuntime.data().laeden.get("lager");
+            return l == null ? "kein Laden" : l.sells.size() + "/" + l.buys.size();
+        });
+        check(lines.equals("1/1"), "Laden mit 1 Verkauf und 1 Ankauf erwartet: " + lines);
+        // wie ein Storyteller-NPC: Befehl von der Konsole für den Spieler
+        sp.getServer().runCommand("markt laden oeffnen lager @p");
+        ctx.waitFor(mc -> mc.screen != null && mc.screen.getClass().getSimpleName().equals("LadenScreen"), 100);
+        ctx.waitTicks(10);
+        shot(ctx, "markt-18-laden-kaufen");
+        long before = sp.getServer().computeOnServer(server -> Economy.balance(player(server)));
+        press(ctx, "Kaufen ·", true);
+        ctx.waitTicks(10);
+        String bought = sp.getServer().computeOnServer(server -> player(server).getInventory().countItem(net.minecraft.world.item.Items.TORCH)
+                + "/" + (before - Economy.balance(player(server))));
+        check(bought.equals("4/5"), "Kauf 4 Fackeln für 0,5 erwartet (Stück/Zehntel): " + bought);
+        press(ctx, "Verkaufen", false);
+        ctx.waitTicks(5);
+        shot(ctx, "markt-19-laden-verkaufen");
+        long before2 = sp.getServer().computeOnServer(server -> Economy.balance(player(server)));
+        press(ctx, "Alle", false);
+        ctx.waitTicks(10);
+        String sold = sp.getServer().computeOnServer(server -> player(server).getInventory().countItem(net.minecraft.world.item.Items.COAL)
+                + "/" + (Economy.balance(player(server)) - before2));
+        check(sold.equals("4/24"), "Ankauf: Tageslimit 2 × 8 Kohle für je 1,2 erwartet (Rest/Zehntel): " + sold);
+        press(ctx, "Fertig", false);
+        ctx.waitFor(mc -> mc.screen == null, 100);
     }
 
     /**
