@@ -1,6 +1,16 @@
 # Changelog: TwoGG Markt
 
 
+
+## 0.5.0+26.1.2 – 23.11.2026 – Waren mit Lager und Preis nach Bestand
+
+- **Waren mit Lager** im Laden: Grundpreis je Einheit, Lagerplatz, Sollbestand. Preis = Grundpreis × 2^((Soll − Bestand)
+  / Lager · 2) – leer doppelt, voll halb; jede Einheit einzeln gerechnet. Ankauf = Preis × `spread` (0,6).
+- **Lager voll = kein Ankauf** mehr; Geld des Händlers unbegrenzt. **Wöchentliche Lieferung** (Standard Montag 06:00,
+  unsichtbar) setzt alle Waren auf Soll – auffüllen und Überschuss weg.
+- `/markt laden ware|import|bestand|lieferung|lieferzeit`; Import aus JSON mit Item-ID oder vollem Stapel (Daten wie
+  Verzauberungen), unbekannte Items werden gemeldet. Beispiel `beispiele/materiallager.json` (109 Waren).
+- `StockMath` mit Tests; Spieltest: Import inkl. Verzauberungsbuch, Ankauf bis Lager voll, Preis fällt, Lieferung.
 ## 0.4.0+26.1.2 – 23.11.2026 – Server-Laden für NPCs
 
 - **Laden**: feste Preise, unbegrenzter Vorrat, Verkauf und Ankauf (mit Tagesgrenze je Spieler), Fenster mit den Seiten

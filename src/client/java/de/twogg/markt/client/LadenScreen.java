@@ -89,10 +89,14 @@ public class LadenScreen extends MarktScreen {
         if (o == null) return;
         int by = cy + ch - PAD - 20;
         addRenderableWidget(KitButton.icon(x, by, 20, KitIcon.MINUS, "Weniger", b -> { times = Math.max(1, times - 1); rebuildWidgets(); }));
-        addRenderableWidget(KitButton.icon(x + 60, by, 20, KitIcon.PLUS, "Mehr", b -> { times = Math.min(64, times + 1); rebuildWidgets(); }));
+        addRenderableWidget(KitButton.icon(x + 60, by, 20, KitIcon.PLUS, "Mehr", b -> {
+            times = Math.min(o.stock < 0 ? 64 : Math.max(1, Math.min(64, o.stock)), times + 1);
+            rebuildWidgets();
+        }));
         payToggle(x + 86, by, 60);
         int bw = Math.min(170, x + w - (x + 150));
-        addRenderableWidget(KitButton.primary(x + w - bw, by, bw, KitDraw.fit("Kaufen · " + money(o.price * times), bw - 8), b -> {
+        String label = (o.stock >= 0 && times > 1 ? "Kaufen · ab " : "Kaufen · ") + money(o.price * times);
+        addRenderableWidget(KitButton.primary(x + w - bw, by, bw, KitDraw.fit(label, bw - 8), b -> {
             Views.Action a = Views.Action.of("buy");
             a.id = o.id;
             a.count = times;
@@ -123,8 +127,8 @@ public class LadenScreen extends MarktScreen {
                 String price = l.bundle + " Stück → " + money(l.price);
                 int right = x + w - 106;
                 text(g, KitDraw.fit(l.name, right - (x + 22) - font.width(price) - 8), x + 22, ry + 1, KitColors.TEXT);
-                String info = "dabei " + l.have + (l.left >= 0 ? " · heute noch " + l.left : "");
-                text(g, KitDraw.fit(info, right - (x + 22)), x + 22, ry + 11, l.have > 0 ? KitColors.MUTED : KitColors.FAINT);
+                String info = "dabei " + l.have + (!l.note.isEmpty() ? " · " + l.note : l.left >= 0 ? " · heute noch " + l.left : "");
+                text(g, KitDraw.fit(info, right - (x + 22) - font.width(price) - 8), x + 22, ry + 11, l.have > 0 ? KitColors.MUTED : KitColors.FAINT);
                 right(g, price, right, ry + 6, KitColors.TEXT);
             }
         } else {
@@ -150,8 +154,13 @@ public class LadenScreen extends MarktScreen {
             int ry = y + 14 + i * ROW;
             item(g, o.item, x + 3, ry + 2);
             String price = o.count + "× für " + money(o.price);
-            text(g, KitDraw.fit(o.name, w - 40 - font.width(price)), x + 24, ry + 6, KitColors.TEXT);
-            right(g, price, x + w - 8, ry + 6, KitColors.TEXT);
+            if (o.note.isEmpty()) {
+                text(g, KitDraw.fit(o.name, w - 40 - font.width(price)), x + 24, ry + 6, KitColors.TEXT);
+            } else {
+                text(g, KitDraw.fit(o.name, w - 40 - font.width(price)), x + 24, ry + 1, KitColors.TEXT);
+                text(g, KitDraw.fit(o.note, w - 40 - font.width(price)), x + 24, ry + 11, o.stock <= 0 ? KitColors.AMBER_TEXT : KitColors.MUTED);
+            }
+            right(g, price, x + w - 8, ry + 6, o.stock == 0 ? KitColors.AMBER_TEXT : KitColors.TEXT);
         }
     }
 }

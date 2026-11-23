@@ -109,6 +109,7 @@ public final class MarktRuntime {
             BoardService.refreshIfDue(false);
             BoardService.expirePlayerJobs();
             BuyerService.decay();
+            de.twogg.markt.server.LadenService.deliveries();
             Holograms.tick();
         }
         if (saveSoon || (dirty && ticks % 600 == 0)) save();

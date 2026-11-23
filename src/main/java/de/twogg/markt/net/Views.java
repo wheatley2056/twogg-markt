@@ -147,6 +147,8 @@ public final class Views {
         public long price;
         public int stock;
         public long sold;
+        /** Laden-Ware (seit 0.5.0): Zusatzzeile, z. B. „Lager 12 Stacks“; leer = Standard. */
+        public String note = "";
     }
 
     public static final class BuyerLine {
@@ -159,6 +161,8 @@ public final class Views {
         public double sold;
         /** Laden-Ankauf (seit 0.4.0): ID der Zeile; leer = Ankaufstelle (Item-ID aus {@link #item}). */
         public String id = "";
+        /** Laden-Ware (seit 0.5.0): Zusatzzeile statt „heute noch …“, z. B. „Lager fast voll“. */
+        public String note = "";
     }
 
     public static final class JobLine {

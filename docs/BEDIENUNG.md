@@ -101,6 +101,28 @@ NPCs: Im Storyteller eine Seite mit Auslöser „NPC angesprochen“ und der Akt
 `markt laden oeffnen <id> {player}`. Das Fenster bleibt gültig, solange man höchstens 8 Blöcke von der Stelle entfernt
 ist, an der es aufging. Keine Marktgebühr; Ankauf zahlt wie die Ankaufstelle (`buyer.payCash`).
 
+#### Waren mit Lager (seit 0.5.0)
+
+Statt fester Preise kann ein Laden **Waren mit Lagerbestand** führen. Jede Ware hat einen Grundpreis je Einheit
+(z. B. 64 Bruchstein), einen **Lagerplatz** (Obergrenze) und einen **Sollbestand**.
+
+- **Preis nach Bestand:** Beim Sollbestand gilt der Grundpreis. Je leerer das Lager, desto teurer (leer = doppelt), je
+  voller, desto billiger (voll = halb). Jede Einheit wird einzeln gerechnet – wer viel auf einmal kauft oder verkauft,
+  merkt, wie der Preis mitwandert.
+- **Ankauf** zum aktuellen Preis × `spread` (Standard 0,6): Kaufen und sofort zurückverkaufen lohnt nie.
+- **Lagerplatz begrenzt:** Ist das Lager voll, nimmt der Händler nichts mehr an („Lager voll“). 100 Stacks Bruchstein
+  bringen also nicht 100-mal Geld – nur so viel, wie ins Lager passt, und das immer billiger. Das Geld des Händlers ist
+  unbegrenzt.
+- **Lieferung (unsichtbar):** Einmal pro Woche (Standard Montag 06:00) setzt das Versorgungsschiff jede Ware auf den
+  Sollbestand: Fehlendes wird aufgefüllt, Überschuss mitgenommen. Danach lässt sich wieder verkaufen.
+- Im Fenster steht je Ware „Lager knapp/normal/gut gefüllt/voll“, beim Ankauf „noch Platz für n“.
+
+Einrichten per Datei (`config/twogg-markt/<datei>.json`, Beispiel `beispiele/materiallager.json`) und
+`/markt laden import <laden> <datei>` – unbekannte Items (z. B. falsche Mod-IDs) werden gemeldet und übersprungen,
+Waren mit gleicher Vorlage ersetzt (Bestand bleibt). Oder einzeln mit der Ware in der Hand:
+`/markt laden ware <laden> <preis> <einheit> <lagerplatz> <soll>`. Items mit Daten (Verzauberungsbücher …) gelten
+nur genau so; einfache Items nach Art.
+
 ### Auftragsbrett
 
 | Seite | Inhalt |
@@ -238,6 +260,10 @@ und nach dem Event die Ergebnisse zeigt.
 | `/markt laden entfernen <id> <zeile>` / `untertitel <id> <text>` | OP 2 | Zeile löschen / Untertitel im Fenster |
 | `/markt laden auf <id>` / `zu <id>` / `loeschen <id>` | OP 2 | Öffnen / schließen / löschen |
 | `/markt laden oeffnen <id> [spieler]` | OP 2, Konsole | Fenster für sich bzw. die Spieler öffnen (Storyteller: `{player}`) |
+| `/markt laden ware <id> <preis> <einheit> <lager> <soll>` | OP 2 | Ware mit Lager aus der Hand (seit 0.5.0) |
+| `/markt laden import <id> <datei>` | OP 2 | Warenliste aus `config/twogg-markt/<datei>.json` |
+| `/markt laden bestand <id> <ware> <stück>` / `lieferung <id>` | OP 2 | Bestand setzen / sofort liefern (alle auf Soll) |
+| `/markt laden lieferzeit <id> <TAG> <hh:mm>` | OP 2 | Wöchentliche Lieferung, z. B. `MONDAY 06:00` |
 | `/markt reload` / `speichern` | OP 2 | Einstellungen neu lesen / Weltdaten speichern |
 
 Admins dürfen in allen Ständen bauen.

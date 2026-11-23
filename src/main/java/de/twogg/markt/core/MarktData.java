@@ -70,6 +70,7 @@ public final class MarktData {
         for (Laden l : laeden.values()) {
             if (l.sells == null) l.sells = new ArrayList<>();
             if (l.buys == null) l.buys = new ArrayList<>();
+            if (l.waren == null) l.waren = new ArrayList<>();
         }
         if (zones == null) zones = new LinkedHashMap<>();
         if (jobs == null) jobs = new ArrayList<>();

@@ -241,6 +241,11 @@ public final class MarktCommands {
                     if (l == null) return 0;
                     say(c, l.id + " – " + l.name + (l.subtitle.isEmpty() ? "" : " · " + l.subtitle) + (l.open ? "" : " (geschlossen)"));
                     for (var o : l.sells) say(c, " " + o.id + " Verkauf: " + o.count + "× " + o.name + " für " + MarktRuntime.fmt(o.price) + " · " + o.sold + "× verkauft");
+                    for (var w : l.waren) say(c, " " + w.id + " Ware: " + w.name + " · " + w.unit + " Stück, Grundpreis " + MarktRuntime.fmt(w.base)
+                            + " · Bestand " + w.stock + "/" + w.capacity + " (Soll " + w.target + ") · jetzt " + MarktRuntime.fmt(
+                            de.twogg.markt.core.StockMath.sellPrice(w.base, w.stock, w.target, w.capacity)) + " / Ankauf "
+                            + MarktRuntime.fmt(de.twogg.markt.core.StockMath.buyPrice(w.base, w.stock, w.target, w.capacity, l.spread)));
+                    if (!l.waren.isEmpty()) say(c, " Lieferung jede Woche " + l.deliveryDay + " " + l.deliveryTime + " · Ankauf = Preis × " + l.spread);
                     for (var b : l.buys) say(c, " " + b.id + " Ankauf: " + b.count + "× " + b.name + " für " + MarktRuntime.fmt(b.price)
                             + (b.dailyLimit > 0 ? " · " + b.dailyLimit + "/Tag" : "") + " · " + b.bought + "× angekauft");
                     return 1;
@@ -258,6 +263,53 @@ public final class MarktCommands {
                                         .then(argument("tageslimit", IntegerArgumentType.integer(0, 10000))
                                                 .executes(c -> buyCmd(c, IntegerArgumentType.getInteger(c, "stueck"), IntegerArgumentType.getInteger(c, "tageslimit")))
                                                 .then(argument("item", StringArgumentType.greedyString()).executes(c -> buyItemCmd(c))))))))
+                .then(literal("ware").then(argument("laden", StringArgumentType.word()).suggests(LAEDEN)
+                        .then(argument("preis", DoubleArgumentType.doubleArg(0.1, 1_000_000))
+                        .then(argument("einheit", IntegerArgumentType.integer(1, 576))
+                        .then(argument("lager", IntegerArgumentType.integer(1, 1_000_000))
+                        .then(argument("soll", IntegerArgumentType.integer(0, 1_000_000)).executes(c -> {
+                            ServerPlayer p = player(c);
+                            var l = ladenArg(c);
+                            if (p == null || l == null) return 0;
+                            return say(c, LadenService.putWare(p.level().registryAccess(), l, p.getMainHandItem(), null,
+                                    DoubleArgumentType.getDouble(c, "preis"), IntegerArgumentType.getInteger(c, "einheit"),
+                                    IntegerArgumentType.getInteger(c, "lager"), IntegerArgumentType.getInteger(c, "soll")));
+                        })))))))
+                .then(literal("import").then(argument("laden", StringArgumentType.word()).suggests(LAEDEN)
+                        .then(argument("datei", StringArgumentType.word()).executes(c -> {
+                            var l = ladenArg(c);
+                            if (l == null) return 0;
+                            for (String line : LadenService.importFile(c.getSource().registryAccess(), l, StringArgumentType.getString(c, "datei"))) say(c, line);
+                            return 1;
+                        }))))
+                .then(literal("lieferung").then(argument("laden", StringArgumentType.word()).suggests(LAEDEN).executes(c -> {
+                    var l = ladenArg(c);
+                    if (l == null) return 0;
+                    LadenService.deliver(l);
+                    return say(c, "Lieferung für " + l.name + ": alle Waren auf Soll gesetzt.");
+                })))
+                .then(literal("lieferzeit").then(argument("laden", StringArgumentType.word()).suggests(LAEDEN)
+                        .then(argument("tag", StringArgumentType.word()).suggests((ctx, b) -> SharedSuggestionProvider.suggest(
+                                List.of("MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"), b))
+                        .then(argument("zeit", StringArgumentType.string()).executes(c -> {
+                            var l = ladenArg(c);
+                            if (l == null) return 0;
+                            l.deliveryDay = StringArgumentType.getString(c, "tag").toUpperCase(java.util.Locale.ROOT);
+                            l.deliveryTime = StringArgumentType.getString(c, "zeit");
+                            MarktRuntime.markDirty();
+                            return say(c, "Lieferung jede Woche " + l.deliveryDay + " " + l.deliveryTime + " (" + l.zone + ").");
+                        })))))
+                .then(literal("bestand").then(argument("laden", StringArgumentType.word()).suggests(LAEDEN)
+                        .then(argument("zeile", StringArgumentType.word())
+                        .then(argument("stueck", IntegerArgumentType.integer(0, 1_000_000)).executes(c -> {
+                            var l = ladenArg(c);
+                            if (l == null) return 0;
+                            var w = l.ware(StringArgumentType.getString(c, "zeile"));
+                            if (w == null) { c.getSource().sendFailure(Component.literal("Keine Ware mit dieser ID.")); return 0; }
+                            w.stock = Math.min(w.capacity, IntegerArgumentType.getInteger(c, "stueck"));
+                            MarktRuntime.markDirty();
+                            return say(c, w.name + ": Bestand " + w.stock + "/" + w.capacity + ".");
+                        })))))
                 .then(literal("entfernen").then(argument("laden", StringArgumentType.word()).suggests(LAEDEN)
                         .then(argument("zeile", StringArgumentType.word()).executes(c -> {
                             var l = ladenArg(c);

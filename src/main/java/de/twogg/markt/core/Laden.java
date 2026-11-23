@@ -22,6 +22,36 @@ public final class Laden {
     public List<Buy> buys = new ArrayList<>();
     public int nextOffer = 1;
 
+    /** Waren mit Lagerbestand und Preis nach Bestand (seit 0.5.0). */
+    public List<Ware> waren = new ArrayList<>();
+    /** Ankauf = Verkaufspreis × spread. */
+    public double spread = 0.6;
+    /** Wöchentliche Lieferung: Wochentag (MONDAY …), Uhrzeit, Zeitzone. Füllt bis zum Soll auf, Überschuss geht zurück. */
+    public String deliveryDay = "MONDAY";
+    public String deliveryTime = "06:00";
+    public String zone = "Europe/Berlin";
+    /** Zeitpunkt (ms) der letzten ausgeführten Lieferung. */
+    public long lastDelivery;
+
+    /** Eine Ware mit Lager: Preise in Zehnteln je Einheit ({@code unit} Stück), Bestände in Stück. */
+    public static final class Ware {
+        public String id = "";
+        public JsonElement item;
+        public String name = "";
+        public int unit = 1;
+        public long base = 10;
+        public long capacity = 64;
+        public long target = 32;
+        public long stock;
+        public long sold;
+        public long bought;
+    }
+
+    public Ware ware(String id) {
+        for (Ware w : waren) if (w.id.equals(id)) return w;
+        return null;
+    }
+
     public static final class Buy {
         public String id = "";
         /** Vorlage; angekauft wird jedes unbeschädigte Item dieser Art (Daten egal). */

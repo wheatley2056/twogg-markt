@@ -577,6 +577,80 @@ public final class MarktClientTest implements FabricClientGameTest {
         check(sold.equals("4/24"), "Ankauf: Tageslimit 2 × 8 Kohle für je 1,2 erwartet (Rest/Zehntel): " + sold);
         press(ctx, "Fertig", false);
         ctx.waitFor(mc -> mc.screen == null, 100);
+
+        // 0.5.0: Waren mit Lager – Import (inkl. Verzauberungsbuch mit Daten), Preis wandert, Lager voll, Lieferung
+        String imp = sp.getServer().computeOnServer(server -> {
+            try {
+                java.nio.file.Path f = de.twogg.markt.data.Store.configFile().getParent().resolve("testlager.json");
+                java.nio.file.Files.createDirectories(f.getParent());
+                java.nio.file.Files.writeString(f, "{\"spread\":0.6,\"waren\":["
+                        + "{\"item\":\"minecraft:cobblestone\",\"einheit\":64,\"preis\":0.5,\"lager\":256,\"soll\":128},"
+                        + "{\"stack\":{\"id\":\"minecraft:enchanted_book\",\"count\":1,\"components\":{\"minecraft:stored_enchantments\":{\"minecraft:mending\":1}}},"
+                        + "\"name\":\"Reparatur\",\"einheit\":1,\"preis\":12,\"lager\":4,\"soll\":1},"
+                        + "{\"item\":\"gibtsnicht:holz\",\"preis\":1}]}");
+                var l = MarktRuntime.data().laeden.get("lager");
+                return String.join(" | ", de.twogg.markt.server.LadenService.importFile(server.registryAccess(), l, "testlager"));
+            } catch (Exception e) {
+                return e.toString();
+            }
+        });
+        check(imp.startsWith("2 Waren übernommen") && imp.contains("gibtsnicht:holz"), "Import: " + imp);
+        String book = sp.getServer().computeOnServer(server -> {
+            var l = MarktRuntime.data().laeden.get("lager");
+            var w = l.waren.get(1);
+            ItemStack st = de.twogg.markt.data.Stacks.fromJson(server.registryAccess(), w.item);
+            return st.getItem() + " " + st.getComponentsPatch().isEmpty() + " " + w.stock;
+        });
+        check(book.contains("enchanted_book false 1"), "Buch mit Reparatur und Bestand 1: " + book);
+        String flow = sp.getServer().computeOnServer(server -> {
+            ServerPlayer p = player(server);
+            var l = MarktRuntime.data().laeden.get("lager");
+            var w = l.waren.get(0);
+            Economy.pay(p, Money.ofCoins(20), "test", "Lager");
+            long p0 = de.twogg.markt.core.StockMath.sellPrice(w.base, w.stock, w.target, w.capacity);
+            p.getInventory().clearContent();
+            p.getInventory().add(new ItemStack(net.minecraft.world.item.Items.COBBLESTONE, 64 * 5));
+            long bal = Economy.balance(p);
+            de.twogg.markt.net.Views.Action a = de.twogg.markt.net.Views.Action.of("sell");
+            a.id = w.id;
+            a.flag = true;
+            a.screen = "laden";
+            de.twogg.markt.server.Sessions.open(p, "laden", p.blockPosition(), null, "lager");
+            de.twogg.markt.server.LadenService.handle(p, a);
+            long earned = Economy.balance(p) - bal;
+            int left = p.getInventory().countItem(net.minecraft.world.item.Items.COBBLESTONE);
+            long stockFull = w.stock;
+            long p1 = de.twogg.markt.core.StockMath.sellPrice(w.base, w.stock, w.target, w.capacity);
+            de.twogg.markt.server.LadenService.deliver(l);
+            return earned + "/" + left + "/" + stockFull + "/" + (p1 < p0) + "/" + w.stock;
+        });
+        // 2 Stacks passen (128 → 256), Ankauf 0,3 × Faktor 1 bzw. ≈0,71 → 3 + 2 = 5 Zehntel; 3 Stacks bleiben übrig
+        check(flow.equals("5/192/256/true/128"), "Ankauf bis Lager voll, Preis fällt, Lieferung auf Soll: " + flow);
+        // die echte Liste für Brandt: alles Vanilla wird erkannt, nur die Mod-Platzhalter (MODID:) fehlen
+        String real = sp.getServer().computeOnServer(server -> {
+            try {
+                java.nio.file.Path src = java.nio.file.Path.of(System.getProperty("user.dir")).resolve("../../../beispiele/materiallager.json").normalize();
+                java.nio.file.Files.copy(src, de.twogg.markt.data.Store.configFile().getParent().resolve("materiallager.json"),
+                        java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                de.twogg.markt.server.LadenService.create("materiallager", "Materiallager");
+                var l = MarktRuntime.data().laeden.get("materiallager");
+                var out = de.twogg.markt.server.LadenService.importFile(server.registryAccess(), l, "materiallager");
+                boolean onlyMod = out.stream().skip(1).allMatch(x -> x.contains("MODID:"));
+                return out.get(0) + " · nur Mod-Platzhalter: " + onlyMod + " · " + l.waren.size();
+            } catch (Exception e) {
+                return e.toString();
+            }
+        });
+        check(real.startsWith("100 Waren übernommen, 9 übersprungen") && real.contains("nur Mod-Platzhalter: true"), "Materiallager-Liste: " + real);
+        sp.getServer().runCommand("markt laden oeffnen lager @p");
+        ctx.waitFor(mc -> mc.screen != null && mc.screen.getClass().getSimpleName().equals("LadenScreen"), 100);
+        ctx.waitTicks(10);
+        shot(ctx, "markt-20-lager-kaufen");
+        press(ctx, "Verkaufen", false);
+        ctx.waitTicks(5);
+        shot(ctx, "markt-21-lager-verkaufen");
+        press(ctx, "Fertig", false);
+        ctx.waitFor(mc -> mc.screen == null, 100);
     }
 
     /**

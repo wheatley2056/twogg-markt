@@ -1,0 +1,915 @@
+{
+  "_hinweis": "Warenliste Materiallager (Brandt). Preise in WLC je Einheit (einheit = Stück pro Handel) beim Sollbestand; leeres Lager = doppelt, volles Lager = halb so teuer. Ankauf = Preis × spread. Lieferung füllt jede Woche auf Soll und nimmt Überschuss mit. Einträge mit MODID: durch die echte Mod-ID ersetzen (z. B. natures_spirit:fir_log), sonst werden sie beim Import übersprungen. Kopieren nach config/twogg-markt/materiallager.json, dann /markt laden import materiallager materiallager",
+  "lieferung": {
+    "tag": "MONDAY",
+    "zeit": "06:00",
+    "zone": "Europe/Berlin"
+  },
+  "spread": 0.6,
+  "waren": [
+    {
+      "name": "Rohes Eisen",
+      "einheit": 8,
+      "preis": 0.8,
+      "lager": 1024,
+      "soll": 512,
+      "item": "raw_iron"
+    },
+    {
+      "name": "Rohes Kupfer",
+      "einheit": 16,
+      "preis": 0.6,
+      "lager": 1024,
+      "soll": 512,
+      "item": "raw_copper"
+    },
+    {
+      "name": "Rohes Gold",
+      "einheit": 8,
+      "preis": 1.2,
+      "lager": 512,
+      "soll": 256,
+      "item": "raw_gold"
+    },
+    {
+      "name": "Rohes Platin",
+      "einheit": 8,
+      "preis": 2.0,
+      "lager": 256,
+      "soll": 128,
+      "item": "MODID:raw_platinum"
+    },
+    {
+      "name": "Smaragd",
+      "einheit": 1,
+      "preis": 0.4,
+      "lager": 256,
+      "soll": 128,
+      "item": "emerald"
+    },
+    {
+      "name": "Redstone-Staub",
+      "einheit": 32,
+      "preis": 0.6,
+      "lager": 2048,
+      "soll": 1024,
+      "item": "redstone"
+    },
+    {
+      "name": "Lapislazuli",
+      "einheit": 16,
+      "preis": 0.6,
+      "lager": 1024,
+      "soll": 512,
+      "item": "lapis_lazuli"
+    },
+    {
+      "name": "Kohle",
+      "einheit": 32,
+      "preis": 0.6,
+      "lager": 2048,
+      "soll": 1024,
+      "item": "coal"
+    },
+    {
+      "name": "Diamant",
+      "einheit": 1,
+      "preis": 1.5,
+      "lager": 128,
+      "soll": 32,
+      "item": "diamond"
+    },
+    {
+      "name": "Faden",
+      "einheit": 16,
+      "preis": 0.3,
+      "lager": 512,
+      "soll": 256,
+      "item": "string"
+    },
+    {
+      "name": "Glowstone-Staub",
+      "einheit": 16,
+      "preis": 0.6,
+      "lager": 512,
+      "soll": 256,
+      "item": "glowstone_dust"
+    },
+    {
+      "name": "Netherwarze",
+      "einheit": 16,
+      "preis": 0.5,
+      "lager": 512,
+      "soll": 256,
+      "item": "nether_wart"
+    },
+    {
+      "name": "Magmacreme",
+      "einheit": 4,
+      "preis": 0.6,
+      "lager": 128,
+      "soll": 64,
+      "item": "magma_cream"
+    },
+    {
+      "name": "Lohenrute",
+      "einheit": 1,
+      "preis": 0.5,
+      "lager": 128,
+      "soll": 64,
+      "item": "blaze_rod"
+    },
+    {
+      "name": "Netherquarz",
+      "einheit": 32,
+      "preis": 0.6,
+      "lager": 1024,
+      "soll": 512,
+      "item": "quartz"
+    },
+    {
+      "name": "Schleimball",
+      "einheit": 8,
+      "preis": 0.5,
+      "lager": 256,
+      "soll": 128,
+      "item": "slime_ball"
+    },
+    {
+      "name": "Honigwabe",
+      "einheit": 8,
+      "preis": 0.5,
+      "lager": 256,
+      "soll": 128,
+      "item": "honeycomb"
+    },
+    {
+      "name": "Amethystscherbe",
+      "einheit": 8,
+      "preis": 0.4,
+      "lager": 512,
+      "soll": 256,
+      "item": "amethyst_shard"
+    },
+    {
+      "name": "Leder",
+      "einheit": 8,
+      "preis": 0.5,
+      "lager": 512,
+      "soll": 256,
+      "item": "leather"
+    },
+    {
+      "name": "Feder",
+      "einheit": 16,
+      "preis": 0.3,
+      "lager": 512,
+      "soll": 256,
+      "item": "feather"
+    },
+    {
+      "name": "Tintenbeutel",
+      "einheit": 8,
+      "preis": 0.4,
+      "lager": 256,
+      "soll": 128,
+      "item": "ink_sac"
+    },
+    {
+      "name": "Ghastträne",
+      "einheit": 1,
+      "preis": 1.0,
+      "lager": 32,
+      "soll": 8,
+      "item": "ghast_tear"
+    },
+    {
+      "name": "Drachenatem",
+      "einheit": 1,
+      "preis": 1.5,
+      "lager": 32,
+      "soll": 8,
+      "item": "dragon_breath"
+    },
+    {
+      "name": "Ausgetrockneter Ghast",
+      "einheit": 1,
+      "preis": 5.0,
+      "lager": 8,
+      "soll": 2,
+      "item": "dried_ghast"
+    },
+    {
+      "name": "Verzauberungsbuch: Reparatur",
+      "einheit": 1,
+      "preis": 12.0,
+      "lager": 4,
+      "soll": 1,
+      "stack": {
+        "id": "minecraft:enchanted_book",
+        "count": 1,
+        "components": {
+          "minecraft:stored_enchantments": {
+            "minecraft:mending": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "Verzauberungsbuch: Haltbarkeit III",
+      "einheit": 1,
+      "preis": 4.0,
+      "lager": 8,
+      "soll": 2,
+      "stack": {
+        "id": "minecraft:enchanted_book",
+        "count": 1,
+        "components": {
+          "minecraft:stored_enchantments": {
+            "minecraft:unbreaking": 3
+          }
+        }
+      }
+    },
+    {
+      "name": "Verzauberungsbuch: Effizienz IV",
+      "einheit": 1,
+      "preis": 4.0,
+      "lager": 8,
+      "soll": 2,
+      "stack": {
+        "id": "minecraft:enchanted_book",
+        "count": 1,
+        "components": {
+          "minecraft:stored_enchantments": {
+            "minecraft:efficiency": 4
+          }
+        }
+      }
+    },
+    {
+      "name": "Verzauberungsbuch: Huschen III",
+      "einheit": 1,
+      "preis": 8.0,
+      "lager": 4,
+      "soll": 1,
+      "stack": {
+        "id": "minecraft:enchanted_book",
+        "count": 1,
+        "components": {
+          "minecraft:stored_enchantments": {
+            "minecraft:swift_sneak": 3
+          }
+        }
+      }
+    },
+    {
+      "name": "Schallplatte „Pigstep“",
+      "einheit": 1,
+      "preis": 6.0,
+      "lager": 2,
+      "soll": 1,
+      "item": "music_disc_pigstep"
+    },
+    {
+      "name": "Schallplatte „Tears“",
+      "einheit": 1,
+      "preis": 6.0,
+      "lager": 2,
+      "soll": 1,
+      "item": "music_disc_tears"
+    },
+    {
+      "name": "Rüstungsbesatz „Rippe“",
+      "einheit": 1,
+      "preis": 5.0,
+      "lager": 4,
+      "soll": 1,
+      "item": "rib_armor_trim_smithing_template"
+    },
+    {
+      "name": "Rüstungsbesatz „Schnauze“",
+      "einheit": 1,
+      "preis": 4.0,
+      "lager": 4,
+      "soll": 1,
+      "item": "snout_armor_trim_smithing_template"
+    },
+    {
+      "name": "Rüstungsbesatz „Turmspitze“",
+      "einheit": 1,
+      "preis": 6.0,
+      "lager": 4,
+      "soll": 1,
+      "item": "spire_armor_trim_smithing_template"
+    },
+    {
+      "name": "Chorusfrucht",
+      "einheit": 16,
+      "preis": 0.5,
+      "lager": 512,
+      "soll": 256,
+      "item": "chorus_fruit"
+    },
+    {
+      "name": "Shulkerschale",
+      "einheit": 1,
+      "preis": 3.0,
+      "lager": 16,
+      "soll": 4,
+      "item": "shulker_shell"
+    },
+    {
+      "name": "Bannervorlage „Schnauze“",
+      "einheit": 1,
+      "preis": 2.0,
+      "lager": 4,
+      "soll": 1,
+      "item": "piglin_banner_pattern"
+    },
+    {
+      "name": "Zuckerrohr",
+      "einheit": 32,
+      "preis": 0.4,
+      "lager": 1024,
+      "soll": 512,
+      "item": "sugar_cane"
+    },
+    {
+      "name": "Weißer Farbstoff",
+      "einheit": 16,
+      "preis": 0.3,
+      "lager": 512,
+      "soll": 256,
+      "item": "white_dye"
+    },
+    {
+      "name": "Hellgrauer Farbstoff",
+      "einheit": 16,
+      "preis": 0.3,
+      "lager": 512,
+      "soll": 256,
+      "item": "light_gray_dye"
+    },
+    {
+      "name": "Grauer Farbstoff",
+      "einheit": 16,
+      "preis": 0.3,
+      "lager": 512,
+      "soll": 256,
+      "item": "gray_dye"
+    },
+    {
+      "name": "Schwarzer Farbstoff",
+      "einheit": 16,
+      "preis": 0.3,
+      "lager": 512,
+      "soll": 256,
+      "item": "black_dye"
+    },
+    {
+      "name": "Brauner Farbstoff",
+      "einheit": 16,
+      "preis": 0.3,
+      "lager": 512,
+      "soll": 256,
+      "item": "brown_dye"
+    },
+    {
+      "name": "Roter Farbstoff",
+      "einheit": 16,
+      "preis": 0.3,
+      "lager": 512,
+      "soll": 256,
+      "item": "red_dye"
+    },
+    {
+      "name": "Oranger Farbstoff",
+      "einheit": 16,
+      "preis": 0.3,
+      "lager": 512,
+      "soll": 256,
+      "item": "orange_dye"
+    },
+    {
+      "name": "Gelber Farbstoff",
+      "einheit": 16,
+      "preis": 0.3,
+      "lager": 512,
+      "soll": 256,
+      "item": "yellow_dye"
+    },
+    {
+      "name": "Hellgrüner Farbstoff",
+      "einheit": 16,
+      "preis": 0.3,
+      "lager": 512,
+      "soll": 256,
+      "item": "lime_dye"
+    },
+    {
+      "name": "Grüner Farbstoff",
+      "einheit": 16,
+      "preis": 0.3,
+      "lager": 512,
+      "soll": 256,
+      "item": "green_dye"
+    },
+    {
+      "name": "Türkiser Farbstoff",
+      "einheit": 16,
+      "preis": 0.3,
+      "lager": 512,
+      "soll": 256,
+      "item": "cyan_dye"
+    },
+    {
+      "name": "Hellblauer Farbstoff",
+      "einheit": 16,
+      "preis": 0.3,
+      "lager": 512,
+      "soll": 256,
+      "item": "light_blue_dye"
+    },
+    {
+      "name": "Blauer Farbstoff",
+      "einheit": 16,
+      "preis": 0.3,
+      "lager": 512,
+      "soll": 256,
+      "item": "blue_dye"
+    },
+    {
+      "name": "Violetter Farbstoff",
+      "einheit": 16,
+      "preis": 0.3,
+      "lager": 512,
+      "soll": 256,
+      "item": "purple_dye"
+    },
+    {
+      "name": "Magenta Farbstoff",
+      "einheit": 16,
+      "preis": 0.3,
+      "lager": 512,
+      "soll": 256,
+      "item": "magenta_dye"
+    },
+    {
+      "name": "Rosa Farbstoff",
+      "einheit": 16,
+      "preis": 0.3,
+      "lager": 512,
+      "soll": 256,
+      "item": "pink_dye"
+    },
+    {
+      "name": "Kürbiskerne",
+      "einheit": 16,
+      "preis": 0.2,
+      "lager": 512,
+      "soll": 256,
+      "item": "pumpkin_seeds"
+    },
+    {
+      "name": "Melonenkerne",
+      "einheit": 16,
+      "preis": 0.2,
+      "lager": 512,
+      "soll": 256,
+      "item": "melon_seeds"
+    },
+    {
+      "name": "Rote-Bete-Samen",
+      "einheit": 16,
+      "preis": 0.2,
+      "lager": 512,
+      "soll": 256,
+      "item": "beetroot_seeds"
+    },
+    {
+      "name": "Winterbeeren-Samen",
+      "einheit": 16,
+      "preis": 0.4,
+      "lager": 512,
+      "soll": 256,
+      "item": "MODID:winterberry_seeds"
+    },
+    {
+      "name": "Knochen",
+      "einheit": 16,
+      "preis": 0.4,
+      "lager": 512,
+      "soll": 256,
+      "item": "bone"
+    },
+    {
+      "name": "Lavaeimer",
+      "einheit": 1,
+      "preis": 0.5,
+      "lager": 16,
+      "soll": 8,
+      "item": "lava_bucket"
+    },
+    {
+      "name": "Bruchstein",
+      "einheit": 64,
+      "preis": 0.4,
+      "lager": 4096,
+      "soll": 2048,
+      "item": "cobblestone"
+    },
+    {
+      "name": "Kies",
+      "einheit": 64,
+      "preis": 0.4,
+      "lager": 4096,
+      "soll": 2048,
+      "item": "gravel"
+    },
+    {
+      "name": "Sand",
+      "einheit": 64,
+      "preis": 0.5,
+      "lager": 4096,
+      "soll": 2048,
+      "item": "sand"
+    },
+    {
+      "name": "Erde",
+      "einheit": 64,
+      "preis": 0.3,
+      "lager": 4096,
+      "soll": 2048,
+      "item": "dirt"
+    },
+    {
+      "name": "Schwarzstein",
+      "einheit": 64,
+      "preis": 0.6,
+      "lager": 4096,
+      "soll": 2048,
+      "item": "blackstone"
+    },
+    {
+      "name": "Netherrack",
+      "einheit": 64,
+      "preis": 0.3,
+      "lager": 4096,
+      "soll": 2048,
+      "item": "netherrack"
+    },
+    {
+      "name": "Basalt",
+      "einheit": 64,
+      "preis": 0.6,
+      "lager": 4096,
+      "soll": 2048,
+      "item": "basalt"
+    },
+    {
+      "name": "Tuff",
+      "einheit": 64,
+      "preis": 0.5,
+      "lager": 4096,
+      "soll": 2048,
+      "item": "tuff"
+    },
+    {
+      "name": "Andesit",
+      "einheit": 64,
+      "preis": 0.5,
+      "lager": 4096,
+      "soll": 2048,
+      "item": "andesite"
+    },
+    {
+      "name": "Diorit",
+      "einheit": 64,
+      "preis": 0.5,
+      "lager": 4096,
+      "soll": 2048,
+      "item": "diorite"
+    },
+    {
+      "name": "Granit",
+      "einheit": 64,
+      "preis": 0.5,
+      "lager": 4096,
+      "soll": 2048,
+      "item": "granite"
+    },
+    {
+      "name": "Calcit",
+      "einheit": 64,
+      "preis": 0.6,
+      "lager": 4096,
+      "soll": 2048,
+      "item": "calcite"
+    },
+    {
+      "name": "Keramik",
+      "einheit": 64,
+      "preis": 0.8,
+      "lager": 4096,
+      "soll": 2048,
+      "item": "terracotta"
+    },
+    {
+      "name": "Roter Sand",
+      "einheit": 64,
+      "preis": 0.6,
+      "lager": 4096,
+      "soll": 2048,
+      "item": "red_sand"
+    },
+    {
+      "name": "Endstein",
+      "einheit": 64,
+      "preis": 1.0,
+      "lager": 4096,
+      "soll": 2048,
+      "item": "end_stone"
+    },
+    {
+      "name": "Kaolin",
+      "einheit": 64,
+      "preis": 0.6,
+      "lager": 4096,
+      "soll": 2048,
+      "item": "MODID:kaolin"
+    },
+    {
+      "name": "Gips",
+      "einheit": 64,
+      "preis": 0.6,
+      "lager": 4096,
+      "soll": 2048,
+      "item": "MODID:gypsum"
+    },
+    {
+      "name": "Speckstein",
+      "einheit": 64,
+      "preis": 0.6,
+      "lager": 4096,
+      "soll": 2048,
+      "item": "MODID:soapstone"
+    },
+    {
+      "name": "Eichenstamm",
+      "einheit": 32,
+      "preis": 0.8,
+      "lager": 2048,
+      "soll": 1024,
+      "item": "oak_log"
+    },
+    {
+      "name": "Fichtenstamm",
+      "einheit": 32,
+      "preis": 0.8,
+      "lager": 2048,
+      "soll": 1024,
+      "item": "spruce_log"
+    },
+    {
+      "name": "Birkenstamm",
+      "einheit": 32,
+      "preis": 0.8,
+      "lager": 2048,
+      "soll": 1024,
+      "item": "birch_log"
+    },
+    {
+      "name": "Tropenbaumstamm",
+      "einheit": 32,
+      "preis": 0.8,
+      "lager": 2048,
+      "soll": 1024,
+      "item": "jungle_log"
+    },
+    {
+      "name": "Akazienstamm",
+      "einheit": 32,
+      "preis": 0.8,
+      "lager": 2048,
+      "soll": 1024,
+      "item": "acacia_log"
+    },
+    {
+      "name": "Schwarzeichenstamm",
+      "einheit": 32,
+      "preis": 0.8,
+      "lager": 2048,
+      "soll": 1024,
+      "item": "dark_oak_log"
+    },
+    {
+      "name": "Mangrovenstamm",
+      "einheit": 32,
+      "preis": 0.8,
+      "lager": 2048,
+      "soll": 1024,
+      "item": "mangrove_log"
+    },
+    {
+      "name": "Kirschbaumstamm",
+      "einheit": 32,
+      "preis": 0.8,
+      "lager": 2048,
+      "soll": 1024,
+      "item": "cherry_log"
+    },
+    {
+      "name": "Blasseichenstamm",
+      "einheit": 32,
+      "preis": 0.8,
+      "lager": 2048,
+      "soll": 1024,
+      "item": "pale_oak_log"
+    },
+    {
+      "name": "Tannenstamm",
+      "einheit": 32,
+      "preis": 0.8,
+      "lager": 2048,
+      "soll": 1024,
+      "item": "MODID:fir_log"
+    },
+    {
+      "name": "Korkstamm",
+      "einheit": 32,
+      "preis": 0.8,
+      "lager": 2048,
+      "soll": 1024,
+      "item": "MODID:cork_log"
+    },
+    {
+      "name": "Karmesinstiel",
+      "einheit": 32,
+      "preis": 0.8,
+      "lager": 2048,
+      "soll": 1024,
+      "item": "crimson_stem"
+    },
+    {
+      "name": "Wirrstiel",
+      "einheit": 32,
+      "preis": 0.8,
+      "lager": 2048,
+      "soll": 1024,
+      "item": "warped_stem"
+    },
+    {
+      "name": "Eichenlaub",
+      "einheit": 32,
+      "preis": 0.3,
+      "lager": 1024,
+      "soll": 512,
+      "item": "oak_leaves"
+    },
+    {
+      "name": "Fichtenlaub",
+      "einheit": 32,
+      "preis": 0.3,
+      "lager": 1024,
+      "soll": 512,
+      "item": "spruce_leaves"
+    },
+    {
+      "name": "Birkenlaub",
+      "einheit": 32,
+      "preis": 0.3,
+      "lager": 1024,
+      "soll": 512,
+      "item": "birch_leaves"
+    },
+    {
+      "name": "Tropenbaumlaub",
+      "einheit": 32,
+      "preis": 0.3,
+      "lager": 1024,
+      "soll": 512,
+      "item": "jungle_leaves"
+    },
+    {
+      "name": "Akazienlaub",
+      "einheit": 32,
+      "preis": 0.3,
+      "lager": 1024,
+      "soll": 512,
+      "item": "acacia_leaves"
+    },
+    {
+      "name": "Schwarzeichenlaub",
+      "einheit": 32,
+      "preis": 0.3,
+      "lager": 1024,
+      "soll": 512,
+      "item": "dark_oak_leaves"
+    },
+    {
+      "name": "Mangrovenlaub",
+      "einheit": 32,
+      "preis": 0.3,
+      "lager": 1024,
+      "soll": 512,
+      "item": "mangrove_leaves"
+    },
+    {
+      "name": "Kirschlaub",
+      "einheit": 32,
+      "preis": 0.3,
+      "lager": 1024,
+      "soll": 512,
+      "item": "cherry_leaves"
+    },
+    {
+      "name": "Blasseichenlaub",
+      "einheit": 32,
+      "preis": 0.3,
+      "lager": 1024,
+      "soll": 512,
+      "item": "pale_oak_leaves"
+    },
+    {
+      "name": "Azaleenlaub",
+      "einheit": 32,
+      "preis": 0.3,
+      "lager": 1024,
+      "soll": 512,
+      "item": "azalea_leaves"
+    },
+    {
+      "name": "Blühende Azaleenlaub",
+      "einheit": 32,
+      "preis": 0.3,
+      "lager": 1024,
+      "soll": 512,
+      "item": "flowering_azalea_leaves"
+    },
+    {
+      "name": "Tannenlaub",
+      "einheit": 32,
+      "preis": 0.3,
+      "lager": 1024,
+      "soll": 512,
+      "item": "MODID:fir_leaves"
+    },
+    {
+      "name": "Korklaub",
+      "einheit": 32,
+      "preis": 0.3,
+      "lager": 1024,
+      "soll": 512,
+      "item": "MODID:cork_leaves"
+    },
+    {
+      "name": "Weiße Wolle",
+      "einheit": 16,
+      "preis": 0.5,
+      "lager": 512,
+      "soll": 256,
+      "item": "white_wool"
+    },
+    {
+      "name": "Tonblock",
+      "einheit": 32,
+      "preis": 0.6,
+      "lager": 1024,
+      "soll": 512,
+      "item": "clay"
+    },
+    {
+      "name": "Glas",
+      "einheit": 32,
+      "preis": 0.6,
+      "lager": 1024,
+      "soll": 512,
+      "item": "glass"
+    },
+    {
+      "name": "Moosblock",
+      "einheit": 32,
+      "preis": 0.5,
+      "lager": 1024,
+      "soll": 512,
+      "item": "moss_block"
+    },
+    {
+      "name": "Seelensand",
+      "einheit": 32,
+      "preis": 0.5,
+      "lager": 1024,
+      "soll": 512,
+      "item": "soul_sand"
+    },
+    {
+      "name": "Seelenerde",
+      "einheit": 32,
+      "preis": 0.5,
+      "lager": 1024,
+      "soll": 512,
+      "item": "soul_soil"
+    }
+  ]
+}
