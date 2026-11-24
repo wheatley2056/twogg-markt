@@ -2,6 +2,16 @@
 
 
 
+## 0.5.1+26.1.2 – 24.11.2026 – Auftragsbrett oben klickbar
+
+- **Fix: Auftragsbrett nur unten klickbar.** Das Modell ist zwei Blöcke hoch, Minecraft prüft Klicks aber nur im
+  eigenen Blockfeld. Über dem Brett steht jetzt ein unsichtbarer Aufsatz (`twogg_markt:job_board_top`, ohne Item und
+  Drop) mit Umriss für Pfosten, Brett, Hakenleiste und Dach; Rechtsklick dort öffnet das Brett darunter. Wird das Brett
+  entfernt, verschwindet der Aufsatz; Abbauen des Aufsatzes (Kreativ) baut das Brett mit ab.
+- Neu gesetzte Bretter bekommen den Aufsatz sofort (Platz darüber nötig). **Bereits stehende Bretter** werden beim
+  ersten Rechtsklick (unten) nachgerüstet, wenn darüber Luft ist.
+- Spieltest: Aufsatz vorhanden, mit Umriss, und ein Klick auf die obere Hälfte öffnet das Auftragsbrett.
+
 ## 0.5.0+26.1.2 – 23.11.2026 – Waren mit Lager und Preis nach Bestand
 
 - **Waren mit Lager** im Laden: Grundpreis je Einheit, Lagerplatz, Sollbestand. Preis = Grundpreis × 2^((Soll − Bestand)

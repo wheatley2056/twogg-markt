@@ -220,16 +220,24 @@ public final class MarktClientTest implements FabricClientGameTest {
             // 7) Auftragsbrett: Marktauftrag liefern, eigenen Auftrag aushängen
             BlockPos board = base.offset(MarktKulisse.BOARD);
             String job = sp.getServer().computeOnServer(server -> {
-                server.overworld().setBlockAndUpdate(board, ModContent.BOARD.defaultBlockState());
+                var lvl = server.overworld();
+                lvl.setBlockAndUpdate(board, ModContent.BOARD.defaultBlockState());
+                ((de.twogg.markt.content.BoardBlock) ModContent.BOARD).ensureTop(lvl, board, lvl.getBlockState(board));
                 Job j = MarktRuntime.data().jobs.stream().filter(x -> x.system).findFirst().orElse(null);
                 if (j == null) return "";
                 ServerPlayer p = player(server);
                 var item = net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(net.minecraft.resources.Identifier.parse(j.item));
                 p.getInventory().add(new ItemStack(item, j.count));
-                BoardService.open(p, board);
+                // Seit 0.5.1: die obere Hälfte ist ein eigener (unsichtbarer) Block und öffnet das Brett darunter
+                if (!lvl.getBlockState(board.above()).is(ModContent.BOARD_TOP)) return "";
+                var top = board.above();
+                if (lvl.getBlockState(top).getShape(lvl, top).isEmpty()) return "";
+                var hit = new net.minecraft.world.phys.BlockHitResult(
+                        net.minecraft.world.phys.Vec3.atCenterOf(top), net.minecraft.core.Direction.NORTH, top, false);
+                p.gameMode.useItemOn(p, lvl, ItemStack.EMPTY, InteractionHand.MAIN_HAND, hit);
                 return j.id + ":" + j.reward;
             });
-            check(!job.isEmpty(), "Keine Marktaufträge am Brett");
+            check(!job.isEmpty(), "Keine Marktaufträge am Brett oder Aufsatz des Bretts fehlt/ohne Umriss");
             ctx.waitFor(mc -> mc.screen != null && mc.screen.getClass().getSimpleName().equals("BoardScreen"), 100);
             ctx.waitTicks(5);
             shot(ctx, "markt-11-auftragsbrett");

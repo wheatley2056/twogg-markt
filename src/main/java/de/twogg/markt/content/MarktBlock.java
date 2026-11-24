@@ -64,4 +64,9 @@ public class MarktBlock extends HorizontalDirectionalBlock {
         if (!level.isClientSide() && player instanceof ServerPlayer sp) onUse.accept(sp, pos);
         return InteractionResult.SUCCESS;
     }
+
+    /** Öffnet das Fenster dieses Blocks für {@code player} an {@code pos} (wie ein Rechtsklick). */
+    void open(ServerPlayer player, BlockPos pos) {
+        onUse.accept(player, pos);
+    }
 }

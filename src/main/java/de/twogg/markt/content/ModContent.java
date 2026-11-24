@@ -49,8 +49,17 @@ public final class ModContent {
             Shapes.or(Block.box(0, 0, 1, 16, 12, 16), Block.box(0.5, 12, 2.5, 16, 16, 9), Block.box(1, 12, 9.5, 6, 16, 13.5),
                     Block.box(0.5, 12, 14.5, 15.5, 16, 16)));
     /** Auftragsbrett: Marktaufträge und Aufträge von Spielern. */
-    public static final Block BOARD = block("job_board", BoardService::open, true, SoundType.WOOD, MapColor.WOOD,
-            Shapes.or(Block.box(0, 0, 7, 2, 16, 9), Block.box(14, 0, 7, 16, 16, 9), Block.box(2, 6, 6.5, 14, 16, 9.5)));
+    // Zwei Blöcke hoch: unten das Brett, darüber ein unsichtbarer Aufsatz für die obere Hälfte (sonst nur unten klickbar).
+    public static final Block BOARD = register("job_board", true, SoundType.WOOD, MapColor.WOOD,
+            p -> new BoardBlock(p, BoardService::open,
+                    Shapes.or(Block.box(0, 0, 7, 2, 16, 9), Block.box(14, 0, 7, 16, 16, 9), Block.box(2, 6, 6.5, 14, 16, 9.5)),
+                    () -> ModContent.BOARD_TOP));
+    /** Oberer Teil des Auftragsbretts (unsichtbar, ohne Item): Pfosten, Brett, Leiste mit Haken und Dach. */
+    public static final Block BOARD_TOP = register("job_board_top", true, SoundType.WOOD, MapColor.WOOD,
+            p -> new BoardTopBlock(p.noLootTable(),
+                    Shapes.or(Block.box(0, 0, 7, 2, 13, 9), Block.box(14, 0, 7, 16, 13, 9), Block.box(2, 0, 6.5, 14, 8, 9.5),
+                            Block.box(0, 7.5, 5.5, 16, 12, 7), Block.box(1, 13, 7, 15, 14, 9), Block.box(0, 13, 2, 16, 15.5, 14)),
+                    () -> ModContent.BOARD));
 
     /** Losbude: Lose und Wichteln während des Events, Ziehung und Verteilung bei der Siegerehrung. */
     public static final Block LOTTERY = block("lottery_booth", ActivityService::openLottery, true, SoundType.WOOD, MapColor.COLOR_RED,
@@ -97,11 +106,16 @@ public final class ModContent {
 
     private static Block block(String name, BiConsumer<ServerPlayer, BlockPos> onUse, boolean fixed, SoundType sound,
                                MapColor color, VoxelShape shape) {
+        return register(name, fixed, sound, color, p -> new MarktBlock(p, onUse, shape));
+    }
+
+    private static Block register(String name, boolean fixed, SoundType sound, MapColor color,
+                                  java.util.function.Function<BlockBehaviour.Properties, Block> factory) {
         ResourceKey<Block> key = ResourceKey.create(Registries.BLOCK, TwoggMarkt.id(name));
         BlockBehaviour.Properties p = BlockBehaviour.Properties.of().setId(key).mapColor(color).sound(sound).noOcclusion();
         // Feste Admin-Blöcke wie das Bankterminal: Spieler können sie nicht abbauen (nur im Kreativmodus)
         p = fixed ? p.strength(-1.0f, 3_600_000f) : p.strength(2.0f, 3.0f);
-        return Registry.register(BuiltInRegistries.BLOCK, key, new MarktBlock(p, onUse, shape));
+        return Registry.register(BuiltInRegistries.BLOCK, key, factory.apply(p));
     }
 
     private static Item blockItem(String name, Block block, Rarity rarity) {
