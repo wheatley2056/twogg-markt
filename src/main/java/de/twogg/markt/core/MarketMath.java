@@ -18,6 +18,14 @@ public final class MarketMath {
         return Math.max(1, (long) Math.ceil(euro / rate * 10.0 - 1e-9));
     }
 
+    /**
+     * Theke (seit 0.5.2): Ist das Angebot seit der Anzeige teurer oder kleiner geworden? {@code shownPrice}/{@code shownCount}
+     * schickt der Client mit; 0 = unbekannt (ältere Clients), dann wird nicht verglichen.
+     */
+    public static boolean offerWorse(long shownPrice, double shownCount, long price, int count) {
+        return (shownPrice > 0 && price > shownPrice) || (shownCount > 0 && count < shownCount);
+    }
+
     /** Coins (1,5) in Zehntel (15), kaufmännisch gerundet. */
     public static long tenths(double coins) {
         return Math.round(coins * 10.0);

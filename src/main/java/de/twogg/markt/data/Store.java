@@ -44,6 +44,24 @@ public final class Store {
             return c;
         } catch (IOException | RuntimeException e) {
             TwoggMarkt.LOGGER.error("config/twogg-markt/markt.json ist fehlerhaft ({}). Es gelten die Standardwerte, die Datei bleibt unverändert.", e.toString());
+            backupBroken(f);
+            return null;
+        }
+    }
+
+    /**
+     * Kopie einer fehlerhaften Datei ablegen ({@code markt.json.broken-<Zeit>}). Speichert danach jemand im Admin-Fenster,
+     * überschreibt das die Datei mit den Standardwerten – die Kopie hält die Handarbeit fest.
+     */
+    static Path backupBroken(Path f) {
+        try {
+            if (!Files.exists(f)) return null;
+            Path b = f.resolveSibling(f.getFileName() + ".broken-" + new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date()));
+            Files.copy(f, b, StandardCopyOption.REPLACE_EXISTING);
+            TwoggMarkt.LOGGER.warn("Kopie der fehlerhaften Datei: {}", b.getFileName());
+            return b;
+        } catch (IOException e) {
+            TwoggMarkt.LOGGER.warn("Kopie von {} nicht angelegt: {}", f.getFileName(), e.toString());
             return null;
         }
     }
@@ -52,7 +70,8 @@ public final class Store {
         try {
             Files.createDirectories(configFile().getParent());
             write(configFile(), GSON.toJson(c));
-        } catch (IOException e) {
+        } catch (IOException | RuntimeException e) {
+            // RuntimeException: z. B. NaN in einem Feld (Gson schreibt das nicht) – nicht den Server-Tick abbrechen (seit 0.5.2)
             TwoggMarkt.LOGGER.error("Einstellungen nicht gespeichert: {}", e.toString());
         }
     }
@@ -88,7 +107,8 @@ public final class Store {
         try {
             Files.createDirectories(dir);
             write(dir.resolve("markt.json"), GSON.toJson(d));
-        } catch (IOException e) {
+        } catch (IOException | RuntimeException e) {
+            // RuntimeException: z. B. NaN in einem Feld (Gson schreibt das nicht) – nicht den Server-Tick abbrechen (seit 0.5.2)
             TwoggMarkt.LOGGER.error("Marktdaten nicht gespeichert: {}", e.toString());
         }
     }

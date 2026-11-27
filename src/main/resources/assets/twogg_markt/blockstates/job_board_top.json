@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "twogg_markt:block/job_board_top"
+    },
+    "facing=east": {
+      "model": "twogg_markt:block/job_board_top",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "twogg_markt:block/job_board_top",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "twogg_markt:block/job_board_top",
+      "y": 270
+    }
+  }
+}

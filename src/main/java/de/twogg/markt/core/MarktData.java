@@ -12,6 +12,8 @@ import java.util.Map;
 public final class MarktData {
     public int version = 1;
     public Map<String, Plot> plots = new LinkedHashMap<>();
+    /** Server-Läden (seit 0.4.0): ID → Laden. */
+    public Map<String, Laden> laeden = new LinkedHashMap<>();
     /** Räumdienst-Zonen: ID → Bereich. */
     public Map<String, Zone> zones = new LinkedHashMap<>();
     public List<Job> jobs = new ArrayList<>();
@@ -41,6 +43,8 @@ public final class MarktData {
     /** Adventskalender: Jahr und geöffnete Türchen pro Spieler. */
     public int adventYear;
     public Map<String, List<Integer>> advent = new HashMap<>();
+    /** Spieler (UUID), die das Markt-Handbuch schon bekommen haben (seit 0.3.0). */
+    public java.util.Set<String> guideGiven = new java.util.HashSet<>();
 
     public static final class Zone {
         public String id = "";
@@ -62,6 +66,14 @@ public final class MarktData {
 
     public void sanitize() {
         if (plots == null) plots = new LinkedHashMap<>();
+        if (laeden == null) laeden = new LinkedHashMap<>();
+        for (Laden l : laeden.values()) {
+            if (l.sells == null) l.sells = new ArrayList<>();
+            if (l.buys == null) l.buys = new ArrayList<>();
+            if (l.waren == null) l.waren = new ArrayList<>();
+            // NaN/unendlich aus Hand-Edits ließe das Speichern scheitern; Ankauf höchstens 0,95 × Preis (seit 0.5.2)
+            l.spread = Double.isFinite(l.spread) ? StockMath.spread(l.spread) : 0.6;
+        }
         if (zones == null) zones = new LinkedHashMap<>();
         if (jobs == null) jobs = new ArrayList<>();
         if (sold == null) sold = new HashMap<>();
@@ -72,6 +84,7 @@ public final class MarktData {
         if (event == null) event = new MarktEvent();
         event.sanitize();
         if (advent == null) advent = new HashMap<>();
+        if (guideGiven == null) guideGiven = new java.util.HashSet<>();
         if (leaderboardHolo == null) leaderboardHolo = "";
         plots.values().removeIf(p -> p == null || p.box == null);
         for (Map.Entry<String, Plot> e : plots.entrySet()) {

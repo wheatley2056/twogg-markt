@@ -5,7 +5,7 @@ Spieler **mieten** sie für einen Zeitraum oder **kaufen** sie und verkaufen an 
 Spieler. Dazu kommen Nebenverdienste neben der eigentlichen Arbeit auf Winterland: **Ankauf**, **Auftragsbrett** und
 **Räumdienst**. Bezahlt wird mit [TwoGG Economy](../twogg-economy) (Konto oder Bargeld, Preise folgen dem Wertkurs).
 
-Aktuelle Version: **0.2.1+26.1.2**
+Aktuelle Version: **0.2.2+26.1.2**
 
 ## Features
 
@@ -54,7 +54,7 @@ Aktuelle Version: **0.2.1+26.1.2**
 | TwoGG Roleplay | optional; dann gelten die Konten pro Charakter der Economy |
 | Seite | **Server und alle Clients** |
 
-1. `twogg-markt-0.2.1+26.1.2.jar` zusammen mit Kit, Economy und Fabric API in `mods/` auf dem Server und bei allen
+1. `twogg-markt-0.2.2+26.1.2.jar` zusammen mit Kit, Economy und Fabric API in `mods/` auf dem Server und bei allen
    Spielern ablegen.
 2. Beim ersten Start entsteht `config/twogg-markt/markt.json` mit der Weihnachtsmarkt-Vorlage.
 3. Die Marktdaten liegen in der Welt unter `<welt>/twogg-markt/`.
@@ -122,7 +122,7 @@ Alle Werte stehen in `config/twogg-markt/markt.json` bzw. pro Stand in der Markt
 ```
 cd ../twogg-kit && ./gradlew publishToMavenLocal
 cd ../twogg-markt
-./gradlew build      # → build/libs/twogg-markt-0.2.1+26.1.2.jar
+./gradlew build      # → build/libs/twogg-markt-0.2.2+26.1.2.jar
 ./gradlew test       # Logik-Kern (MarketMathTest, EventTest)
 xvfb-run -a ./gradlew runClientGameTest   # Durchgang im echten Spiel mit Screenshots
 ```

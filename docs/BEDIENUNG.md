@@ -15,6 +15,20 @@ Preise für Stände und die Theke stehen in **€** und werden zum aktuellen Wer
 
 ## Für Spieler
 
+### Markt-Handbuch (seit 0.3.0)
+
+Ein eigenes Buch (Item `twogg_markt:handbuch`): Rechtsklick öffnet eine **Doppelseite** mit Ledereinband und Pergament.
+Links die Titelseite, rechts das **Inhaltsverzeichnis zum Anklicken**; danach Kapitel zu Stand, Theke, Geld ohne Stand,
+Bezahlen, Weihnachtsmarkt, Befehlen und Tipps – mit **Bildern aus dem Spiel** (Klick vergrößert ein Bild). Am rechten
+Rand stecken farbige **Lesezeichen** je Kapitel. Blättern: „◀ zurück“ / „weiter ▶“, Pfeiltasten, A/D, Bild ↑/↓ oder
+Mausrad; Pos1 springt zum Anfang. Die Zahlen im Text (Gebühr, Preise, Grenzen) schickt der Server aus der aktuellen
+Config mit. Jeder bekommt es beim ersten Betreten einmal (`guide.giveOnJoin`), `/markt handbuch` gibt jederzeit ein
+neues; auch im Kreativ-Tab.
+
+Text: `src/main/resources/assets/twogg_markt/handbuch/de_de.txt` (Auszeichnung `# Kapitel`, `## Abschnitt`, `- Punkt`,
+`![bild] Unterschrift`, Platzhalter wie `{fee}`). Bilder: `textures/gui/handbuch/<bild>.png` (16:9, 384 × 216), erzeugt von
+`tools/handbuch_bilder.py` aus den Screenshots des Spieltests (`./gradlew runClientGameTest`, dann das Skript).
+
 ### Markt öffnen
 
 | Weg | Was passiert |
@@ -77,6 +91,42 @@ Konto (oder bar, `buyer.payCash`).
   Tagesbedarf und erholt sich in `recoverMinutes` (24 Stunden) wieder. Grün = voller Preis, gelb = unter der Hälfte.
 - Gezählt werden nur unbeschädigte Stapel aus dem Hauptinventar; Namen und Daten sind egal.
 - Fällt ein Preis auf 0, kauft der Markt das Item an diesem Tag nicht mehr.
+
+### Laden (seit 0.4.0)
+
+Ein **Server-Laden** gehört keinem Spieler und braucht keinen Stand: feste Preise, unbegrenzter Vorrat. Er hat zwei
+Seiten: **Kaufen** (Ware wählen, Menge −/+, Konto/Bar, „Kaufen · Betrag“) und **Verkaufen** (was der Laden ankauft,
+„1×“ oder „Alle“, bis zur Tagesgrenze). Geöffnet wird er nicht über einen Block, sondern **per Befehl** – gedacht für
+NPCs: Im Storyteller eine Seite mit Auslöser „NPC angesprochen“ und der Aktion „Befehl“ (als Konsole)
+`markt laden oeffnen <id> {player}`. Das Fenster bleibt gültig, solange man höchstens 8 Blöcke von der Stelle entfernt
+ist, an der es aufging. Keine Marktgebühr; Ankauf zahlt wie die Ankaufstelle (`buyer.payCash`).
+
+#### Waren mit Lager (seit 0.5.0)
+
+Statt fester Preise kann ein Laden **Waren mit Lagerbestand** führen. Jede Ware hat einen Grundpreis je Einheit
+(z. B. 64 Bruchstein), einen **Lagerplatz** (Obergrenze) und einen **Sollbestand**.
+
+- **Preis nach Bestand:** Beim Sollbestand gilt der Grundpreis. Je leerer das Lager, desto teurer (leer = doppelt), je
+  voller, desto billiger (voll = halb). Jede Einheit wird einzeln gerechnet – wer viel auf einmal kauft oder verkauft,
+  merkt, wie der Preis mitwandert. Seit 0.5.2 gilt je Einheit der Preis beim Bestand **nach** dem Handel: Kauf zum
+  Bestand nach der Entnahme, Ankauf zum Bestand nach dem Einlagern. Das Fenster zeigt immer den Preis der nächsten
+  Einheit. Gerundet wird auf 0,1 zugunsten des Händlers (Verkauf auf, Ankauf ab).
+- **Ankauf** zum Preis × `spread` (Standard 0,6, höchstens 0,95 – größere Werte werden begrenzt): Kaufen und
+  zurückverkaufen (oder umgekehrt) lohnt nie, auch nicht in beliebigen Folgen.
+- Kleine Lager (z. B. Lager 2, Soll 1) haben eine steile Kurve: Die einzige Einheit beim Soll kostet dann schon den
+  Preis des leeren Lagers (doppelt). Für Einzelstücke lieber Lager ≥ 4 wählen.
+- **Lagerplatz begrenzt:** Ist das Lager voll, nimmt der Händler nichts mehr an („Lager voll“). 100 Stacks Bruchstein
+  bringen also nicht 100-mal Geld – nur so viel, wie ins Lager passt, und das immer billiger. Das Geld des Händlers ist
+  unbegrenzt.
+- **Lieferung (unsichtbar):** Einmal pro Woche (Standard Montag 06:00) setzt das Versorgungsschiff jede Ware auf den
+  Sollbestand: Fehlendes wird aufgefüllt, Überschuss mitgenommen. Danach lässt sich wieder verkaufen.
+- Im Fenster steht je Ware „Lager knapp/normal/gut gefüllt/voll“, beim Ankauf „noch Platz für n“.
+
+Einrichten per Datei (`config/twogg-markt/<datei>.json`, Beispiel `beispiele/materiallager.json`) und
+`/markt laden import <laden> <datei>` – unbekannte Items (z. B. falsche Mod-IDs) werden gemeldet und übersprungen,
+Waren mit gleicher Vorlage ersetzt (Bestand bleibt). Oder einzeln mit der Ware in der Hand:
+`/markt laden ware <laden> <preis> <einheit> <lagerplatz> <soll>`. Items mit Daten (Verzauberungsbücher …) gelten
+nur genau so; einfache Items nach Art.
 
 ### Auftragsbrett
 
@@ -188,6 +238,7 @@ und nach dem Event die Ergebnisse zeigt.
 |---|---|---|
 | `/markt` | alle | Standübersicht |
 | `/markt zeigen` | alle | Umrisse 30 Sekunden |
+| `/markt handbuch` | alle | Markt-Handbuch ins Inventar |
 | `/markt helfer add <spieler>` / `entfernen <name>` | alle (Besitzer) | Helfer im eigenen Stand |
 | `/markt admin` | OP 2 | Marktverwaltung |
 | `/markt planer` | OP 2 | Marktplaner ins Inventar |
@@ -207,6 +258,17 @@ und nach dem Event die Ergebnisse zeigt.
 | `/markt event start [minuten]` / `stop` / `abbrechen` / `status` | OP 2 | Event starten, Siegerehrung jetzt, ohne Preise abbrechen, Stand |
 | `/markt event tafel hier` / `weg` | OP 2 | Bestenliste-Hologramm |
 | `/markt gelaende setzen` / `weg` | OP 2 | Marktgelände aus der Planer-Auswahl |
+| `/markt laden neu <id> <name>` | OP 2 | Laden anlegen (ID: a–z, 0–9, _) |
+| `/markt laden verkauf <id> <preis> [stück] [item]` | OP 2 | Ware verkaufen: Preis in Coins pro Kauf; ohne Item die Ware in der Hand (mit allen Daten) |
+| `/markt laden ankauf <id> <preis> [stück] [tageslimit] [item]` | OP 2 | Ankauf: jedes unbeschädigte Item dieser Art, Preis pro Bündel, Tagesgrenze je Spieler (0 = keine) |
+| `/markt laden info <id>` / `liste` | OP 2 | Zeilen mit IDs (v1, a2 …), verkauft/angekauft |
+| `/markt laden entfernen <id> <zeile>` / `untertitel <id> <text>` | OP 2 | Zeile löschen / Untertitel im Fenster |
+| `/markt laden auf <id>` / `zu <id>` / `loeschen <id>` | OP 2 | Öffnen / schließen / löschen |
+| `/markt laden oeffnen <id> [spieler]` | OP 2, Konsole | Fenster für sich bzw. die Spieler öffnen (Storyteller: `{player}`) |
+| `/markt laden ware <id> <preis> <einheit> <lager> <soll>` | OP 2 | Ware mit Lager aus der Hand (seit 0.5.0) |
+| `/markt laden import <id> <datei>` | OP 2 | Warenliste aus `config/twogg-markt/<datei>.json` |
+| `/markt laden bestand <id> <ware> <stück>` / `lieferung <id>` | OP 2 | Bestand setzen / sofort liefern (alle auf Soll) |
+| `/markt laden lieferzeit <id> <TAG> <hh:mm>` | OP 2 | Wöchentliche Lieferung, z. B. `MONDAY 06:00` |
 | `/markt reload` / `speichern` | OP 2 | Einstellungen neu lesen / Weltdaten speichern |
 
 Admins dürfen in allen Ständen bauen.
@@ -217,9 +279,15 @@ Admins dürfen in allen Ständen bauen.
 |---|---|---|
 | Verkaufstheke | Spieler im eigenen Stand | Besitzer und Helfer (Holz) |
 | Standschild, Ankaufstelle, Auftragsbrett, Losbude, Adventskalender, Verstecktes Geschenk | Admins | nur im Kreativmodus (wie das Bankterminal) |
+| Marktplaner | – | Item, nur für Admins nutzbar |
+
+Platz beim Aufstellen: Die Blöcke zeigen mit der Vorderseite zum Spieler, der sie setzt. Theke (Markise),
+Ankaufstelle (Preistafel), Auftragsbrett und Losbude (Dach) sind knapp zwei Blöcke hoch – darüber einen Block
+freilassen; anklicken kann man den unteren Teil. Der **Adventskalender** ist ein Häuschen für die Wand: vor eine Wand
+setzen (Rückseite an die Wand), er ist gut 1,5 Blöcke breit und 2 Blöcke hoch. Das **Geschenk** ist klein und lässt
+sich gut in Ecken, unter Tannen oder neben Kisten verstecken.
 
 Wichtelbaum und Lichterkette gab es nur in 0.2.0. Wurden sie schon gesetzt, verschwinden sie beim Laden der Welt
 (Minecraft ersetzt unbekannte Blöcke durch Luft).
-| Marktplaner | – | Item, nur für Admins nutzbar |
 
 Es gibt keine Rezepte. Weitere Theken kaufen Spieler unter „Mein Stand“ (`shop.counterPrice`, 20 €).

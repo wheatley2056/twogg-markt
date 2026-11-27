@@ -1,0 +1,110 @@
+# Willkommen auf dem Markt
+Der {title} ist der Treffpunkt von Winterland: Hier mietest du eine Holzbude, verkaufst deine Ware, nimmst Aufträge an und verdienst dir ein paar Coins dazu.
+![markt] Der Markt mit Ständen, Hologrammen und der Bestenliste.
+## So findest du dich zurecht
+- /markt öffnet die Standübersicht.
+- /markt zeigen umrandet alle Stände in der Nähe: grün frei, gelb vermietet, blau verkauft, rot gesperrt.
+- Betrittst du einen Stand, steht über der Hotbar, wem er gehört und was er kostet.
+![umrisse] /markt zeigen: Umrisse der Stände in Statusfarben.
+## Was es alles gibt
+- Verkaufstheke im eigenen Stand
+- Ankaufstelle für Rohstoffe
+- Auftragsbrett mit Belohnungen
+- Räumdienst gegen Bezahlung
+- Losbude, Adventskalender und Geschenkesuche im Weihnachtsmarkt-Event
+
+# Dein eigener Stand
+Ein Stand ist eine eingezeichnete Bude vom Boden bis unters Dach. Rechtsklick aufs Standschild davor oder /markt zeigt Größe, Miete pro {period} und Kaufpreis.
+![staende] Die Standübersicht: Größe, Miete, Kaufpreis.
+## Mieten oder kaufen
+- Wähle die Zahl der Zeiträume mit − und +, dann „Mieten …“. Der zweite Klick bestätigt.
+- Ein gemieteter Stand lässt sich jederzeit kaufen; die restliche Miete verfällt.
+- Du darfst höchstens {maxStalls} gleichzeitig haben.
+- Preise stehen in €, bezahlt wird in Coins zum aktuellen Kurs der Bank.
+## Beim ersten Mal
+Mit dem ersten Stand bekommst du eine Verkaufstheke ins Inventar. Weitere Theken gibt es unter „Mein Stand“ für {counterPrice} €.
+## Kündigen und zurückgeben
+- Kündigen (Miete): {rentRefund} % der noch nicht angefangenen Zeiträume kommen zurück.
+- Zurückgeben (Kauf): Der Markt zahlt {buyback} % des Kaufpreises.
+- Kurz vor Ablauf bekommst du eine Nachricht. Danach ist der Stand frei, deine Kasse wird ausgezahlt.
+![mein_stand] „Mein Stand“: Restzeit, Kasse, Helfer.
+## Bauen und Helfer
+Nur du und deine Helfer bauen im Stand, öffnen Kisten und bedienen die Theke. Bis zu {maxHelpers} Helfer trägst du unter „Mein Stand“ ein (nur Spieler, die gerade online sind). Helfer leeren aber nie die Kasse.
+
+# Die Verkaufstheke
+Die Theke verkauft Ware aus Truhen, Fässern und Shulkerkisten in deinem Stand – auch wenn du nicht da bist.
+## Angebot anlegen
+- Theke in den eigenen Stand stellen und Ware in die Kisten legen.
+- Rechtsklick auf die Theke, Seite „Verwalten“.
+- Die Ware in die Hand nehmen, Preis (Coins pro Kauf) und Stück eintragen, „Anbieten“.
+- Bis zu {maxOffers} Angebote pro Theke.
+![theke_verwalten] Seite „Verwalten“ der Verkaufstheke.
+## Gut zu wissen
+- Verkauft wird nur Ware, die genau der Vorlage entspricht – mit Namen und Verzauberungen.
+- „Vorrat“ zeigt, wie viele Käufe deine Kisten noch hergeben.
+- Von jedem Verkauf gehen {fee} % Marktgebühr ab, der Rest landet in der Standkasse.
+- „Kasse leeren“ zahlt dir die Einnahmen aus – aufs Konto oder bar.
+- Geschlossene Theken verkaufen nichts.
+## Einkaufen
+Andere Spieler wählen ein Angebot, stellen die Menge ein und drücken „Kaufen“. Die Ware kommt direkt ins Inventar. Am eigenen Stand kann man nicht kaufen.
+![theke_kaufen] So sehen Käufer deine Theke.
+
+# Geld ohne Stand
+Auch ohne eigene Bude verdienst du auf dem Markt.
+## Ankaufstelle
+Der Markt kauft Rohstoffe und Gebäck zum Tagespreis. „1×“ verkauft ein Bündel, „Alle“ so viele wie möglich. Je mehr alle zusammen verkaufen, desto weiter fällt der Preis (bis auf {minFactor} %). Über den Tag erholt er sich wieder. Grün heißt voller Preis, gelb unter der Hälfte.
+![ankauf] Die Ankaufstelle mit Tagespreisen.
+## Auftragsbrett
+- Marktaufträge: Items liefern, Belohnung kassieren. Jeder kann jeden Auftrag einmal erledigen, solange Plätze frei sind.
+- Neue Marktaufträge gibt es regelmäßig, {jobsActive} hängen gleichzeitig.
+- Eigene Aufträge: Ware in die Hand, Stück und Belohnung eintragen, „Auftrag aushängen“. Höchstens {jobsMax} Aufträge, Belohnung bis {jobsMaxReward}.
+- Geliefertes holst du im Abholfach ab.
+![auftragsbrett] Das Auftragsbrett.
+![aushaengen] Einen eigenen Auftrag aushängen.
+## Räumdienst
+In Räumzonen zahlt der Markt fürs Schneeschippen: alle {snowBlocks} Schneeblöcke {snowPay} Coins, höchstens {snowDaily} am Tag. Selbst gesetzter Schnee zählt nicht.
+
+# Bezahlen
+Bezahlt wird über die Winterland-Bank.
+## Konto oder bar
+In jedem Markt-Fenster schaltest du mit „Konto“ / „Bar“ um: vom Bankkonto oder mit Bargeld aus dem Inventar.
+## Vorgemerkte Beträge
+Kann der Markt dir gerade nichts auszahlen – etwa weil du offline bist –, merkt er sich den Betrag. Du bekommst ihn beim nächsten Login oder beim Öffnen eines Markt-Fensters. Die Fußzeile zeigt „vorgemerkt …“.
+
+# Weihnachtsmarkt
+Zu festen Zeiten öffnet der Weihnachtsmarkt: Glocken läuten, Schnee fällt, eine Leiste oben zeigt die Restzeit.
+![eroeffnung] Die Eröffnung: Glocken, Schnee und Bossleiste.
+## Ablauf
+- Ankündigung im Chat
+- Eröffnung mit Glocken und Schneefall
+- Markt geöffnet: Lose, Wichteln, Geschenkesuche, Abstimmung
+- Siegerehrung mit Losziehung, Preisen und Feuerwerk
+## Losbude
+Lose kosten {ticket} €, höchstens {maxTickets} pro Spieler. Bei der Siegerehrung wird der Topf verlost: {pot} % gehen an {winners} (Anteile {shares} %). Je mehr Lose, desto größer die Chance.
+![losbude] Die Losbude.
+## Wichteln
+Gib an der Losbude einen Stapel als Geschenk ab. Bei der Siegerehrung bekommt jeder ein fremdes Geschenk ins Abholfach.
+![wichteln] Wichteln an der Losbude.
+## Geschenkesuche
+Auf dem Markt sind Geschenke versteckt. Rechtsklick bringt {giftReward} Coins – einmal pro Geschenk und Event.
+## Adventskalender
+Vom 1. bis 24. Dezember öffnest du jeden Tag ein Türchen. Verpasste Tage bleiben zu.
+![advent] Der Adventskalender.
+## Abstimmen
+Stimme für den schönsten Stand: „★ Für diesen Stand stimmen“ in der Übersicht oder an der Theke. Eine Stimme, umentscheiden geht, nur nicht für den eigenen Stand.
+## Bestenliste
+Preise gibt es für den schönsten Stand, den besten Umsatz, die fleißigsten Helfer, den Räumdienst und die Geschenkesuche. Platz 1 bis 3 gewinnen.
+![event] Die Event-Seite mit Bestenlisten.
+
+# Befehle
+- /markt – Standübersicht
+- /markt zeigen – Stände 30 Sekunden umranden
+- /markt helfer add <Spieler> – Helfer eintragen
+- /markt helfer entfernen <Name> – Helfer austragen
+- /markt handbuch – dieses Buch
+
+# Tipps
+- Schöne Stände bekommen mehr Stimmen – Deko lohnt sich.
+- Halte deine Kisten voll: Ohne Vorrat verschwindet dein Angebot aus der Liste.
+- Wer zuerst an die Ankaufstelle geht, bekommt den besten Preis.
+Viel Erfolg und frohe Weihnachten!

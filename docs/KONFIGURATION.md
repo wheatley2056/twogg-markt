@@ -80,8 +80,8 @@ Winterland-Vorlage:
 
 | Item | Bündel | Coins | Bedarf/Tag | Limit/Spieler |
 |---|---|---|---|---|
-| Fichtenholz | 8 | 0,2 | 64 | 32 |
-| Kohle | 4 | 0,2 | 64 | 32 |
+| Fichtenholz | 8 | 0,1 | 64 | 32 |
+| Kohle | 8 | 0,1 | 32 | 16 |
 | Lebkuchen (Kekse) | 4 | 0,2 | 48 | 24 |
 | Brot | 2 | 0,2 | 32 | 16 |
 | Kürbiskuchen | 1 | 0,3 | 24 | 12 |
@@ -89,7 +89,7 @@ Winterland-Vorlage:
 | Äpfel | 4 | 0,3 | 32 | 16 |
 | Kabeljau | 2 | 0,3 | 32 | 16 |
 | Lachs | 2 | 0,4 | 24 | 12 |
-| Wolle (weiß) | 4 | 0,3 | 32 | 16 |
+| Wolle (weiß) | 16 | 0,3 | 8 | 4 |
 | Honigflasche | 1 | 0,4 | 16 | 8 |
 | Kerzen | 2 | 0,4 | 16 | 8 |
 | Eisenbarren | 1 | 0,3 | 32 | 16 |
@@ -149,6 +149,12 @@ Vorlagen mit unbekannter Item-ID werden beim Ziehen übersprungen.
 | `musicTicksPerEighth` | int | `4` | Tempo (Ticks pro Achtel) |
 | `weatherSnow` | boolean | `true` | Niederschlag während des Events (Schnee in kalten Biomen) |
 | `fireworks` | boolean | `true` | Feuerwerk bei der Siegerehrung |
+
+### `guide` (seit 0.3.0)
+
+| Feld | Standard | Bedeutung |
+|---|---|---|
+| `giveOnJoin` | `true` | Jeder Spieler bekommt beim ersten Betreten des Servers einmal das **Markt-Handbuch** (gemerkt in den Weltdaten unter `guideGiven`). `/markt handbuch` gibt es jederzeit erneut. |
 
 ## Weltdaten `<welt>/twogg-markt/markt.json`
 

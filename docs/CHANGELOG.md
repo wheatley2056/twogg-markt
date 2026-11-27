@@ -1,5 +1,92 @@
 # Changelog: TwoGG Markt
 
+
+
+## 0.5.2+26.1.2 – 27.11.2026 – Geldpumpe im Lager-Laden geschlossen
+
+- **Fix: Geldpumpe bei „Waren mit Lager“.** Kauf wurde zum Bestand vor der Entnahme, Ankauf zum Bestand vor dem
+  Einlagern gerechnet – bei kleinen Lagern (z. B. Schallplatten: Lager 2, Soll 1) brachte Kaufen und sofort
+  Zurückverkaufen +1,2 WLC je Runde. Jetzt gilt je Einheit der Preis beim Bestand nach dem Handel (Kauf nach der
+  Entnahme, Ankauf nach dem Einlagern), auch Stück für Stück in Stapelkäufen. `spread` ist auf höchstens 0,95 begrenzt
+  (beim Import, beim Laden der Weltdaten und in der Rechnung). Rundung auf 0,1 immer zugunsten des Ladens: Verkauf
+  aufgerundet (bisher kaufmännisch), Ankauf abgerundet. Folge: günstige Waren kosten oft 0,1 mehr als bisher, kleine
+  Lager beim Soll spürbar mehr. Fenster und `/markt laden info` zeigen den Preis der nächsten Einheit.
+- **Fix: NaN/unendlich beim Import** (`spread`, `preis`) wird abgelehnt statt übernommen; fehlerhafte Einträge werden
+  übersprungen und gemeldet. NaN im `spread` der Weltdaten wird beim Laden ersetzt; ein Fehler beim Schreiben von
+  `markt.json` bricht den Server-Tick nicht mehr ab (wird geloggt).
+- **Fix: Lockvogel an der Theke.** Der Kauf schickt den angezeigten Preis und die Stückzahl mit; ist das Angebot
+  inzwischen teurer oder kleiner, bricht der Server ab und zeigt das neue Angebot. Ältere Clients schicken nichts mit
+  und sind weiter ungeschützt (kein Protokollwechsel, sie funktionieren weiter).
+- **Ankauf-Vorlage:** Fichtenholz 8 für 0,1 (bisher 0,2), Kohle 8 für 0,1 (bisher 4 für 0,2), Wolle 16 für 0,3
+  (bisher 4 für 0,3) – nicht mehr als das Materiallager mindestens verlangt. Gilt nur für neu angelegte
+  `config/twogg-markt/markt.json`.
+- Tests: kein Gewinn aus Kauf/Rückverkauf und Verkauf/Rückkauf für jeden Bestand 0 … Lager und 1 … 64 Einheiten aller
+  Waren aus `beispiele/`, Zufallsfolgen, Rundung, `spread`-Grenze, Ankauf-Vorlage gegen Materiallager, NaN beim Laden
+  und Speichern, Theken-Prüfung.
+
+## 0.5.1+26.1.2 – 24.11.2026 – Auftragsbrett oben klickbar
+
+- **Fix: Auftragsbrett nur unten klickbar.** Das Modell ist zwei Blöcke hoch, Minecraft prüft Klicks aber nur im
+  eigenen Blockfeld. Über dem Brett steht jetzt ein unsichtbarer Aufsatz (`twogg_markt:job_board_top`, ohne Item und
+  Drop) mit Umriss für Pfosten, Brett, Hakenleiste und Dach; Rechtsklick dort öffnet das Brett darunter. Wird das Brett
+  entfernt, verschwindet der Aufsatz; Abbauen des Aufsatzes (Kreativ) baut das Brett mit ab.
+- Neu gesetzte Bretter bekommen den Aufsatz sofort (Platz darüber nötig). **Bereits stehende Bretter** werden beim
+  ersten Rechtsklick (unten) nachgerüstet, wenn darüber Luft ist.
+- Spieltest: Aufsatz vorhanden, mit Umriss, und ein Klick auf die obere Hälfte öffnet das Auftragsbrett.
+
+## 0.5.0+26.1.2 – 23.11.2026 – Waren mit Lager und Preis nach Bestand
+
+- **Waren mit Lager** im Laden: Grundpreis je Einheit, Lagerplatz, Sollbestand. Preis = Grundpreis × 2^((Soll − Bestand)
+  / Lager · 2) – leer doppelt, voll halb; jede Einheit einzeln gerechnet. Ankauf = Preis × `spread` (0,6).
+- **Lager voll = kein Ankauf** mehr; Geld des Händlers unbegrenzt. **Wöchentliche Lieferung** (Standard Montag 06:00,
+  unsichtbar) setzt alle Waren auf Soll – auffüllen und Überschuss weg.
+- `/markt laden ware|import|bestand|lieferung|lieferzeit`; Import aus JSON mit Item-ID oder vollem Stapel (Daten wie
+  Verzauberungen), unbekannte Items werden gemeldet. Beispiel `beispiele/materiallager.json` (109 Waren).
+- `StockMath` mit Tests; Spieltest: Import inkl. Verzauberungsbuch, Ankauf bis Lager voll, Preis fällt, Lieferung.
+## 0.4.0+26.1.2 – 23.11.2026 – Server-Laden für NPCs
+
+- **Laden**: feste Preise, unbegrenzter Vorrat, Verkauf und Ankauf (mit Tagesgrenze je Spieler), Fenster mit den Seiten
+  Kaufen/Verkaufen (`LadenScreen`). Kein Block: `/markt laden oeffnen <id> <spieler>` – z. B. aus einer Storyteller-Seite
+  („NPC angesprochen“ → Befehl als Konsole), so wird jeder Storyteller-NPC mit eigenem Skin zum Händler.
+- Verwaltung per `/markt laden neu|verkauf|ankauf|info|liste|entfernen|untertitel|auf|zu|loeschen`; Ware aus der Hand
+  oder per Item-ID. Daten in `markt.json` → `laeden`.
+- Spieltest: Laden anlegen, per Konsole öffnen, 4 Fackeln kaufen, Kohle bis zur Tagesgrenze verkaufen.
+## 0.3.0+26.1.2 (22.11.2026)
+
+- **Markt-Handbuch:** eigenes Buch (Item `twogg_markt:handbuch`) mit Doppelseiten, Ledereinband und Pergament:
+  Titelseite, anklickbares Inhaltsverzeichnis, farbige Lesezeichen je Kapitel, acht Kapitel (Willkommen, Stand, Theke,
+  Geld ohne Stand, Bezahlen, Weihnachtsmarkt, Befehle, Tipps) mit 14 Bildern aus dem Spiel (Klick vergrößert).
+  Blättern mit Pfeilen, Tasten oder Mausrad, Seitenumblättern-Klang. Zahlen kommen live aus der Server-Config. Beim
+  ersten Betreten einmal ins Inventar (`guide.giveOnJoin`), sonst `/markt handbuch` oder Kreativ-Tab.
+- **Neue Modelle** für alle Markt-Blöcke, detailliert im Blockbench-Stil mit eigenen Texturen (32 Texel je Block):
+  Verkaufstheke mit Auslage (Apfelkiste, Lebkuchen, Preisschild), Tannengirlande und kleiner rot-weißer Markise mit
+  Lichterkette; Standschild mit Goldrahmen, Schneedach, Tannenzweig und Laterne; Ankaufstelle mit Messingwaage,
+  Holzkiste, Getreidesack und Preistafel unter einem Schneedach; Auftragsbrett als Pinnwand mit Zetteln, Nadeln,
+  Kopfschild „AUFTRÄGE“, Girlande und Satteldach; Losbude als kleine Bude mit Losrad, Losglas und gestreiftem Dach;
+  Adventskalender als Holzhäuschen für die Wand mit 24 nummerierten Türchen, Schneedach, Eiszapfen und Kamin;
+  verstecktes Geschenk mit Schleife, Anhänger und kleinem Zweitgeschenk. Leuchtende Lichter/Laternen auch nachts,
+  passende Item-Ansichten (GUI, Hand, Rahmen) und Partikel. Kollision und Umriss folgen den Modellen.
+- Erzeugt von `tools/modelle.py` (deterministisch; prüft auf Z-Fighting, ganze Texel, doppelte Elemente,
+  22,5°-Rotationen, Grenzen −16…32), Vorschau ohne Spiel mit `tools/modell_vorschau.py`. Ersetzt `tools/textures.py`.
+- Spieltest-Bilder sind jetzt sauber (keine Meldungen/Chat, Weltbilder ohne HUD) – daraus macht
+  `tools/handbuch_bilder.py` die Bilder des Handbuchs. Kulisse ist eine verschneite Weihnachtsmarkt-Gasse
+  (`MarktKulisse`), am Ende eine Abnahme aller Modelle in verschiedenen Ausrichtungen bei Tag und Nacht.
+- Technisch: `content/guide/` (`HandbookLayout` setzt Text und Bilder mit der echten Schrift auf die Seiten,
+  `GuideBook`, `GuideService`), `client/HandbookScreen`, Ansicht `handbuch` mit den Werten, Weltdaten `guideGiven`,
+  Unit-Test `HandbookLayoutTest`, Spieltest `HandbuchClientTest`.
+
+## 0.2.2+26.1.2 (18.11.2026)
+
+- Behoben: Nach einer Auszahlung (Standkasse, Ankauf, Aufträge, Geschenke, Gutschriften beim Login) wird der Markt
+  sofort gespeichert. Vorher lag das Geld schon bei der Bank, der Markt merkte sich die geleerte Kasse aber erst beim
+  nächsten Speichern (alle 30 s) – nach einem Absturz dazwischen wurde dieselbe Kasse ein zweites Mal ausgezahlt.
+- Behoben: Ist `config/twogg-markt/markt.json` fehlerhaft, liegt jetzt eine Kopie `markt.json.broken-<Zeit>` daneben.
+  Speichern im Admin-Fenster hätte die Handarbeit sonst mit den Standardwerten überschrieben.
+- Behoben: „Kasse leeren“ an der Theke meldete „bar ausgezahlt“, obwohl Bargeld für Stände abgeschaltet war oder der
+  Betrag nur vorgemerkt wurde; ist Bargeld aus, geht der Betrag jetzt aufs Konto.
+- Spieltest startet ein Kit-Event (seit Economy 0.3 bucht die Bank nur in einem laufenden Event).
+- Gebaut gegen TwoGG Kit 1.4.2.
+
 ## 0.2.1+26.1.2 (15.11.2026)
 
 - Behoben: Hitboxen von Standschild, Auftragsbrett und Adventskalender drehen jetzt mit der Blickrichtung (vorher

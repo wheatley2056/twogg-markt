@@ -4,6 +4,6 @@
   "version": "1.0.0",
   "name": "TwoGG Markt Client-Test",
   "environment": "*",
-  "entrypoints": { "fabric-client-gametest": ["de.twogg.markt.test.MarktClientTest"] },
+  "entrypoints": { "fabric-client-gametest": ["de.twogg.markt.test.MarktClientTest", "de.twogg.markt.test.HandbuchClientTest"] },
   "depends": { "twogg_markt": "*" }
 }

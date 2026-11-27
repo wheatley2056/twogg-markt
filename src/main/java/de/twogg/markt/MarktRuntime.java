@@ -23,6 +23,7 @@ public final class MarktRuntime {
     private static MarktConfig config = MarktConfig.defaults();
     private static MarktData data = new MarktData();
     private static boolean dirty;
+    private static boolean saveSoon;
     private static long ticks;
 
     private MarktRuntime() {}
@@ -66,10 +67,20 @@ public final class MarktRuntime {
         dirty = true;
     }
 
+    /**
+     * Nach einer Auszahlung: am Ende des Ticks speichern. Sonst stünde nach einem Absturz die Kasse (oder der Auftrag)
+     * wieder im alten Zustand, während das Geld schon bei der Bank liegt – und würde ein zweites Mal ausgezahlt.
+     */
+    public static void saveSoon() {
+        dirty = true;
+        saveSoon = true;
+    }
+
     public static void save() {
         if (server == null) return;
         Store.saveData(dir(), data);
         dirty = false;
+        saveSoon = false;
     }
 
     /** Einstellungen neu einlesen. false, wenn die Datei fehlerhaft ist (dann bleibt alles, wie es war). */
@@ -98,9 +109,10 @@ public final class MarktRuntime {
             BoardService.refreshIfDue(false);
             BoardService.expirePlayerJobs();
             BuyerService.decay();
+            de.twogg.markt.server.LadenService.deliveries();
             Holograms.tick();
         }
-        if (dirty && ticks % 600 == 0) save();
+        if (saveSoon || (dirty && ticks % 600 == 0)) save();
     }
 
     private static void rollDay() {

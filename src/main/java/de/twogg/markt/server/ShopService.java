@@ -111,7 +111,7 @@ public final class ShopService {
         boolean error = false;
         switch (act.a) {
             case "buy" -> {
-                String[] r = buy(p, plot, act.id, Math.max(1, Math.min(64, act.count)), act.cash);
+                String[] r = buy(p, plot, act.id, Math.max(1, Math.min(64, act.count)), act.cash, act.amount, act.value);
                 msg = r[0];
                 error = r[1] != null;
             }
@@ -178,8 +178,12 @@ public final class ShopService {
                     long v = plot.till;
                     plot.till = 0;
                     MarktRuntime.markDirty();
-                    Pay.payout(p, v, act.cash, "markt:kasse", "Standkasse " + plot.name);
-                    msg = MarktRuntime.fmt(v) + " aus der Kasse " + (act.cash ? "bar ausgezahlt." : "aufs Konto.");
+                    boolean cash = act.cash && MarktRuntime.config().stalls.allowCash;
+                    if (Pay.payout(p, v, cash, "markt:kasse", "Standkasse " + plot.name)) {
+                        msg = MarktRuntime.fmt(v) + " aus der Kasse " + (cash ? "bar ausgezahlt." : "aufs Konto.");
+                    } else {
+                        msg = MarktRuntime.fmt(v) + " aus der Kasse vorgemerkt.";
+                    }
                 }
             }
             default -> msg = "";
@@ -188,12 +192,20 @@ public final class ShopService {
     }
 
     /** @return {Meldung, null = ok / sonst Fehler} */
-    private static String[] buy(ServerPlayer p, Plot plot, String offerId, int times, boolean cash) {
+    /**
+     * @param shownPrice im Fenster angezeigter Preis je Kauf (Zehntel), 0 = unbekannt (ältere Clients)
+     * @param shownCount im Fenster angezeigte Stückzahl je Kauf, 0 = unbekannt
+     */
+    private static String[] buy(ServerPlayer p, Plot plot, String offerId, int times, boolean cash, long shownPrice, double shownCount) {
         long now = MarktRuntime.now();
         if (!plot.shopOpen) return new String[]{"Die Theke ist geschlossen.", "x"};
         if (plot.member(p.getUUID().toString(), now)) return new String[]{"Am eigenen Stand kaufst du nicht.", "x"};
         Offer o = plot.offer(offerId);
         if (o == null) return new String[]{"Das Angebot gibt es nicht mehr.", "x"};
+        // Lockvogel: Angebot zwischen Anzeige und Kauf verteuert oder verkleinert → nicht kaufen (seit 0.5.2)
+        if (MarketMath.offerWorse(shownPrice, shownCount, o.price, o.count)) {
+            return new String[]{"Das Angebot hat sich geändert: jetzt " + o.count + "× für " + MarktRuntime.fmt(o.price) + ". Nichts gekauft.", "x"};
+        }
         var reg = p.level().registryAccess();
         ItemStack proto = Stacks.fromJson(reg, o.item);
         if (proto.isEmpty()) return new String[]{"Diese Ware gibt es auf dem Server nicht mehr.", "x"};

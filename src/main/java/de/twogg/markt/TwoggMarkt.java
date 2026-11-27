@@ -9,6 +9,7 @@ import de.twogg.markt.server.EventService;
 import de.twogg.markt.server.Holograms;
 import de.twogg.markt.server.BoardService;
 import de.twogg.markt.server.BuyerService;
+import de.twogg.markt.server.LadenService;
 import de.twogg.markt.server.MarktCommands;
 import de.twogg.markt.server.Outlines;
 import de.twogg.markt.server.Pay;
@@ -43,6 +44,7 @@ public class TwoggMarkt implements ModInitializer {
     @Override
     public void onInitialize() {
         ModContent.init();
+        de.twogg.markt.content.guide.GuideBook.init();
         PayloadTypeRegistry.clientboundPlay().register(Payloads.View.TYPE, Payloads.View.CODEC);
         PayloadTypeRegistry.serverboundPlay().register(Payloads.Action.TYPE, Payloads.Action.CODEC);
         ServerPlayNetworking.registerGlobalReceiver(Payloads.Action.TYPE, (p, ctx) -> handle(ctx.player(), p.json()));
@@ -57,6 +59,7 @@ public class TwoggMarkt implements ModInitializer {
             if (!MarktRuntime.running()) return;
             Pay.settle(handler.getPlayer());
             EventService.join(handler.getPlayer());
+            de.twogg.markt.content.guide.GuideService.join(handler.getPlayer());
         });
         ServerPlayConnectionEvents.DISCONNECT.register((handler, s) -> {
             Sessions.forget(handler.getPlayer().getUUID());
@@ -82,6 +85,7 @@ public class TwoggMarkt implements ModInitializer {
                 case "market" -> StallService.handle(player, act);
                 case "shop" -> ShopService.handle(player, act);
                 case "buyer" -> BuyerService.handle(player, act);
+                case LadenService.SCREEN -> LadenService.handle(player, act);
                 case "board" -> BoardService.handle(player, act);
                 case "admin" -> AdminService.handle(player, act);
                 case "lottery", "advent" -> ActivityService.handle(player, act);
