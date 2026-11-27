@@ -178,4 +178,15 @@ class MarketMathTest {
         assertEquals(20, d.pending.get("u").amount);
         assertEquals("Name", d.pending.get("u").name);
     }
+
+    @Test
+    void thekeLehntVerteuertesOderVerkleinertesAngebotAb() {
+        // seit 0.5.2: angezeigt 16 Stück für 0,1 – inzwischen 1 Stück für 500
+        assertTrue(MarketMath.offerWorse(1, 16, 5000, 1));
+        assertTrue(MarketMath.offerWorse(1, 16, 2, 16));
+        assertTrue(MarketMath.offerWorse(1, 16, 1, 8));
+        assertFalse(MarketMath.offerWorse(1, 16, 1, 16));
+        assertFalse(MarketMath.offerWorse(5, 16, 3, 32), "billiger oder mehr ist in Ordnung");
+        assertFalse(MarketMath.offerWorse(0, 0, 5000, 1), "ältere Clients schicken nichts mit");
+    }
 }

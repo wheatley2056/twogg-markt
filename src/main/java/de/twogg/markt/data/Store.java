@@ -70,7 +70,8 @@ public final class Store {
         try {
             Files.createDirectories(configFile().getParent());
             write(configFile(), GSON.toJson(c));
-        } catch (IOException e) {
+        } catch (IOException | RuntimeException e) {
+            // RuntimeException: z. B. NaN in einem Feld (Gson schreibt das nicht) – nicht den Server-Tick abbrechen (seit 0.5.2)
             TwoggMarkt.LOGGER.error("Einstellungen nicht gespeichert: {}", e.toString());
         }
     }
@@ -106,7 +107,8 @@ public final class Store {
         try {
             Files.createDirectories(dir);
             write(dir.resolve("markt.json"), GSON.toJson(d));
-        } catch (IOException e) {
+        } catch (IOException | RuntimeException e) {
+            // RuntimeException: z. B. NaN in einem Feld (Gson schreibt das nicht) – nicht den Server-Tick abbrechen (seit 0.5.2)
             TwoggMarkt.LOGGER.error("Marktdaten nicht gespeichert: {}", e.toString());
         }
     }

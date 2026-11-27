@@ -108,8 +108,13 @@ Statt fester Preise kann ein Laden **Waren mit Lagerbestand** führen. Jede Ware
 
 - **Preis nach Bestand:** Beim Sollbestand gilt der Grundpreis. Je leerer das Lager, desto teurer (leer = doppelt), je
   voller, desto billiger (voll = halb). Jede Einheit wird einzeln gerechnet – wer viel auf einmal kauft oder verkauft,
-  merkt, wie der Preis mitwandert.
-- **Ankauf** zum aktuellen Preis × `spread` (Standard 0,6): Kaufen und sofort zurückverkaufen lohnt nie.
+  merkt, wie der Preis mitwandert. Seit 0.5.2 gilt je Einheit der Preis beim Bestand **nach** dem Handel: Kauf zum
+  Bestand nach der Entnahme, Ankauf zum Bestand nach dem Einlagern. Das Fenster zeigt immer den Preis der nächsten
+  Einheit. Gerundet wird auf 0,1 zugunsten des Händlers (Verkauf auf, Ankauf ab).
+- **Ankauf** zum Preis × `spread` (Standard 0,6, höchstens 0,95 – größere Werte werden begrenzt): Kaufen und
+  zurückverkaufen (oder umgekehrt) lohnt nie, auch nicht in beliebigen Folgen.
+- Kleine Lager (z. B. Lager 2, Soll 1) haben eine steile Kurve: Die einzige Einheit beim Soll kostet dann schon den
+  Preis des leeren Lagers (doppelt). Für Einzelstücke lieber Lager ≥ 4 wählen.
 - **Lagerplatz begrenzt:** Ist das Lager voll, nimmt der Händler nichts mehr an („Lager voll“). 100 Stacks Bruchstein
   bringen also nicht 100-mal Geld – nur so viel, wie ins Lager passt, und das immer billiger. Das Geld des Händlers ist
   unbegrenzt.

@@ -243,8 +243,8 @@ public final class MarktCommands {
                     for (var o : l.sells) say(c, " " + o.id + " Verkauf: " + o.count + "× " + o.name + " für " + MarktRuntime.fmt(o.price) + " · " + o.sold + "× verkauft");
                     for (var w : l.waren) say(c, " " + w.id + " Ware: " + w.name + " · " + w.unit + " Stück, Grundpreis " + MarktRuntime.fmt(w.base)
                             + " · Bestand " + w.stock + "/" + w.capacity + " (Soll " + w.target + ") · jetzt " + MarktRuntime.fmt(
-                            de.twogg.markt.core.StockMath.sellPrice(w.base, w.stock, w.target, w.capacity)) + " / Ankauf "
-                            + MarktRuntime.fmt(de.twogg.markt.core.StockMath.buyPrice(w.base, w.stock, w.target, w.capacity, l.spread)));
+                            de.twogg.markt.core.StockMath.nextSellPrice(w.base, w.stock, w.target, w.capacity, w.unit)) + " / Ankauf "
+                            + MarktRuntime.fmt(de.twogg.markt.core.StockMath.nextBuyPrice(w.base, w.stock, w.target, w.capacity, l.spread, w.unit)));
                     if (!l.waren.isEmpty()) say(c, " Lieferung jede Woche " + l.deliveryDay + " " + l.deliveryTime + " · Ankauf = Preis × " + l.spread);
                     for (var b : l.buys) say(c, " " + b.id + " Ankauf: " + b.count + "× " + b.name + " für " + MarktRuntime.fmt(b.price)
                             + (b.dailyLimit > 0 ? " · " + b.dailyLimit + "/Tag" : "") + " · " + b.bought + "× angekauft");

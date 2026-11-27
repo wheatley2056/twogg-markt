@@ -29,4 +29,19 @@ class StoreTest {
     void ohneDateiKeineKopie(@TempDir Path dir) {
         assertNull(Store.backupBroken(dir.resolve("fehlt.json")));
     }
+
+    /** seit 0.5.2: NaN/unendlich im spread darf weder beim Laden bleiben noch das Speichern (Server-Tick) abbrechen. */
+    @Test
+    void nanImLadenWirdBeimLadenErsetztUndSpeichernWirftNicht(@TempDir Path dir) throws Exception {
+        Files.writeString(dir.resolve("markt.json"), "{\"laeden\": {\"x\": {\"id\": \"x\", \"spread\": NaN}, \"y\": {\"id\": \"y\", \"spread\": 1.0}}}",
+                StandardCharsets.UTF_8);
+        de.twogg.markt.core.MarktData d = Store.loadData(dir);
+        assertEquals(0.6, d.laeden.get("x").spread, 0);
+        assertEquals(de.twogg.markt.core.StockMath.MAX_SPREAD, d.laeden.get("y").spread, 0);
+        Store.saveData(dir, d);
+        assertTrue(Files.readString(dir.resolve("markt.json"), StandardCharsets.UTF_8).contains("\"spread\": 0.6"));
+        // ein NaN, das trotzdem hineingerät, lässt saveData nicht mehr mit einer Ausnahme herausfallen
+        d.laeden.get("x").spread = Double.NaN;
+        Store.saveData(dir, d);
+    }
 }

@@ -99,6 +99,9 @@ public class ShopScreen extends MarktScreen {
                 a.id = o.id;
                 a.count = times;
                 a.cash = cash;
+                // angezeigter Preis und Stückzahl: der Server bricht ab, wenn sich das Angebot inzwischen verschlechtert hat (seit 0.5.2)
+                a.amount = o.price;
+                a.value = o.count;
                 send(a);
             }).accent(accent()));
             buy.active = o.stock >= times && view.stall.shopOpen;

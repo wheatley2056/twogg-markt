@@ -1,5 +1,5 @@
 {
-  "_hinweis": "Warenliste Materiallager (Brandt). Preise in WLC je Einheit (einheit = Stück pro Handel) beim Sollbestand; leeres Lager = doppelt, volles Lager = halb so teuer. Ankauf = Preis × spread. Lieferung füllt jede Woche auf Soll und nimmt Überschuss mit. Einträge mit MODID: durch die echte Mod-ID ersetzen (z. B. natures_spirit:fir_log), sonst werden sie beim Import übersprungen. Kopieren nach config/twogg-markt/materiallager.json, dann /markt laden import materiallager materiallager",
+  "_hinweis": "Warenliste Materiallager (Brandt). Preise in WLC je Einheit (einheit = Stück pro Handel) beim Sollbestand; leeres Lager = doppelt, volles Lager = halb so teuer. Kauf zum Bestand nach der Entnahme, Ankauf zum Bestand nach dem Einlagern × spread (höchstens 0,95). Lieferung füllt jede Woche auf Soll und nimmt Überschuss mit. Einträge mit MODID: durch die echte Mod-ID ersetzen (z. B. natures_spirit:fir_log), sonst werden sie beim Import übersprungen. Kopieren nach config/twogg-markt/materiallager.json, dann /markt laden import materiallager materiallager",
   "lieferung": {
     "tag": "MONDAY",
     "zeit": "06:00",

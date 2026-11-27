@@ -2,6 +2,28 @@
 
 
 
+## 0.5.2+26.1.2 – 27.11.2026 – Geldpumpe im Lager-Laden geschlossen
+
+- **Fix: Geldpumpe bei „Waren mit Lager“.** Kauf wurde zum Bestand vor der Entnahme, Ankauf zum Bestand vor dem
+  Einlagern gerechnet – bei kleinen Lagern (z. B. Schallplatten: Lager 2, Soll 1) brachte Kaufen und sofort
+  Zurückverkaufen +1,2 WLC je Runde. Jetzt gilt je Einheit der Preis beim Bestand nach dem Handel (Kauf nach der
+  Entnahme, Ankauf nach dem Einlagern), auch Stück für Stück in Stapelkäufen. `spread` ist auf höchstens 0,95 begrenzt
+  (beim Import, beim Laden der Weltdaten und in der Rechnung). Rundung auf 0,1 immer zugunsten des Ladens: Verkauf
+  aufgerundet (bisher kaufmännisch), Ankauf abgerundet. Folge: günstige Waren kosten oft 0,1 mehr als bisher, kleine
+  Lager beim Soll spürbar mehr. Fenster und `/markt laden info` zeigen den Preis der nächsten Einheit.
+- **Fix: NaN/unendlich beim Import** (`spread`, `preis`) wird abgelehnt statt übernommen; fehlerhafte Einträge werden
+  übersprungen und gemeldet. NaN im `spread` der Weltdaten wird beim Laden ersetzt; ein Fehler beim Schreiben von
+  `markt.json` bricht den Server-Tick nicht mehr ab (wird geloggt).
+- **Fix: Lockvogel an der Theke.** Der Kauf schickt den angezeigten Preis und die Stückzahl mit; ist das Angebot
+  inzwischen teurer oder kleiner, bricht der Server ab und zeigt das neue Angebot. Ältere Clients schicken nichts mit
+  und sind weiter ungeschützt (kein Protokollwechsel, sie funktionieren weiter).
+- **Ankauf-Vorlage:** Fichtenholz 8 für 0,1 (bisher 0,2), Kohle 8 für 0,1 (bisher 4 für 0,2), Wolle 16 für 0,3
+  (bisher 4 für 0,3) – nicht mehr als das Materiallager mindestens verlangt. Gilt nur für neu angelegte
+  `config/twogg-markt/markt.json`.
+- Tests: kein Gewinn aus Kauf/Rückverkauf und Verkauf/Rückkauf für jeden Bestand 0 … Lager und 1 … 64 Einheiten aller
+  Waren aus `beispiele/`, Zufallsfolgen, Rundung, `spread`-Grenze, Ankauf-Vorlage gegen Materiallager, NaN beim Laden
+  und Speichern, Theken-Prüfung.
+
 ## 0.5.1+26.1.2 – 24.11.2026 – Auftragsbrett oben klickbar
 
 - **Fix: Auftragsbrett nur unten klickbar.** Das Modell ist zwei Blöcke hoch, Minecraft prüft Klicks aber nur im

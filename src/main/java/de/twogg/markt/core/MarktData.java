@@ -71,6 +71,8 @@ public final class MarktData {
             if (l.sells == null) l.sells = new ArrayList<>();
             if (l.buys == null) l.buys = new ArrayList<>();
             if (l.waren == null) l.waren = new ArrayList<>();
+            // NaN/unendlich aus Hand-Edits ließe das Speichern scheitern; Ankauf höchstens 0,95 × Preis (seit 0.5.2)
+            l.spread = Double.isFinite(l.spread) ? StockMath.spread(l.spread) : 0.6;
         }
         if (zones == null) zones = new LinkedHashMap<>();
         if (jobs == null) jobs = new ArrayList<>();

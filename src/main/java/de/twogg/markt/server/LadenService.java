@@ -71,7 +71,7 @@ public final class LadenService {
             line.item = Stacks.toString(reg, proto);
             line.name = w.name;
             line.count = w.unit;
-            line.price = StockMath.sellPrice(w.base, w.stock, w.target, w.capacity);
+            line.price = StockMath.nextSellPrice(w.base, w.stock, w.target, w.capacity, w.unit);
             line.stock = (int) Math.min(Integer.MAX_VALUE, w.stock / Math.max(1, w.unit));
             line.sold = w.sold;
             line.note = stockNote(w);
@@ -86,8 +86,8 @@ public final class LadenService {
             line.item = Stacks.toString(reg, proto);
             line.name = w.name;
             line.bundle = w.unit;
-            line.price = StockMath.buyPrice(w.base, w.stock, w.target, w.capacity, l.spread);
-            line.basePrice = Math.round(w.base * l.spread);
+            line.price = StockMath.nextBuyPrice(w.base, w.stock, w.target, w.capacity, l.spread, w.unit);
+            line.basePrice = (long) Math.floor(w.base * StockMath.spread(l.spread));
             line.have = Inv.count(p, matcher(proto)) / Math.max(1, w.unit);
             line.left = (int) Math.max(0, (w.capacity - w.stock) / Math.max(1, w.unit));
             line.note = w.stock >= w.capacity ? "Lager voll – nimmt nichts mehr an" : "noch Platz für " + line.left + " · " + stockNote(w);
@@ -203,7 +203,7 @@ public final class LadenService {
         ItemStack proto = Stacks.fromJson(reg, w.item);
         if (proto.isEmpty()) return new String[]{"Diese Ware gibt es auf dem Server nicht mehr.", "x"};
         int unit = Math.max(1, w.unit);
-        times = (int) Math.min(times, w.stock / unit);
+        times = StockMath.sellable(w.stock, unit, times);
         if (times <= 0) return new String[]{w.name + " ist ausverkauft – nächste Lieferung abwarten.", "x"};
         long total = StockMath.sellTotal(w.base, w.stock, w.target, w.capacity, unit, times);
         TxResult tx = Pay.charge(p, total, cash, "markt:laden", (times * unit) + "× " + w.name + " bei " + l.name);
@@ -230,15 +230,9 @@ public final class LadenService {
         if (have <= 0) return new String[]{"Du hast nicht genug dabei (" + unit + " Stück pro Verkauf).", "x"};
         int space = (int) Math.max(0, (w.capacity - w.stock) / unit);
         if (space <= 0) return new String[]{"Das Lager für " + w.name + " ist voll.", "x"};
-        int n = Math.min(all ? have : 1, space);
-        // nur so viele, wie noch etwas einbringen
-        int paid = 0;
-        long total = 0;
-        for (; paid < n; paid++) {
-            long each = StockMath.buyPrice(w.base, w.stock + (long) paid * unit, w.target, w.capacity, l.spread);
-            if (each <= 0) break;
-            total += each;
-        }
+        // nur so viele, wie ins Lager passen und noch etwas einbringen; jede Einheit zum Bestand nach dem Einlagern
+        int paid = StockMath.buyable(w.base, w.stock, w.target, w.capacity, l.spread, unit, all ? have : 1);
+        long total = StockMath.buyTotal(w.base, w.stock, w.target, w.capacity, l.spread, unit, paid);
         if (paid <= 0) return new String[]{"Für " + w.name + " zahlt " + l.name + " gerade nichts.", "x"};
         Inv.take(p, matcher(proto), paid * unit);
         w.stock += (long) paid * unit;
@@ -296,6 +290,7 @@ public final class LadenService {
     public static String putWare(net.minecraft.core.HolderLookup.Provider reg, Laden l, ItemStack proto, String name, double coins, int unit,
                                  long capacity, long target) {
         if (proto.isEmpty()) return "Keine Ware.";
+        if (!Double.isFinite(coins) || coins > 1_000_000) return "Ungültiger Preis.";
         long base = MarketMath.tenths(coins);
         if (base <= 0) return "Preis mindestens 0,1.";
         com.google.gson.JsonElement json = Stacks.toJson(reg, proto.copyWithCount(1));
@@ -335,7 +330,22 @@ public final class LadenService {
             out.add("Datei nicht lesbar: " + f + " (" + e.getMessage() + ")");
             return out;
         }
-        if (root.has("spread")) l.spread = root.get("spread").getAsDouble();
+        String note = null;
+        if (root.has("spread")) {
+            // NaN/unendlich ablehnen (sonst scheitert das Speichern), höchstens 0,95 (seit 0.5.2)
+            double sp;
+            try {
+                sp = root.get("spread").getAsDouble();
+            } catch (RuntimeException e) {
+                sp = Double.NaN;
+            }
+            if (!Double.isFinite(sp) || sp < 0) {
+                out.add("Datei nicht übernommen: „spread“ muss eine Zahl von 0 bis " + StockMath.MAX_SPREAD + " sein.");
+                return out;
+            }
+            if (sp > StockMath.MAX_SPREAD) note = "„spread“ " + sp + " auf " + StockMath.MAX_SPREAD + " begrenzt.";
+            l.spread = StockMath.spread(sp);
+        }
         if (root.has("lieferung")) {
             var d = root.getAsJsonObject("lieferung");
             if (d.has("tag")) l.deliveryDay = d.get("tag").getAsString();
@@ -357,12 +367,29 @@ public final class LadenService {
                 out.add("übersprungen (unbekannt): " + label);
                 continue;
             }
-            putWare(reg, l, proto, o.has("name") ? o.get("name").getAsString() : null, o.get("preis").getAsDouble(),
-                    o.has("einheit") ? o.get("einheit").getAsInt() : 1, o.has("lager") ? o.get("lager").getAsLong() : 64,
-                    o.has("soll") ? o.get("soll").getAsLong() : 32);
+            double preis;
+            int einheit;
+            long lager, soll;
+            try {
+                preis = o.get("preis").getAsDouble();
+                einheit = o.has("einheit") ? o.get("einheit").getAsInt() : 1;
+                lager = o.has("lager") ? o.get("lager").getAsLong() : 64;
+                soll = o.has("soll") ? o.get("soll").getAsLong() : 32;
+            } catch (RuntimeException e) {
+                preis = Double.NaN;
+                einheit = 0;
+                lager = soll = 0;
+            }
+            // NaN/unendlich und fehlende Zahlen ablehnen (seit 0.5.2)
+            if (!Double.isFinite(preis) || MarketMath.tenths(preis) <= 0 || preis > 1_000_000) {
+                out.add("übersprungen (Preis fehlt oder ungültig): " + label);
+                continue;
+            }
+            putWare(reg, l, proto, o.has("name") ? o.get("name").getAsString() : null, preis, einheit, lager, soll);
             ok++;
         }
         out.add(0, ok + " Waren übernommen" + (out.isEmpty() ? "." : ", " + out.size() + " übersprungen:"));
+        if (note != null) out.add(note);
         MarktRuntime.markDirty();
         return out;
     }

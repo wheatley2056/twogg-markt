@@ -223,8 +223,10 @@ public final class MarktConfig {
     public static MarktConfig defaults() {
         MarktConfig c = new MarktConfig();
         List<BuyerItem> b = c.buyer.items;
-        b.add(new BuyerItem("minecraft:spruce_log", "Fichtenholz", 8, 0.2, 64, 32));
-        b.add(new BuyerItem("minecraft:coal", "Kohle", 4, 0.2, 64, 32));
+        // Fichtenholz, Kohle, Wolle verkauft auch das Materiallager (beispiele/materiallager.json): Ankauf je Stück
+        // höchstens dessen niedrigster Verkaufspreis, sonst lohnt „dort kaufen, hier abgeben“ (seit 0.5.2)
+        b.add(new BuyerItem("minecraft:spruce_log", "Fichtenholz", 8, 0.1, 64, 32));
+        b.add(new BuyerItem("minecraft:coal", "Kohle", 8, 0.1, 32, 16));
         b.add(new BuyerItem("minecraft:cookie", "Lebkuchen", 4, 0.2, 48, 24));
         b.add(new BuyerItem("minecraft:bread", "Brot", 2, 0.2, 32, 16));
         b.add(new BuyerItem("minecraft:pumpkin_pie", "Kürbiskuchen", 1, 0.3, 24, 12));
@@ -232,7 +234,7 @@ public final class MarktConfig {
         b.add(new BuyerItem("minecraft:apple", "Äpfel", 4, 0.3, 32, 16));
         b.add(new BuyerItem("minecraft:cod", "Kabeljau", 2, 0.3, 32, 16));
         b.add(new BuyerItem("minecraft:salmon", "Lachs", 2, 0.4, 24, 12));
-        b.add(new BuyerItem("minecraft:white_wool", "Wolle", 4, 0.3, 32, 16));
+        b.add(new BuyerItem("minecraft:white_wool", "Wolle", 16, 0.3, 8, 4));
         b.add(new BuyerItem("minecraft:honey_bottle", "Honig", 1, 0.4, 16, 8));
         b.add(new BuyerItem("minecraft:candle", "Kerzen", 2, 0.4, 16, 8));
         b.add(new BuyerItem("minecraft:iron_ingot", "Eisenbarren", 1, 0.3, 32, 16));

@@ -208,12 +208,12 @@ public final class MarktClientTest implements FabricClientGameTest {
             ctx.waitTicks(5);
             shot(ctx, "markt-09-ankauf");
             long bal4 = sp.getServer().computeOnServer(server -> Economy.balance(player(server)));
-            press(ctx, "Alle", false);   // erste Zeile: Fichtenholz, 8 Stück für 0,2
+            press(ctx, "Alle", false);   // erste Zeile: Fichtenholz, 8 Stück für 0,1 (seit 0.5.2)
             ctx.waitTicks(10);
             shot(ctx, "markt-10-ankauf-verkauft");
             String sold = sp.getServer().computeOnServer(server -> player(server).getInventory().countItem(Items.SPRUCE_LOG)
                     + "/" + (Economy.balance(player(server)) - bal4));
-            check(sold.equals("0/4"), "Ankauf 2 × 8 Fichtenstämme = 0,4 WLC: " + sold);
+            check(sold.equals("0/2"), "Ankauf 2 × 8 Fichtenstämme = 0,2 WLC: " + sold);
             press(ctx, "Fertig", false);
             ctx.waitFor(mc -> mc.screen == null, 100);
 
@@ -632,8 +632,9 @@ public final class MarktClientTest implements FabricClientGameTest {
             de.twogg.markt.server.LadenService.deliver(l);
             return earned + "/" + left + "/" + stockFull + "/" + (p1 < p0) + "/" + w.stock;
         });
-        // 2 Stacks passen (128 → 256), Ankauf 0,3 × Faktor 1 bzw. ≈0,71 → 3 + 2 = 5 Zehntel; 3 Stacks bleiben übrig
-        check(flow.equals("5/192/256/true/128"), "Ankauf bis Lager voll, Preis fällt, Lieferung auf Soll: " + flow);
+        // 2 Stacks passen (128 → 256), Ankauf zum Bestand nach dem Einlagern (seit 0.5.2): 0,3 × ≈0,71 bzw. 0,5 → 2 + 1
+        // = 3 Zehntel; 3 Stacks bleiben übrig
+        check(flow.equals("3/192/256/true/128"), "Ankauf bis Lager voll, Preis fällt, Lieferung auf Soll: " + flow);
         // die echte Liste für Brandt: alles Vanilla wird erkannt, nur die Mod-Platzhalter (MODID:) fehlen
         String real = sp.getServer().computeOnServer(server -> {
             try {
