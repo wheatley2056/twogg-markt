@@ -6,6 +6,7 @@ import de.twogg.markt.core.Laden;
 import de.twogg.markt.core.MarketMath;
 import de.twogg.markt.core.MarktData;
 import de.twogg.markt.core.Offer;
+import de.twogg.markt.core.Restock;
 import de.twogg.markt.core.StockMath;
 import de.twogg.markt.data.Stacks;
 import de.twogg.markt.net.Views;
@@ -17,7 +18,8 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.item.ItemStack;
 
 /**
- * Server-Laden (seit 0.4.0): feste Preise, unbegrenzter Vorrat, Verkauf und Ankauf. Kein Block: Geöffnet wird per
+ * Server-Laden (seit 0.4.0): feste Preise (ohne Bestand) und Waren mit Lager (seit 0.5.0), Verkauf und Ankauf. Brandts
+ * Lager pflegt {@link LagerService} aus der Config (seit 0.6.0, nur Waren mit Bestand). Kein Block: Geöffnet wird per
  * {@code /markt laden oeffnen <id> <spieler>} (Storyteller-NPC, Befehlsblock …); das Fenster gilt, solange der Spieler
  * höchstens 8 Blöcke von der Stelle entfernt bleibt, an der es aufging.
  */
@@ -48,7 +50,8 @@ public final class LadenService {
     static void send(ServerPlayer p, Laden l, String msg, boolean error) {
         Views.View v = Send.base(p, SCREEN, msg, error);
         v.title = l.name;
-        v.subtitle = l.subtitle;
+        v.subtitle = l.waren.isEmpty() ? l.subtitle
+                : (l.subtitle.isBlank() ? "" : l.subtitle + " · ") + "Nachschub " + LagerService.when(l);
         v.payCash = MarktRuntime.config().buyer.payCash;
         var reg = p.level().registryAccess();
         for (Offer o : l.sells) {
@@ -244,30 +247,12 @@ public final class LadenService {
                 + (MarktRuntime.config().buyer.payCash ? " bar." : " aufs Konto.") + (paid < (all ? have : 1) ? " Mehr nimmt das Lager nicht." : ""), null};
     }
 
-    /** Letzter planmäßiger Liefertermin ≤ {@code now} (ms). */
+    /** Letzter planmäßiger Liefertermin ≤ {@code now} (ms), in der Zeitzone des Ladens (Sommer-/Winterzeit, seit 0.6.0 in {@link Restock}). */
     static long lastSlot(Laden l, long now) {
-        java.time.ZoneId z;
-        try {
-            z = java.time.ZoneId.of(l.zone);
-        } catch (RuntimeException e) {
-            z = java.time.ZoneId.of("Europe/Berlin");
-        }
-        java.time.DayOfWeek day;
-        java.time.LocalTime time;
-        try {
-            day = java.time.DayOfWeek.valueOf(l.deliveryDay.trim().toUpperCase(java.util.Locale.ROOT));
-            time = java.time.LocalTime.parse(l.deliveryTime.trim());
-        } catch (RuntimeException e) {
-            day = java.time.DayOfWeek.MONDAY;
-            time = java.time.LocalTime.of(6, 0);
-        }
-        java.time.ZonedDateTime n = java.time.Instant.ofEpochMilli(now).atZone(z);
-        java.time.ZonedDateTime slot = n.with(java.time.temporal.TemporalAdjusters.previousOrSame(day)).with(time);
-        if (slot.isAfter(n)) slot = slot.minusWeeks(1);
-        return slot.toInstant().toEpochMilli();
+        return Restock.lastSlot(now, LagerService.day(l), LagerService.time(l), Restock.zone(l.zone));
     }
 
-    /** Fällige Lieferungen ausführen (alle 5 s): Bestand auf Soll, Überschuss geht zurück. */
+    /** Fällige Lieferungen ausführen (alle 5 s). War der Server über den Termin aus, kommt sie einmal beim Start. */
     public static void deliveries() {
         long now = System.currentTimeMillis();
         for (Laden l : MarktRuntime.data().laeden.values()) {
@@ -277,12 +262,17 @@ public final class LadenService {
                 deliver(l);
                 l.lastDelivery = slot;
                 MarktRuntime.markDirty();
+                de.twogg.markt.TwoggMarkt.LOGGER.info("Nachschub für {}: alle Waren bis zum Soll aufgefüllt", l.name);
             }
         }
     }
 
+    /**
+     * Lieferung: jede Ware bis zum Soll auffüllen (nicht obendrauf). Überschuss geht nur mit {@link Laden#trimSurplus}
+     * zurück (Standard für ältere Läden; Brandts Lager behält ihn, seit 0.6.0).
+     */
     public static void deliver(Laden l) {
-        for (Laden.Ware w : l.waren) w.stock = Math.max(0, Math.min(w.capacity, w.target));
+        for (Laden.Ware w : l.waren) w.stock = Restock.restock(w.stock, w.target, w.capacity, l.trimSurplus);
         MarktRuntime.markDirty();
     }
 
@@ -407,6 +397,10 @@ public final class LadenService {
         return null;
     }
 
+    /** Brandts Lager hat seit 0.6.0 keinen unbegrenzten Vorrat und keinen festen Ankauf mehr. */
+    static final String LAGER_FIXED = "Brandts Lager führt nur Waren mit Bestand: Liste in config/twogg-markt/markt.json unter „lager.items“, "
+            + "danach /markt reload (oder einzeln /markt laden ware).";
+
     /** Ware aus der Hand anbieten. @return Meldung */
     public static String addSell(ServerPlayer p, Laden l, double coins, int count) {
         return addSell(p.level().registryAccess(), p.getMainHandItem(), l, coins, count);
@@ -414,6 +408,7 @@ public final class LadenService {
 
     /** Ware {@code hand} (Vorlage, Anzahl egal) anbieten. */
     public static String addSell(net.minecraft.core.HolderLookup.Provider reg, ItemStack hand, Laden l, double coins, int count) {
+        if (LagerService.isLager(l)) return LAGER_FIXED;
         if (hand.isEmpty()) return "Nimm die Ware in die Hand (oder gib die Item-ID an).";
         long price = MarketMath.tenths(coins);
         if (price <= 0) return "Preis mindestens 0,1.";
@@ -434,6 +429,7 @@ public final class LadenService {
     }
 
     public static String addBuy(net.minecraft.core.HolderLookup.Provider reg, ItemStack hand, Laden l, double coins, int count, int dailyLimit) {
+        if (LagerService.isLager(l)) return LAGER_FIXED;
         if (hand.isEmpty()) return "Nimm ein Beispiel der Ware in die Hand (oder gib die Item-ID an).";
         long price = MarketMath.tenths(coins);
         if (price <= 0) return "Preis mindestens 0,1.";

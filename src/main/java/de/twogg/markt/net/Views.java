@@ -119,6 +119,11 @@ public final class Views {
         public String state = "LOCKED";
         public String text = "";
         public String item = "";
+        /** Nur Marktverwaltung (seit 0.6.0): Coins in Zehnteln, Stückzahl, eigener Text, Item-ID bzw. Name. */
+        public long coins;
+        public int count;
+        public String note = "";
+        public String itemName = "";
     }
 
     public static final class PlotLine {

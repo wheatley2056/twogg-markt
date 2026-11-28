@@ -177,6 +177,8 @@ public final class MarktCommands {
                 .then(literal("auftraege").requires(admin)
                         .then(literal("neu").executes(c -> admin(c, Views.Action.of("jobs_reroll")))))
                 .then(laden().requires(admin))
+                .then(lager().requires(admin))
+                .then(advent().requires(admin))
                 .then(literal("reload").requires(admin).executes(c -> admin(c, Views.Action.of("reload"))))
                 .then(literal("speichern").requires(admin).executes(c -> {
                     MarktRuntime.save();
@@ -225,7 +227,8 @@ public final class MarktCommands {
                 .then(literal("liste").executes(c -> {
                     if (MarktRuntime.data().laeden.isEmpty()) return say(c, "Keine Läden. Anlegen: /markt laden neu <id> <name>");
                     for (var l : MarktRuntime.data().laeden.values()) {
-                        say(c, l.id + " – " + l.name + (l.open ? "" : " (geschlossen)") + " · " + l.sells.size() + " Verkauf, " + l.buys.size() + " Ankauf");
+                        say(c, l.id + " – " + l.name + (l.open ? "" : " (geschlossen)") + " · " + l.sells.size() + " Verkauf, " + l.buys.size() + " Ankauf, "
+                                + l.waren.size() + " Waren mit Lager" + (LagerService.isLager(l) ? " (Brandts Lager, aus der Config)" : ""));
                     }
                     return 1;
                 }))
@@ -286,7 +289,7 @@ public final class MarktCommands {
                     var l = ladenArg(c);
                     if (l == null) return 0;
                     LadenService.deliver(l);
-                    return say(c, "Lieferung für " + l.name + ": alle Waren auf Soll gesetzt.");
+                    return say(c, "Lieferung für " + l.name + ": alle Waren bis zum Soll aufgefüllt" + (l.trimSurplus ? ", Überschuss zurück." : " (Überschuss bleibt)."));
                 })))
                 .then(literal("lieferzeit").then(argument("laden", StringArgumentType.word()).suggests(LAEDEN)
                         .then(argument("tag", StringArgumentType.word()).suggests((ctx, b) -> SharedSuggestionProvider.suggest(
@@ -341,6 +344,96 @@ public final class MarktCommands {
                             return p == null ? 0 : openFor(c, List.of(p));
                         })
                         .then(argument("spieler", EntityArgument.players()).executes(c -> openFor(c, EntityArgument.getPlayers(c, "spieler"))))));
+    }
+
+    /** {@code /markt lager} (seit 0.6.0): Brandts Lager – Stand des Abgleichs, Abgleich, Nachschub sofort. */
+    private static com.mojang.brigadier.builder.LiteralArgumentBuilder<CommandSourceStack> lager() {
+        return literal("lager")
+                .executes(MarktCommands::lagerInfo)
+                .then(literal("abgleich").executes(c -> {
+                    LagerService.sync();
+                    return lagerInfo(c);
+                }))
+                .then(literal("nachschub").executes(c -> {
+                    var cfg = MarktRuntime.config().lager;
+                    var l = cfg == null ? null : MarktRuntime.data().laeden.get(cfg.laden);
+                    if (l == null || !LagerService.isLager(l)) {
+                        c.getSource().sendFailure(Component.literal("Brandts Lager ist nicht eingerichtet (lager.enabled, lager.laden)."));
+                        return 0;
+                    }
+                    LadenService.deliver(l);
+                    c.getSource().sendSuccess(() -> Component.literal("Nachschub für " + l.name + ": alle Waren bis zum Wochenbestand aufgefüllt."), true);
+                    return 1;
+                }));
+    }
+
+    private static int lagerInfo(CommandContext<CommandSourceStack> c) {
+        List<String> r = LagerService.report();
+        if (r.isEmpty()) return say(c, "Brandts Lager: noch kein Abgleich (/markt lager abgleich).");
+        say(c, "Brandts Lager: " + r.getFirst());
+        for (String line : r.subList(1, r.size())) c.getSource().sendSuccess(() -> Component.literal(" " + line).withStyle(ChatFormatting.GOLD), false);
+        var cfg = MarktRuntime.config().lager;
+        if (cfg != null) say(c, " Waren und Preise: /markt laden info " + cfg.laden);
+        return 1;
+    }
+
+    /**
+     * {@code /markt advent …} (seit 0.6.0): Inhalte der Türchen bearbeiten. Gespeichert in
+     * {@code config/twogg-markt/markt.json} unter {@code event.adventDays}.
+     */
+    private static com.mojang.brigadier.builder.LiteralArgumentBuilder<CommandSourceStack> advent() {
+        var tag = argument("tag", IntegerArgumentType.integer(1, 24));
+        return literal("advent")
+                .executes(MarktCommands::adventList)
+                .then(literal("liste").executes(MarktCommands::adventList))
+                .then(literal("item").then(argument("tag", IntegerArgumentType.integer(1, 24)).executes(c -> adventAct(c, "advent_item"))))
+                .then(literal("leeren").then(argument("tag", IntegerArgumentType.integer(1, 24)).executes(c -> adventAct(c, "advent_clear"))))
+                .then(literal("muenzen").then(argument("tag", IntegerArgumentType.integer(1, 24))
+                        .then(argument("coins", DoubleArgumentType.doubleArg(0, 10_000)).executes(c -> {
+                            Views.Action a = Views.Action.of("advent_coins");
+                            a.count = IntegerArgumentType.getInteger(c, "tag");
+                            a.value = DoubleArgumentType.getDouble(c, "coins");
+                            return admin(c, a);
+                        }))))
+                .then(literal("text").then(tag
+                        .then(argument("text", StringArgumentType.greedyString()).executes(c -> {
+                            Views.Action a = Views.Action.of("advent_text");
+                            a.count = IntegerArgumentType.getInteger(c, "tag");
+                            a.text = StringArgumentType.getString(c, "text");
+                            return admin(c, a);
+                        }))))
+                .then(literal("standard")
+                        .then(literal("alle").executes(c -> {
+                            Views.Action a = Views.Action.of("advent_default");
+                            a.count = 0;
+                            return admin(c, a);
+                        }))
+                        .then(argument("tag", IntegerArgumentType.integer(1, 24)).executes(c -> adventAct(c, "advent_default"))))
+                .then(literal("zuruecksetzen")
+                        .then(literal("alle").executes(c -> admin(c, Views.Action.of("advent_reopen"))))
+                        .then(argument("spieler", EntityArgument.player()).executes(c -> {
+                            Views.Action a = Views.Action.of("advent_reopen");
+                            a.name = EntityArgument.getPlayer(c, "spieler").getGameProfile().name();
+                            return admin(c, a);
+                        })));
+    }
+
+    private static int adventAct(CommandContext<CommandSourceStack> c, String action) {
+        Views.Action a = Views.Action.of(action);
+        a.count = IntegerArgumentType.getInteger(c, "tag");
+        return admin(c, a);
+    }
+
+    private static int adventList(CommandContext<CommandSourceStack> c) {
+        var cfg = MarktRuntime.config();
+        say(c, "Adventskalender (" + (cfg.event.advent ? "an" : "aus") + ") – ändern: /markt advent item|muenzen|text|leeren|standard <tag>");
+        var reg = c.getSource().registryAccess();
+        for (int day = 1; day <= 24; day++) {
+            Views.AdventDoor door = AdminService.adventDoor(reg, cfg.advent(day), day);
+            String line = String.format("%2d. %s", day, door.text);
+            c.getSource().sendSuccess(() -> Component.literal(line), false);
+        }
+        return 1;
     }
 
     private static int sellCmd(CommandContext<CommandSourceStack> c, int count) {

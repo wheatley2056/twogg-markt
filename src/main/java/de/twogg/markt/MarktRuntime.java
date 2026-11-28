@@ -33,6 +33,14 @@ public final class MarktRuntime {
         MarktConfig c = Store.loadConfig();
         config = c == null ? MarktConfig.defaults() : c;
         data = Store.loadData(dir());
+        // Seit 0.6.0: Weltdaten einmal umstellen (Beispielaufträge, unbegrenzter Vorrat in Brandts Lager), vorher Kopie
+        if (data.version < MarktData.VERSION) {
+            Store.keepCopy(dir().resolve("markt.json"), Store.MIGRATION_SUFFIX);
+            for (String m : data.migrate(config)) TwoggMarkt.LOGGER.info("Markt-Weltdaten: {}", m);
+            dirty = true;
+            saveSoon = true;
+        }
+        for (String m : de.twogg.markt.server.LagerService.sync()) TwoggMarkt.LOGGER.info("Brandts Lager: {}", m);
         rollDay();
         BoardService.refreshIfDue(true);
         TwoggMarkt.LOGGER.info("Markt geöffnet: {} Stände, {} Räumzonen, {} Aufträge", data.plots.size(), data.zones.size(), data.jobs.size());
@@ -88,6 +96,7 @@ public final class MarktRuntime {
         MarktConfig c = Store.loadConfig();
         if (c == null) return false;
         config = c;
+        if (server != null) for (String m : de.twogg.markt.server.LagerService.sync()) TwoggMarkt.LOGGER.info("Brandts Lager: {}", m);
         return true;
     }
 

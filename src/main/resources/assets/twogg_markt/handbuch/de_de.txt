@@ -55,8 +55,8 @@ Auch ohne eigene Bude verdienst du auf dem Markt.
 Der Markt kauft Rohstoffe und Gebäck zum Tagespreis. „1×“ verkauft ein Bündel, „Alle“ so viele wie möglich. Je mehr alle zusammen verkaufen, desto weiter fällt der Preis (bis auf {minFactor} %). Über den Tag erholt er sich wieder. Grün heißt voller Preis, gelb unter der Hälfte.
 ![ankauf] Die Ankaufstelle mit Tagespreisen.
 ## Auftragsbrett
-- Marktaufträge: Items liefern, Belohnung kassieren. Jeder kann jeden Auftrag einmal erledigen, solange Plätze frei sind.
-- Neue Marktaufträge gibt es regelmäßig, {jobsActive} hängen gleichzeitig.
+- Aufträge anderer Spieler: Items liefern, Belohnung kassieren.
+- Marktaufträge hängt die Marktleitung aus, wenn sie etwas braucht (bis zu {jobsActive} gleichzeitig). Jeder kann jeden einmal erledigen, solange Plätze frei sind.
 - Eigene Aufträge: Ware in die Hand, Stück und Belohnung eintragen, „Auftrag aushängen“. Höchstens {jobsMax} Aufträge, Belohnung bis {jobsMaxReward}.
 - Geliefertes holst du im Abholfach ab.
 ![auftragsbrett] Das Auftragsbrett.

@@ -10,6 +10,8 @@ import java.util.Map;
 
 /** Weltdaten des Markts ({@code <welt>/twogg-markt/markt.json}). */
 public final class MarktData {
+    /** Stand der Weltdaten: 1 bis 0.5.2, 2 seit 0.6.0 (siehe {@link #migrate}). */
+    public static final int VERSION = 2;
     public int version = 1;
     public Map<String, Plot> plots = new LinkedHashMap<>();
     /** Server-Läden (seit 0.4.0): ID → Laden. */
@@ -111,6 +113,33 @@ public final class MarktData {
             if (j.posterName == null) j.posterName = "";
             if (j.title == null) j.title = "";
         }
+    }
+
+    /**
+     * Weltdaten von vor 0.6.0 hochziehen (einmal): Beispielaufträge der alten Vorlage vom Brett nehmen (nur
+     * Marktaufträge, deren Titel und Item aus der Vorlage stammen – Spieleraufträge bleiben) und in Brandts Lager die
+     * Zeilen mit unbegrenztem Vorrat (feste Verkäufe) und festem Ankauf entfernen; dort gelten nur noch Waren mit
+     * Bestand aus {@code lager.items}.
+     *
+     * @return Meldungen fürs Log; leer = nichts zu tun
+     */
+    public List<String> migrate(MarktConfig cfg) {
+        List<String> out = new ArrayList<>();
+        if (version >= VERSION) return out;
+        int before = jobs.size();
+        jobs.removeIf(j -> j.system && (j.poster == null || j.poster.isBlank()) && MarktConfig.isSampleJob(j.title, j.item));
+        if (jobs.size() < before) out.add((before - jobs.size()) + " Beispielaufträge vom Auftragsbrett entfernt (Spieleraufträge bleiben).");
+        MarktConfig.Lager lc = cfg == null ? null : cfg.lager;
+        Laden l = lc == null || !lc.enabled ? null : laeden.get(lc.laden);
+        if (l != null && (!l.sells.isEmpty() || !l.buys.isEmpty())) {
+            out.add("Brandts Lager „" + l.id + "“: " + l.sells.size() + " Verkaufszeilen mit unbegrenztem Vorrat und " + l.buys.size()
+                    + " feste Ankaufszeilen entfernt (Kopie: markt.json.vor-0.6.0).");
+            l.sells.clear();
+            l.buys.clear();
+        }
+        out.add("Weltdaten von Version " + version + " auf " + VERSION + " gebracht.");
+        version = VERSION;
+        return out;
     }
 
     public Plot plotAt(String dim, int x, int y, int z) {

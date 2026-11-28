@@ -86,4 +86,12 @@ public final class StockMath {
         while (paid < n && buyPrice(baseTenths, stock + (long) (paid + 1) * u, target, capacity, spread) > 0) paid++;
         return paid;
     }
+
+    /**
+     * Billigster Preis einer Einheit, den Brandt je verlangt: bei vollem Lager (Bestand fällt, Preis steigt – je voller,
+     * desto billiger). Für den Abgleich mit der Ankaufstelle (seit 0.6.0).
+     */
+    public static long cheapestSell(long baseTenths, long target, long capacity, int unit) {
+        return nextSellPrice(baseTenths, capacity, target, capacity, unit);
+    }
 }

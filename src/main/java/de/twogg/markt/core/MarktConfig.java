@@ -1,5 +1,8 @@
 package de.twogg.markt.core;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,6 +11,10 @@ import java.util.List;
  * Nachkommastelle, Preise für Stände in der Referenzwährung (€) des Economy-Profils.
  */
 public final class MarktConfig {
+    /** Stand der Einstellungsdatei: 0 = vor 0.6.0 (Feld fehlt), 2 = seit 0.6.0. Siehe {@link #migrate()}. */
+    public static final int VERSION = 2;
+    public int configVersion;
+
     public String title = "Weihnachtsmarkt";
     public String subtitle = "Winterland";
     /** Akzentfarbe der Fenster. */
@@ -21,6 +28,11 @@ public final class MarktConfig {
     public Event event = new Event();
     /** Markt-Handbuch (seit 0.3.0): Buch zum Durchblättern. */
     public Guide guide = new Guide();
+    /**
+     * Brandts Lager (seit 0.6.0): Waren mit begrenztem Bestand im Laden {@link Lager#laden}, jede Woche aufgefüllt.
+     * {@code null} nur in Dateien von vor 0.6.0 – {@link #migrate()} setzt dann die Vorlage ein.
+     */
+    public Lager lager;
 
     public static final class Guide {
         /** Jeder Spieler bekommt das Handbuch beim ersten Betreten des Servers (einmal). */
@@ -207,6 +219,11 @@ public final class MarktConfig {
         public String item = "";
         public int count = 1;
         public String text = "";
+        /**
+         * Seit 0.6.0: kompletter Stapel (ItemStack-JSON mit Anzahl und Daten wie Verzauberungen oder Namen), gesetzt per
+         * {@code /markt advent item <tag>} oder in der Marktverwaltung aus der Hand. Hat Vorrang vor {@link #item}/{@link #count}.
+         */
+        public JsonElement stack;
 
         public AdventDay() {}
 
@@ -217,6 +234,252 @@ public final class MarktConfig {
             this.count = count;
             this.text = text;
         }
+    }
+
+    /**
+     * Brandts Lager (seit 0.6.0): Der Laden {@link #laden} (Storyteller-NPC Brandt öffnet ihn mit
+     * {@code markt laden oeffnen materiallager {player}}) führt genau diese Waren – kein unbegrenzter Vorrat. Beim Start und
+     * bei {@code /markt reload} wird der Laden mit dieser Liste abgeglichen (Bestände bleiben erhalten).
+     */
+    public static final class Lager {
+        public boolean enabled = true;
+        /** ID des Ladens in den Weltdaten ({@code laeden}). */
+        public String laden = "materiallager";
+        /** Fenstertitel; leer = Name des Ladens bleibt. */
+        public String name = "Materiallager";
+        public String subtitle = "Brandts Lager";
+        /** Nachschub: Wochentag (MONDAY … SUNDAY), Uhrzeit hh:mm und Zeitzone. Füllt bis zum Wochenbestand auf. */
+        public String restockDay = "SUNDAY";
+        public String restockTime = "06:00";
+        public String zone = "Europe/Berlin";
+        /** Überschuss (von Spielern über den Wochenbestand verkauft) beim Nachschub mitnehmen; Standard: bleibt liegen. */
+        public boolean trimSurplus = false;
+        /** Rückkauf = Verkaufspreis × spread (höchstens 0,95). */
+        public double spread = 0.6;
+        /** Lagerplatz = Wochenbestand × capacityFactor, wenn eine Ware keinen eigenen {@code capacity} hat. */
+        public double capacityFactor = 2.0;
+        public List<LagerItem> items = new ArrayList<>();
+    }
+
+    /** Eine Ware in Brandts Lager. Bestände in Stück, Preis in Coins je Einheit ({@code unit} Stück) beim Wochenbestand. */
+    public static final class LagerItem {
+        /** Item-ID (z. B. {@code minecraft:coal}); bei {@link #stack} nur zur Anzeige in Meldungen. */
+        public String item = "";
+        /** Optional: kompletter Stapel mit Daten (Verzauberungsbücher …); gehandelt wird dann nur genau dieses Item. */
+        public JsonElement stack;
+        /** Anzeigename; leer = Name des Items. */
+        public String name = "";
+        /** Stück pro Kauf/Verkauf. */
+        public int unit = 1;
+        /**
+         * Coins je Einheit, die die erste Einheit kostet, wenn der Bestand beim Wochenbestand steht (so steht es dann im
+         * Fenster). Leeres Lager etwa doppelt, volles Lager etwa halb so teuer. Siehe {@link #baseTenths(double)}.
+         */
+        public double price = 0.1;
+        /** Wochenbestand (Soll) in Stück: so weit füllt der Nachschub jeden Sonntag auf. */
+        public long weekly = 64;
+        /** Lagerplatz in Stück (Obergrenze für Verkäufe der Spieler); 0 = weekly × capacityFactor. */
+        public long capacity;
+
+        public LagerItem() {}
+
+        public LagerItem(String item, String name, int unit, double price, long weekly) {
+            this.item = item;
+            this.name = name;
+            this.unit = unit;
+            this.price = price;
+            this.weekly = weekly;
+        }
+
+        /** Lagerplatz in Stück: eigener Wert oder Wochenbestand × Faktor, auf ganze Einheiten aufgerundet, mindestens eine Einheit über dem Soll. */
+        public long capacity(double factor) {
+            int u = Math.max(1, unit);
+            long cap = capacity > 0 ? capacity : (long) Math.ceil(Math.max(0, weekly) * Math.max(1, factor));
+            cap = Math.max(cap, Math.max(0, weekly) + u);
+            return (cap + u - 1) / u * u;
+        }
+
+        /**
+         * Grundpreis der Ware in Zehnteln (Preisfaktor 1 genau beim Soll), so gewählt, dass die erste Einheit beim
+         * Wochenbestand höchstens {@link #price} kostet – Brandt rechnet je Einheit zum Bestand nach der Entnahme und rundet
+         * auf, ohne diese Umrechnung stünde z. B. Bruchstein mit 0,5 statt 0,4 im Fenster.
+         */
+        public long baseTenths(double factor) {
+            long want = Math.max(1, MarketMath.tenths(price));
+            long cap = capacity(factor), target = Math.min(cap, Math.max(0, weekly));
+            int u = Math.max(1, unit);
+            double f = StockMath.factor(target - u, target, cap);
+            long b = Math.max(1, (long) Math.floor(want / f));
+            while (b > 1 && StockMath.nextSellPrice(b, target, target, cap, u) > want) b--;
+            while (StockMath.nextSellPrice(b + 1, target, target, cap, u) <= want) b++;
+            return b;
+        }
+
+        @Override
+        public String toString() {
+            return item + (stack == null ? "" : " " + stack);
+        }
+    }
+
+    /** Verzauberungsbuch als Stapel-JSON (Datenkomponente {@code minecraft:stored_enchantments}). */
+    static JsonElement book(String enchantment, int level) {
+        return JsonParser.parseString("{\"id\":\"minecraft:enchanted_book\",\"count\":1,\"components\":"
+                + "{\"minecraft:stored_enchantments\":{\"minecraft:" + enchantment + "\":" + level + "}}}");
+    }
+
+    private static LagerItem bookItem(String enchantment, int level, String name, double price, long weekly) {
+        LagerItem i = new LagerItem("minecraft:enchanted_book", name, 1, price, weekly);
+        i.stack = book(enchantment, level);
+        return i;
+    }
+
+    /**
+     * Vorlage für Brandts Lager (Verkaufsliste der Serverleitung, 0.6.0). Preisgefüge: Stundenlohn 1,5 WLC (Stechuhr),
+     * Woche aktiv ≈ 30–40 WLC. Massengüter kosten Minuten, Seltenes (Reparatur, Schallplatten, Besätze, Drachenatem)
+     * Stunden bis Tage Arbeit. Wochenbestand für 42 Spieler. Je Stück nie billiger, als die Ankaufstelle der Vorlage
+     * für dasselbe (oder daraus geschmolzene) Item zahlt – sonst lohnt „bei Brandt kaufen, dort abgeben“ (Test).
+     */
+    public static Lager defaultLager() {
+        Lager l = new Lager();
+        List<LagerItem> w = l.items;
+        // --- Items
+        w.add(new LagerItem("minecraft:raw_iron", "Rohes Eisen", 8, 4.8, 640));
+        w.add(new LagerItem("minecraft:raw_copper", "Rohes Kupfer", 16, 1.6, 1024));
+        w.add(new LagerItem("minecraft:raw_gold", "Rohes Gold", 8, 6.4, 336));
+        w.add(new LagerItem("autumnal_winterly:raw_platinum", "Rohes Platin", 4, 6.0, 168));
+        w.add(new LagerItem("minecraft:emerald", "Smaragd", 1, 0.8, 256));
+        w.add(new LagerItem("minecraft:redstone", "Redstone-Staub", 32, 1.2, 2048));
+        w.add(new LagerItem("minecraft:lapis_lazuli", "Lapislazuli", 16, 1.2, 1024));
+        w.add(new LagerItem("minecraft:coal", "Kohle", 32, 1.0, 2048));
+        w.add(new LagerItem("minecraft:diamond", "Diamant", 1, 4.0, 84));
+        w.add(new LagerItem("minecraft:string", "Faden", 16, 0.6, 1024));
+        w.add(new LagerItem("minecraft:glowstone_dust", "Glowstone-Staub", 16, 1.2, 672));
+        w.add(new LagerItem("minecraft:nether_wart", "Netherwarze", 16, 0.8, 672));
+        w.add(new LagerItem("minecraft:magma_cream", "Magmacreme", 4, 1.2, 168));
+        w.add(new LagerItem("minecraft:blaze_rod", "Lohenrute", 1, 0.8, 128));
+        w.add(new LagerItem("minecraft:quartz", "Netherquarz", 32, 1.6, 1344));
+        w.add(new LagerItem("minecraft:slime_ball", "Schleimball", 8, 1.2, 336));
+        w.add(new LagerItem("minecraft:honeycomb", "Honigwabe", 8, 3.2, 336));
+        w.add(new LagerItem("minecraft:amethyst_shard", "Amethystscherbe", 8, 0.8, 512));
+        w.add(new LagerItem("minecraft:leather", "Leder", 8, 1.2, 512));
+        w.add(new LagerItem("minecraft:feather", "Feder", 16, 0.6, 672));
+        w.add(new LagerItem("minecraft:ink_sac", "Tintenbeutel", 8, 0.8, 336));
+        w.add(new LagerItem("minecraft:ghast_tear", "Ghastträne", 1, 2.0, 32));
+        w.add(new LagerItem("minecraft:dragon_breath", "Drachenatem", 1, 3.0, 32));
+        w.add(new LagerItem("minecraft:dried_ghast", "Ausgetrockneter Ghast", 1, 8.0, 8));
+        w.add(bookItem("mending", 1, "Verzauberungsbuch: Reparatur", 25.0, 4));
+        w.add(bookItem("unbreaking", 3, "Verzauberungsbuch: Haltbarkeit III", 6.0, 8));
+        w.add(bookItem("efficiency", 4, "Verzauberungsbuch: Effizienz IV", 5.0, 8));
+        w.add(bookItem("swift_sneak", 3, "Verzauberungsbuch: Huschen III", 20.0, 2));
+        w.add(new LagerItem("minecraft:music_disc_pigstep", "Schallplatte „Pigstep“", 1, 12.0, 2));
+        w.add(new LagerItem("minecraft:music_disc_tears", "Schallplatte „Tears“", 1, 15.0, 2));
+        w.add(new LagerItem("minecraft:rib_armor_trim_smithing_template", "Rüstungsbesatz „Rippe“", 1, 10.0, 2));
+        w.add(new LagerItem("minecraft:snout_armor_trim_smithing_template", "Rüstungsbesatz „Schnauze“", 1, 10.0, 2));
+        w.add(new LagerItem("minecraft:spire_armor_trim_smithing_template", "Rüstungsbesatz „Turmspitze“", 1, 15.0, 2));
+        w.add(new LagerItem("minecraft:chorus_fruit", "Chorusfrucht", 16, 1.2, 672));
+        w.add(new LagerItem("minecraft:shulker_shell", "Shulkerschale", 1, 4.0, 32));
+        w.add(new LagerItem("minecraft:piglin_banner_pattern", "Bannervorlage „Schnauze“", 1, 4.0, 4));
+        w.add(new LagerItem("minecraft:sugar_cane", "Zuckerrohr", 32, 0.6, 1344));
+        String[][] dyes = {{"white", "Weißer"}, {"light_gray", "Hellgrauer"}, {"gray", "Grauer"}, {"black", "Schwarzer"},
+                {"brown", "Brauner"}, {"red", "Roter"}, {"orange", "Oranger"}, {"yellow", "Gelber"}, {"lime", "Hellgrüner"},
+                {"green", "Grüner"}, {"cyan", "Türkiser"}, {"light_blue", "Hellblauer"}, {"blue", "Blauer"},
+                {"purple", "Violetter"}, {"magenta", "Magenta"}, {"pink", "Rosa"}};
+        for (String[] d : dyes) w.add(new LagerItem("minecraft:" + d[0] + "_dye", d[1] + " Farbstoff", 16, 0.6, 672));
+        w.add(new LagerItem("minecraft:pumpkin_seeds", "Kürbiskerne", 16, 0.3, 672));
+        w.add(new LagerItem("minecraft:melon_seeds", "Melonenkerne", 16, 0.3, 672));
+        w.add(new LagerItem("minecraft:beetroot_seeds", "Rote-Bete-Samen", 16, 0.3, 672));
+        w.add(new LagerItem("autumnal_winterly:winterberry_seeds", "Winterbeeren-Samen", 16, 0.6, 672));
+        w.add(new LagerItem("minecraft:bone", "Knochen", 16, 1.2, 672));
+        w.add(new LagerItem("minecraft:lava_bucket", "Lavaeimer", 1, 1.5, 42));
+        // --- Blöcke (je 64 Stück)
+        w.add(new LagerItem("minecraft:cobblestone", "Bruchstein", 64, 0.4, 10752));
+        w.add(new LagerItem("minecraft:gravel", "Kies", 64, 0.6, 4096));
+        w.add(new LagerItem("minecraft:sand", "Sand", 64, 0.6, 6144));
+        w.add(new LagerItem("minecraft:dirt", "Erde", 64, 0.3, 6144));
+        w.add(new LagerItem("minecraft:blackstone", "Schwarzstein", 64, 0.8, 4096));
+        w.add(new LagerItem("minecraft:netherrack", "Netherrack", 64, 0.3, 4096));
+        w.add(new LagerItem("minecraft:basalt", "Basalt", 64, 0.8, 4096));
+        w.add(new LagerItem("minecraft:tuff", "Tuffstein", 64, 0.6, 4096));
+        w.add(new LagerItem("minecraft:andesite", "Andesit", 64, 0.5, 4096));
+        w.add(new LagerItem("minecraft:diorite", "Diorit", 64, 0.5, 4096));
+        w.add(new LagerItem("minecraft:granite", "Granit", 64, 0.5, 4096));
+        String[][] trees = {{"minecraft:oak", "Eichen", "2.0", "4096"}, {"minecraft:spruce", "Fichten", "2.0", "4096"},
+                {"minecraft:birch", "Birken", "2.0", "4096"}, {"minecraft:jungle", "Tropenbaum", "2.0", "2688"},
+                {"minecraft:acacia", "Akazien", "2.0", "2688"}, {"minecraft:dark_oak", "Schwarzeichen", "2.0", "2688"},
+                {"minecraft:mangrove", "Mangroven", "2.4", "2688"}, {"minecraft:cherry", "Kirsch", "2.4", "2688"},
+                {"minecraft:pale_oak", "Blasseichen", "2.4", "2688"}, {"autumnal_winterly:fir", "Tannen", "2.4", "2688"},
+                {"arts_and_crafts:cork", "Kork", "2.4", "2688"}};
+        for (String[] t : trees) w.add(new LagerItem(t[0] + "_log", t[1] + "stamm", 64, Double.parseDouble(t[2]), Long.parseLong(t[3])));
+        for (String[] t : trees) w.add(new LagerItem(t[0] + "_leaves", t[1] + "laub", 64, 0.6, 2688));
+        w.add(new LagerItem("minecraft:azalea_leaves", "Azaleenlaub", 64, 0.6, 2688));
+        w.add(new LagerItem("minecraft:flowering_azalea_leaves", "Blühendes Azaleenlaub", 64, 0.6, 2688));
+        w.add(new LagerItem("minecraft:white_wool", "Weiße Wolle", 16, 0.8, 1024));
+        w.add(new LagerItem("autumnal_winterly:kaolin", "Kaolin", 64, 0.8, 2688));
+        w.add(new LagerItem("arts_and_crafts:gypsum", "Gips", 64, 0.8, 2688));
+        w.add(new LagerItem("minecraft:calcite", "Calcit", 64, 1.0, 2688));
+        w.add(new LagerItem("minecraft:clay", "Tonblock", 64, 1.6, 2688));
+        w.add(new LagerItem("minecraft:terracotta", "Keramik", 64, 1.6, 2688));
+        w.add(new LagerItem("arts_and_crafts:soapstone", "Speckstein", 64, 0.8, 2688));
+        w.add(new LagerItem("minecraft:glass", "Glas", 64, 1.6, 4096));
+        w.add(new LagerItem("minecraft:moss_block", "Moosblock", 64, 1.0, 2688));
+        w.add(new LagerItem("minecraft:red_sand", "Roter Sand", 64, 0.8, 2688));
+        w.add(new LagerItem("minecraft:soul_sand", "Seelensand", 64, 1.0, 2688));
+        w.add(new LagerItem("minecraft:soul_soil", "Seelenerde", 64, 1.0, 2688));
+        w.add(new LagerItem("minecraft:end_stone", "Endstein", 64, 1.6, 2688));
+        return l;
+    }
+
+    /** Vorlage des Auftrags-Pools bis 0.5.2 (Beispielaufträge). Seit 0.6.0 startet das Brett leer; nur für die Migration. */
+    public static List<JobTemplate> winterlandJobPool() {
+        List<JobTemplate> j = new ArrayList<>();
+        j.add(new JobTemplate("Brennholz für die Glühweinbude", "minecraft:spruce_log", 32, 2.0));
+        j.add(new JobTemplate("Lebkuchen für den Süßwarenstand", "minecraft:cookie", 24, 2.0));
+        j.add(new JobTemplate("Kürbiskuchen für das Markt-Café", "minecraft:pumpkin_pie", 6, 2.0));
+        j.add(new JobTemplate("Tannengrün für die Dekoration", "minecraft:spruce_leaves", 32, 1.0));
+        j.add(new JobTemplate("Laternen für die Gassen", "minecraft:lantern", 4, 2.0));
+        j.add(new JobTemplate("Kerzen für die Krippe", "minecraft:candle", 8, 2.0));
+        j.add(new JobTemplate("Wolle für Mützen und Schals", "minecraft:white_wool", 16, 1.5));
+        j.add(new JobTemplate("Fisch für die Fischbude", "minecraft:cod", 10, 1.5));
+        j.add(new JobTemplate("Glasflaschen für den Punsch", "minecraft:glass_bottle", 16, 1.0));
+        j.add(new JobTemplate("Süßbeeren für die Marmelade", "minecraft:sweet_berries", 32, 1.5));
+        j.add(new JobTemplate("Schneebälle für die Wurfbude", "minecraft:snowball", 64, 0.5));
+        j.add(new JobTemplate("Eisblöcke für die Eisbahn", "minecraft:ice", 24, 1.5));
+        j.add(new JobTemplate("Honig für den Met", "minecraft:honey_bottle", 4, 2.0));
+        j.add(new JobTemplate("Papier für Geschenke", "minecraft:paper", 24, 1.0));
+        j.add(new JobTemplate("Äpfel für Bratäpfel", "minecraft:apple", 12, 1.5));
+        j.add(new JobTemplate("Kohle für die Maronenröster", "minecraft:charcoal", 16, 1.5));
+        return j;
+    }
+
+    /** Stammt ein Auftrag (Titel + Item) aus der alten Beispiel-Vorlage? Selbst angelegte Vorlagen bleiben. */
+    public static boolean isSampleJob(String title, String item) {
+        for (JobTemplate t : winterlandJobPool()) if (t.title.equals(title) && t.item.equals(item)) return true;
+        return false;
+    }
+
+    /**
+     * Einstellungsdatei von vor 0.6.0 hochziehen (einmal, vor {@link #sanitize()}): Brandts Lager mit der Vorlage
+     * anlegen, falls es fehlt, und die Beispielaufträge der alten Vorlage aus dem Pool nehmen (eigene bleiben).
+     *
+     * @return Meldungen fürs Log; leer = nichts zu tun
+     */
+    public List<String> migrate() {
+        List<String> out = new ArrayList<>();
+        if (configVersion >= VERSION) return out;
+        if (lager == null) {
+            lager = defaultLager();
+            out.add("Brandts Lager eingerichtet: " + lager.items.size() + " Waren mit Wochenbestand, Nachschub jeden Sonntag "
+                    + lager.restockTime + " (" + lager.zone + "), Laden „" + lager.laden + "“.");
+        }
+        if (jobs != null && jobs.pool != null) {
+            int before = jobs.pool.size();
+            jobs.pool.removeIf(t -> t != null && isSampleJob(t.title, t.item));
+            int removed = before - jobs.pool.size();
+            if (removed > 0) out.add(removed + " Beispielaufträge aus dem Auftrags-Pool entfernt (eigene Vorlagen: " + jobs.pool.size() + ").");
+        }
+        out.add("Einstellungen von Version " + configVersion + " auf " + VERSION + " gebracht.");
+        configVersion = VERSION;
+        return out;
     }
 
     /** Vorlage mit Weihnachtsmarkt-Werten für Winterland (Kurs 10 €: 1 WLC ≈ 10 €, Stundenlohn 1,5 WLC). */
@@ -240,23 +503,9 @@ public final class MarktConfig {
         b.add(new BuyerItem("minecraft:iron_ingot", "Eisenbarren", 1, 0.3, 32, 16));
         b.add(new BuyerItem("minecraft:ice", "Eisblöcke", 8, 0.2, 32, 16));
 
-        List<JobTemplate> j = c.jobs.pool;
-        j.add(new JobTemplate("Brennholz für die Glühweinbude", "minecraft:spruce_log", 32, 2.0));
-        j.add(new JobTemplate("Lebkuchen für den Süßwarenstand", "minecraft:cookie", 24, 2.0));
-        j.add(new JobTemplate("Kürbiskuchen für das Markt-Café", "minecraft:pumpkin_pie", 6, 2.0));
-        j.add(new JobTemplate("Tannengrün für die Dekoration", "minecraft:spruce_leaves", 32, 1.0));
-        j.add(new JobTemplate("Laternen für die Gassen", "minecraft:lantern", 4, 2.0));
-        j.add(new JobTemplate("Kerzen für die Krippe", "minecraft:candle", 8, 2.0));
-        j.add(new JobTemplate("Wolle für Mützen und Schals", "minecraft:white_wool", 16, 1.5));
-        j.add(new JobTemplate("Fisch für die Fischbude", "minecraft:cod", 10, 1.5));
-        j.add(new JobTemplate("Glasflaschen für den Punsch", "minecraft:glass_bottle", 16, 1.0));
-        j.add(new JobTemplate("Süßbeeren für die Marmelade", "minecraft:sweet_berries", 32, 1.5));
-        j.add(new JobTemplate("Schneebälle für die Wurfbude", "minecraft:snowball", 64, 0.5));
-        j.add(new JobTemplate("Eisblöcke für die Eisbahn", "minecraft:ice", 24, 1.5));
-        j.add(new JobTemplate("Honig für den Met", "minecraft:honey_bottle", 4, 2.0));
-        j.add(new JobTemplate("Papier für Geschenke", "minecraft:paper", 24, 1.0));
-        j.add(new JobTemplate("Äpfel für Bratäpfel", "minecraft:apple", 12, 1.5));
-        j.add(new JobTemplate("Kohle für die Maronenröster", "minecraft:charcoal", 16, 1.5));
+        // Seit 0.6.0 ohne Beispielaufträge: Das Brett zeigt nur, was Admins in den Pool schreiben oder Spieler aushängen
+        c.lager = defaultLager();
+        c.configVersion = VERSION;
 
         List<AdventDay> a = c.event.adventDays;
         String[][] items = {{"minecraft:cookie", "8"}, {"minecraft:candle", "2"}, {"minecraft:pumpkin_pie", "2"}, {"minecraft:lantern", "2"},
@@ -282,6 +531,8 @@ public final class MarktConfig {
         if (snow == null) snow = new Snow();
         if (event == null) event = new Event();
         if (guide == null) guide = new Guide();
+        if (lager == null) lager = new Lager();
+        sanitizeLager(lager);
         Event e = event;
         if (e.schedule == null) e.schedule = new ArrayList<>();
         if (e.announceMinutes == null) e.announceMinutes = new ArrayList<>();
@@ -290,6 +541,7 @@ public final class MarktConfig {
         if (e.adventDays == null) e.adventDays = new ArrayList<>();
         e.adventDays.removeIf(d -> d == null || d.day < 1 || d.day > 24);
         for (AdventDay d : e.adventDays) {
+            if (d.stack != null && d.stack.isJsonNull()) d.stack = null;
             if (d.item == null) d.item = "";
             if (d.text == null) d.text = "";
             d.coins = Math.max(0, d.coins);
@@ -351,9 +603,54 @@ public final class MarktConfig {
         snow.dailyMax = Math.max(0, snow.dailyMax);
     }
 
+    private static void sanitizeLager(Lager l) {
+        if (l.laden == null || !l.laden.matches("[a-z0-9_]{1,32}")) l.laden = "materiallager";
+        if (l.name == null) l.name = "";
+        if (l.subtitle == null) l.subtitle = "";
+        l.restockDay = Restock.day(l.restockDay == null ? "" : l.restockDay, java.time.DayOfWeek.SUNDAY).name();
+        l.restockTime = Restock.time(l.restockTime == null ? "" : l.restockTime, java.time.LocalTime.of(6, 0)).toString();
+        l.zone = Restock.zone(l.zone).getId();
+        l.spread = StockMath.spread(l.spread);
+        l.capacityFactor = Double.isFinite(l.capacityFactor) ? Math.max(1, Math.min(100, l.capacityFactor)) : 2.0;
+        if (l.items == null) l.items = new ArrayList<>();
+        l.items.removeIf(i -> i == null || ((i.item == null || i.item.isBlank()) && (i.stack == null || i.stack.isJsonNull())));
+        for (LagerItem i : l.items) {
+            if (i.item == null) i.item = "";
+            if (i.name == null) i.name = "";
+            if (i.stack != null && i.stack.isJsonNull()) i.stack = null;
+            i.unit = Math.max(1, Math.min(64 * 9, i.unit));
+            i.price = Double.isFinite(i.price) ? Math.max(0.1, Math.min(1_000_000, i.price)) : 0.1;
+            i.weekly = Math.max(0, Math.min(10_000_000, i.weekly));
+            i.capacity = Math.max(0, Math.min(20_000_000, i.capacity));
+        }
+    }
+
     public AdventDay advent(int day) {
         for (AdventDay d : event.adventDays) if (d.day == day) return d;
         return null;
+    }
+
+    /** Türchen zum Bearbeiten (seit 0.6.0): vorhandenes oder ein neues, leeres (1–24), sortiert eingefügt. */
+    public AdventDay adventOrCreate(int day) {
+        if (day < 1 || day > 24) throw new IllegalArgumentException("Türchen 1 bis 24.");
+        AdventDay d = advent(day);
+        if (d != null) return d;
+        d = new AdventDay(day, 0, "", 0, "");
+        event.adventDays.add(d);
+        event.adventDays.sort(java.util.Comparator.comparingInt(x -> x.day));
+        return d;
+    }
+
+    /** Türchen auf die Vorlage zurücksetzen (seit 0.6.0); {@code day = 0}: alle 24. */
+    public void resetAdvent(int day) {
+        List<AdventDay> tpl = defaults().event.adventDays;
+        if (day == 0) {
+            event.adventDays = tpl;
+            return;
+        }
+        event.adventDays.removeIf(d -> d.day == day);
+        for (AdventDay d : tpl) if (d.day == day) event.adventDays.add(d);
+        event.adventDays.sort(java.util.Comparator.comparingInt(x -> x.day));
     }
 
     public BuyerItem buyerItem(String item) {

@@ -40,7 +40,14 @@ public final class Store {
             }
             MarktConfig c = GSON.fromJson(Files.readString(f, StandardCharsets.UTF_8), MarktConfig.class);
             if (c == null) throw new IOException("leer");
+            // Seit 0.6.0: Datei von vor 0.6.0 einmal hochziehen (Brandts Lager, Auftrags-Pool), Original als Kopie behalten
+            java.util.List<String> migrated = c.migrate();
             c.sanitize();
+            if (!migrated.isEmpty()) {
+                keepCopy(f, MIGRATION_SUFFIX);
+                saveConfig(c);
+                for (String m : migrated) TwoggMarkt.LOGGER.info("Markt-Einstellungen: {}", m);
+            }
             return c;
         } catch (IOException | RuntimeException e) {
             TwoggMarkt.LOGGER.error("config/twogg-markt/markt.json ist fehlerhaft ({}). Es gelten die Standardwerte, die Datei bleibt unverändert.", e.toString());
@@ -66,6 +73,19 @@ public final class Store {
         }
     }
 
+    /** Endung der Kopie vor der einmaligen Umstellung auf 0.6.0 ({@code markt.json.vor-0.6.0}). */
+    public static final String MIGRATION_SUFFIX = ".vor-0.6.0";
+
+    /** Kopie {@code <datei><suffix>} anlegen, wenn es sie noch nicht gibt (eine ältere Kopie wird nie überschrieben). */
+    public static void keepCopy(Path f, String suffix) {
+        try {
+            Path b = f.resolveSibling(f.getFileName() + suffix);
+            if (Files.exists(f) && !Files.exists(b)) Files.copy(f, b);
+        } catch (IOException e) {
+            TwoggMarkt.LOGGER.warn("Kopie von {} nicht angelegt: {}", f.getFileName(), e.toString());
+        }
+    }
+
     public static void saveConfig(MarktConfig c) {
         try {
             Files.createDirectories(configFile().getParent());
@@ -78,7 +98,11 @@ public final class Store {
 
     public static MarktData loadData(Path dir) {
         Path f = dir.resolve("markt.json");
-        if (!Files.exists(f)) return new MarktData();
+        if (!Files.exists(f)) {
+            MarktData fresh = new MarktData();
+            fresh.version = MarktData.VERSION;   // neue Welt: nichts umzustellen
+            return fresh;
+        }
         try {
             MarktData d = GSON.fromJson(Files.readString(f, StandardCharsets.UTF_8), MarktData.class);
             if (d == null) throw new IOException("leer");

@@ -450,7 +450,7 @@ public class MarketScreen extends MarktScreen {
         String[][] items = {
                 {"Eigener Stand", "Theke in den Stand, Ware in eine Kiste daneben – Verkäufe landen in der Standkasse."},
                 {"Ankauf", "Holz, Kohle, Gebäck, Fisch … Je mehr heute verkauft wurde, desto weniger zahlt er."},
-                {"Auftragsbrett", "Täglich neue Marktaufträge, dazu Aufträge von Spielern."},
+                {"Auftragsbrett", "Aufträge von Spielern, dazu Marktaufträge, wenn der Markt welche aushängt."},
                 {"Räumdienst", "Schnee in den Gassen schippen, bezahlt bis zum Tageslimit."}
         };
         int ty = y + 14;

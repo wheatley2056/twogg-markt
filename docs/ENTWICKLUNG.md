@@ -21,7 +21,7 @@
 ```
 cd ../twogg-kit && ./gradlew publishToMavenLocal
 cd ../twogg-markt
-./gradlew build          # build/libs/twogg-markt-0.2.2+26.1.2.jar (+ -sources.jar)
+./gradlew build          # build/libs/twogg-markt-0.6.0+26.1.2.jar (+ -sources.jar)
 ```
 
 Neue Economy-Version: Jar aus `../twogg-economy/build/libs/` nach `libs/` kopieren und `economy_version` in
@@ -33,7 +33,9 @@ Neue Economy-Version: Jar aus `../twogg-economy/build/libs/` nach `libs/` kopier
 ./gradlew test
 ```
 
-`MarketMathTest` (13 Tests) und `EventTest` (9 Tests: Öffnungszeiten mit Wochentagen, Datum, über Mitternacht und
+Seit 0.6.0 außerdem `RestockTest` (Nachschub sonntags in Europe/Berlin, Sommer-/Winterzeit), `LagerTest` (Brandts
+Lager: Liste, Preise, Bestand für 42 Spieler, keine Geldpumpe), `MigrationTest` (Umstellung von 0.5.2) und
+`AdventAdminTest`. `MarketMathTest` (13 Tests) und `EventTest` (9 Tests: Öffnungszeiten mit Wochentagen, Datum, über Mitternacht und
 Fehlern, gewichtete Losziehung, Wichteln ohne eigenes Geschenk, Rangliste, Melodien im Notenblock-Bereich,
 Event-Zustand, Adventskalender-Vorlage). `MarketMathTest`: €→Coins beim Kurs, Verlängern, buchbare Zeiträume, Erstattung, Gebühr, Ankaufpreis und
 Abklingen, Ziehen der Marktaufträge, Formatierung, `Box`, Status und Rechte eines Stands, `sanitize` von Einstellungen

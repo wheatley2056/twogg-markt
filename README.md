@@ -26,9 +26,11 @@ Aktuelle Version: **0.2.2+26.1.2**
   der Rest landet in der **Standkasse**. Helfer dürfen mitverkaufen.
 - **Ankauf:** Der Markt kauft Holz, Kohle, Gebäck, Fisch, Wolle … Der Preis fällt, je mehr heute schon verkauft wurde
   (alle Spieler zusammen), und erholt sich über den Tag. Dazu ein Tageslimit pro Spieler.
-- **Auftragsbrett:** Täglich wechselnde **Marktaufträge** aus einem Pool (z. B. „32 Fichtenholz für die Glühweinbude“),
-  jeder kann jeden einmal erledigen. Spieler hängen **eigene Aufträge** aus – die Belohnung wird hinterlegt, die Ware
-  landet im Abholfach des Auftraggebers.
+- **Auftragsbrett:** Spieler hängen **eigene Aufträge** aus – die Belohnung wird hinterlegt, die Ware landet im
+  Abholfach des Auftraggebers. Dazu auf Wunsch täglich wechselnde **Marktaufträge** aus einem Pool, den Admins füllen
+  (seit 0.6.0 ohne Beispielaufträge, das Brett startet leer).
+- **Brandts Lager** (seit 0.6.0): Server-Laden für den NPC Brandt mit begrenztem Wochenbestand (für 42 Spieler),
+  Preis nach Bestand, Rückkauf bis zum Lagerplatz, Nachschub jeden Sonntag 06:00. Liste und Preise in der Config.
 - **Räumdienst:** In Räumzonen (Gassen, Plätze) zahlt der Markt fürs Schneeschippen, bis zum Tageslimit.
 - **Hologramme:** Über jedem Stand schwebt Name, Status und Preis (frei) bzw. Besitzer und Angebote (vergeben),
   während des Events auch die Stimmen. Vanilla-Textanzeigen – sichtbar für alle, aktualisieren sich selbst.
@@ -108,12 +110,13 @@ Standschild ebenso. `/markt zeigen` umrandet die Stände in der Nähe für 30 Se
 | Stechuhr (Icebreaker, zum Vergleich) | 1,5 WLC pro Stunde |
 | Stand mieten | kostet 1,5 WLC pro Tag (15 €), kaufen 40 WLC (400 €) |
 | Ankauf | z. B. 8 Fichtenstämme → 0,2 WLC, 1 Kürbiskuchen → 0,3 WLC; Preis fällt bei viel Verkauf bis auf 30 % |
-| Marktauftrag | 0,5 bis 2 WLC, vier gleichzeitig, jeder erledigt jeden einmal, täglich neue |
+| Marktauftrag | nur, wenn Admins Vorlagen in `jobs.pool` eintragen (seit 0.6.0 leer) |
+| Brandts Lager | Rückkauf zu etwa 60 % des Verkaufspreises, bis der Lagerplatz voll ist (z. B. Diamant 2,3 WLC) |
 | Räumdienst | 0,1 WLC je 8 geräumte Schneeblöcke, höchstens 3 WLC pro Tag |
 | Eigener Stand | was die Kunden zahlen, minus 5 % Marktgebühr |
 | Geschenkesuche (Event) | 0,5 WLC je gefundenem Geschenk |
 | Siegerehrung (Event) | 10 / 5 / 2,5 WLC für Platz 1–3 in jeder Kategorie, Losbude: 80 % des Topfs |
-| Adventskalender | 0,5–10 WLC oder Items pro Tag |
+| Adventskalender | 0,5–10 WLC oder Items pro Tag (Inhalte in der Marktverwaltung, Seite „Advent“) |
 
 Alle Werte stehen in `config/twogg-markt/markt.json` bzw. pro Stand in der Marktverwaltung.
 
@@ -122,7 +125,7 @@ Alle Werte stehen in `config/twogg-markt/markt.json` bzw. pro Stand in der Markt
 ```
 cd ../twogg-kit && ./gradlew publishToMavenLocal
 cd ../twogg-markt
-./gradlew build      # → build/libs/twogg-markt-0.2.2+26.1.2.jar
+./gradlew build      # → build/libs/twogg-markt-0.6.0+26.1.2.jar
 ./gradlew test       # Logik-Kern (MarketMathTest, EventTest)
 xvfb-run -a ./gradlew runClientGameTest   # Durchgang im echten Spiel mit Screenshots
 ```

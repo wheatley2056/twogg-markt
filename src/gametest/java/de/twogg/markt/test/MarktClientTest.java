@@ -219,6 +219,15 @@ public final class MarktClientTest implements FabricClientGameTest {
 
             // 7) Auftragsbrett: Marktauftrag liefern, eigenen Auftrag aushängen
             BlockPos board = base.offset(MarktKulisse.BOARD);
+            // Seit 0.6.0 startet das Brett leer (keine Beispielaufträge): erst eine Vorlage in den Pool, dann ziehen
+            String empty = sp.getServer().computeOnServer(server -> {
+                boolean none = MarktRuntime.data().jobs.isEmpty() && MarktRuntime.config().jobs.pool.isEmpty();
+                MarktRuntime.config().jobs.pool.add(new de.twogg.markt.core.MarktConfig.JobTemplate("Brennholz für die Glühweinbude",
+                        "minecraft:spruce_log", 32, 2.0));
+                BoardService.reroll();
+                return none + "/" + MarktRuntime.data().jobs.size();
+            });
+            check(empty.equals("true/1"), "Auftragsbrett ohne Beispielaufträge, dann 1 Marktauftrag aus dem Pool: " + empty);
             String job = sp.getServer().computeOnServer(server -> {
                 var lvl = server.overworld();
                 lvl.setBlockAndUpdate(board, ModContent.BOARD.defaultBlockState());
@@ -519,6 +528,36 @@ public final class MarktClientTest implements FabricClientGameTest {
                 ctx.waitTicks(5);
                 shot(ctx, "markt-16-admin-" + page.toLowerCase().replace("ä", "ae"));
             }
+            // 0.6.0: Adventskalender bearbeiten – Item aus der Hand (mit Namen) in Türchen 1, Coins per Befehl, Vorlage
+            sp.getServer().runOnServer(server -> {
+                ItemStack kugel = new ItemStack(Items.DIAMOND, 3);
+                kugel.set(net.minecraft.core.component.DataComponents.CUSTOM_NAME, net.minecraft.network.chat.Component.literal("Christbaumkugel"));
+                player(server).setItemInHand(InteractionHand.MAIN_HAND, kugel);
+            });
+            press(ctx, "Aktualisieren", false);
+            ctx.waitTicks(10);
+            press(ctx, "Advent", false);
+            ctx.waitTicks(5);
+            shot(ctx, "markt-16-admin-advent");
+            press(ctx, "Item aus der Hand", true);
+            ctx.waitTicks(10);
+            playerCommand(ctx, "markt advent muenzen 2 4.5");
+            playerCommand(ctx, "markt advent text 2 Halbzeit!");
+            ctx.waitTicks(10);
+            String adv = sp.getServer().computeOnServer(server -> {
+                var c = MarktRuntime.config();
+                var d1 = c.advent(1);
+                ItemStack st = de.twogg.markt.server.ActivityService.gift(server.registryAccess(), d1);
+                String r = de.twogg.markt.data.Stacks.id(st) + "x" + st.getCount() + ":" + st.getHoverName().getString() + "/" + c.advent(2).coins + "/" + c.advent(2).text;
+                // gespeichert: frisch aus der Datei gelesen
+                var file = de.twogg.markt.data.Store.loadConfig();
+                return r + "/" + (file != null && file.advent(1).stack != null);
+            });
+            check(adv.equals("minecraft:diamondx3:Christbaumkugel/4.5/Halbzeit!/true"), "Adventskalender bearbeitet: " + adv);
+            playerCommand(ctx, "markt advent standard 1");
+            ctx.waitTicks(5);
+            String def = sp.getServer().computeOnServer(server -> String.valueOf(MarktRuntime.config().advent(1).stack == null));
+            check(def.equals("true"), "Türchen 1 auf Vorlage: " + def);
             // Regel ändern: Marktgebühr über das Eingabefeld
             press(ctx, "Stände", false);
             ctx.waitTicks(5);
@@ -635,22 +674,23 @@ public final class MarktClientTest implements FabricClientGameTest {
         // 2 Stacks passen (128 → 256), Ankauf zum Bestand nach dem Einlagern (seit 0.5.2): 0,3 × ≈0,71 bzw. 0,5 → 2 + 1
         // = 3 Zehntel; 3 Stacks bleiben übrig
         check(flow.equals("3/192/256/true/128"), "Ankauf bis Lager voll, Preis fällt, Lieferung auf Soll: " + flow);
-        // die echte Liste für Brandt: alles Vanilla wird erkannt, nur die Mod-Platzhalter (MODID:) fehlen
+        // Beispieldatei: alles Vanilla wird erkannt, nur die Mod-Items (Autumnal & Winterly, Arts & Crafts) fehlen hier
         String real = sp.getServer().computeOnServer(server -> {
             try {
                 java.nio.file.Path src = java.nio.file.Path.of(System.getProperty("user.dir")).resolve("../../../beispiele/materiallager.json").normalize();
                 java.nio.file.Files.copy(src, de.twogg.markt.data.Store.configFile().getParent().resolve("materiallager.json"),
                         java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-                de.twogg.markt.server.LadenService.create("materiallager", "Materiallager");
-                var l = MarktRuntime.data().laeden.get("materiallager");
+                de.twogg.markt.server.LadenService.create("beispiel", "Beispiel-Lager");
+                var l = MarktRuntime.data().laeden.get("beispiel");
                 var out = de.twogg.markt.server.LadenService.importFile(server.registryAccess(), l, "materiallager");
-                boolean onlyMod = out.stream().skip(1).allMatch(x -> x.contains("MODID:"));
-                return out.get(0) + " · nur Mod-Platzhalter: " + onlyMod + " · " + l.waren.size();
+                boolean onlyMod = out.stream().skip(1).allMatch(x -> x.contains("autumnal_winterly:") || x.contains("arts_and_crafts:"));
+                return out.get(0) + " · nur Mod-Items: " + onlyMod + " · " + l.waren.size();
             } catch (Exception e) {
                 return e.toString();
             }
         });
-        check(real.startsWith("100 Waren übernommen, 9 übersprungen") && real.contains("nur Mod-Platzhalter: true"), "Materiallager-Liste: " + real);
+        check(real.startsWith("100 Waren übernommen, 9 übersprungen") && real.contains("nur Mod-Items: true"), "Beispiel-Liste: " + real);
+        brandt(sp);
         sp.getServer().runCommand("markt laden oeffnen lager @p");
         ctx.waitFor(mc -> mc.screen != null && mc.screen.getClass().getSimpleName().equals("LadenScreen"), 100);
         ctx.waitTicks(10);
@@ -660,6 +700,55 @@ public final class MarktClientTest implements FabricClientGameTest {
         shot(ctx, "markt-21-lager-verkaufen");
         press(ctx, "Fertig", false);
         ctx.waitFor(mc -> mc.screen == null, 100);
+    }
+
+    /**
+     * Brandts Lager (0.6.0): aus der Config angelegt (Mod-Items fehlen im Test), kein unbegrenzter Vorrat, Kauf senkt den
+     * Bestand, Verkauf hebt ihn nur bis zum Lagerplatz, Nachschub füllt bis zum Wochenbestand auf und lässt Überschuss liegen.
+     */
+    private static void brandt(TestSingleplayerContext sp) {
+        String setup = sp.getServer().computeOnServer(server -> {
+            var l = MarktRuntime.data().laeden.get("materiallager");
+            if (l == null) return "kein Lager";
+            long managed = l.waren.stream().filter(w -> w.managed).count();
+            String fixed = de.twogg.markt.server.LadenService.addSell(server.registryAccess(), new ItemStack(Items.TORCH), l, 1, 1);
+            return managed + "/" + (l.sells.isEmpty() && l.buys.isEmpty()) + "/" + fixed.startsWith("Brandts Lager führt nur") + "/" + l.deliveryDay
+                    + "/" + l.trimSurplus;
+        });
+        check(setup.equals("98/true/true/SUNDAY/false"), "Brandts Lager aus der Config (98 Vanilla-Waren, kein fester Verkauf): " + setup);
+        String flow = sp.getServer().computeOnServer(server -> {
+            ServerPlayer p = player(server);
+            var l = MarktRuntime.data().laeden.get("materiallager");
+            var w = l.waren.stream().filter(x -> x.name.equals("Diamant")).findFirst().orElseThrow();
+            Economy.pay(p, Money.ofCoins(40), "test", "Brandt");
+            p.getInventory().clearContent();
+            de.twogg.markt.server.Sessions.open(p, "laden", p.blockPosition(), null, "materiallager");
+            long bal = Economy.balance(p);
+            long expect = de.twogg.markt.core.StockMath.sellTotal(w.base, w.stock, w.target, w.capacity, 1, 2);
+            Views.Action buy = Views.Action.of("buy");
+            buy.screen = "laden";
+            buy.id = w.id;
+            buy.count = 2;
+            de.twogg.markt.server.LadenService.handle(p, buy);
+            String r = w.stock + ":" + (bal - Economy.balance(p) == expect) + ":" + p.getInventory().countItem(Items.DIAMOND);
+            // 200 Diamanten verkaufen: nur bis zum Lagerplatz (2 × Wochenbestand)
+            p.getInventory().add(new ItemStack(Items.DIAMOND, 64));
+            p.getInventory().add(new ItemStack(Items.DIAMOND, 64));
+            p.getInventory().add(new ItemStack(Items.DIAMOND, 64));
+            Views.Action sell = Views.Action.of("sell");
+            sell.screen = "laden";
+            sell.id = w.id;
+            sell.flag = true;
+            de.twogg.markt.server.LadenService.handle(p, sell);
+            r += "/" + w.stock + ":" + w.capacity + ":" + p.getInventory().countItem(Items.DIAMOND);
+            de.twogg.markt.server.LadenService.deliver(l);   // Überschuss bleibt
+            r += "/" + w.stock;
+            w.stock = 10;
+            de.twogg.markt.server.LadenService.deliver(l);   // bis zum Soll auffüllen, nicht obendrauf
+            r += "/" + w.stock;
+            return r;
+        });
+        check(flow.equals("82:true:2/168:168:108/168/84"), "Brandt: Kauf, Verkauf bis Lagerplatz, Nachschub: " + flow);
     }
 
     /**

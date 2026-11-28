@@ -119,8 +119,8 @@ public final class ActivityService {
             if (opened.contains(d)) {
                 MarktConfig.AdventDay a = MarktRuntime.config().advent(d);
                 door.text = a == null ? "" : reward(a);
-                Item it = a == null ? null : Stacks.item(a.item);
-                if (it != null) door.item = Stacks.toString(reg, new ItemStack(it));
+                ItemStack gift = a == null ? ItemStack.EMPTY : gift(reg, a);
+                if (!gift.isEmpty()) door.item = Stacks.toString(reg, gift.copyWithCount(1));
             }
             v.advent.add(door);
         }
@@ -137,11 +137,25 @@ public final class ActivityService {
         return d.advent.computeIfAbsent(uuid, k -> new ArrayList<>());
     }
 
-    private static String reward(MarktConfig.AdventDay a) {
+    /**
+     * Inhalt eines Türchens: kompletter Stapel aus {@code stack} (seit 0.6.0, z. B. aus der Hand gesetzt) oder Item-ID
+     * mit Anzahl. Leer, wenn es nur Coins gibt oder das Item fehlt.
+     */
+    public static ItemStack gift(net.minecraft.core.HolderLookup.Provider reg, MarktConfig.AdventDay a) {
+        if (a.stack != null) {
+            ItemStack s = Stacks.fromJson(reg, a.stack);
+            if (!s.isEmpty()) return s;
+        }
+        Item it = Stacks.item(a.item);
+        return it == null || a.count <= 0 ? ItemStack.EMPTY : new ItemStack(it, a.count);
+    }
+
+    /** „Text 0,5 WLC + 2× Kerze“ (ohne Item-Daten: Registry des laufenden Servers). */
+    public static String reward(MarktConfig.AdventDay a) {
         List<String> parts = new ArrayList<>();
         if (a.coins > 0) parts.add(MarktRuntime.fmt(MarketMath.tenths(a.coins)));
-        Item it = Stacks.item(a.item);
-        if (it != null && a.count > 0) parts.add(a.count + "× " + new ItemStack(it).getHoverName().getString());
+        ItemStack gift = MarktRuntime.server() == null ? ItemStack.EMPTY : gift(MarktRuntime.server().registryAccess(), a);
+        if (!gift.isEmpty()) parts.add(gift.getCount() + "× " + gift.getHoverName().getString());
         String r = String.join(" + ", parts);
         return a.text.isBlank() ? r : a.text + " " + r;
     }
@@ -207,8 +221,8 @@ public final class ActivityService {
         if (a == null) return ok("Türchen " + day + ": leer – aber es duftet nach Zimt.");
         long coins = MarketMath.tenths(a.coins);
         if (coins > 0) Pay.payout(p, coins, false, "markt:advent", "Adventskalender " + day + ". Dezember");
-        Item it = Stacks.item(a.item);
-        if (it != null && a.count > 0) Inv.give(p, new ItemStack(it, a.count));
+        ItemStack gift = gift(p.level().registryAccess(), a);
+        if (!gift.isEmpty()) Inv.give(p, gift);
         p.level().playSound(null, p.blockPosition(), SoundEvents.NOTE_BLOCK_CHIME.value(), SoundSource.PLAYERS, 0.8f, 1.5f);
         return ok("Türchen " + day + ": " + reward(a));
     }

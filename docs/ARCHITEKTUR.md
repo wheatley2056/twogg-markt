@@ -32,6 +32,9 @@ de.twogg.markt
 │   ├── MarktData         Weltdaten + sanitize, Hilfen (plotAt, zoneAt, addPending)
 │   ├── MarktEvent        Event-Zustand (Phase, Statistik, Stimmen, Lose, Wichtelgeschenke, Ergebnisse)
 │   ├── Schedule          Öffnungszeiten parsen, aktives und nächstes Fenster
+│   ├── Laden, StockMath  Server-Laden, Preise nach Bestand (keine Geldpumpe), getestet in StockMathTest/LagerTest
+│   ├── Restock           Wöchentlicher Nachschub (Termin in der Zeitzone, Sommer-/Winterzeit, auffüllen bis Soll)
+│   ├── LagerCheck        Ankaufstelle zahlt nie mehr, als Brandt mindestens verlangt
 │   ├── Melodies          gemeinfreie Lieder als Notenblock-Notenfolgen
 │   └── MarketMath        €→Coins, Mietzeiträume, Erstattung, Gebühr, Ankaufpreis, Abklingen, Ziehen, Losziehung,
 │                         Wichtel-Zuordnung (niemand bekommt sein eigenes), Rangliste, Format
@@ -64,7 +67,9 @@ de.twogg.markt
     ├── EventService      Phasen, Öffnungszeiten, Bossbar, Musik, Atmos, Statistik, Abstimmung, Siegerehrung, Feuerwerk
     ├── ActivityService   Fenster „lottery“ (Lose und Wichteln) und „advent“; versteckte Geschenke
     ├── Levels            Dimension aus ID
-    ├── AdminService      Fenster „admin“ und alle Admin-Aktionen (auch für /markt-Befehle)
+    ├── LadenService      Fenster „laden“, feste Zeilen und Waren mit Lager, Lieferungen
+    ├── LagerService      Brandts Lager: Abgleich mit lager.items der Config (Start, /markt reload)
+    ├── AdminService      Fenster „admin“ und alle Admin-Aktionen (auch für /markt-Befehle), Adventskalender bearbeiten
     └── MarktCommands     /markt …
 de.twogg.markt.client     (src/client)
 ├── TwoggMarktClient      Empfänger, Toolbox-Kachel „Markt“ (adminOnly)
@@ -105,7 +110,7 @@ stützen den Kurs, Nebenverdienste drücken ihn leicht.
 | lottery | `refresh`, `close`, `buy` (count, cash), Wichteln: `give` (Stapel aus der Hand), `take`, `pickup` |
 | advent | `refresh`, `close`, `open` (heutiges Türchen) |
 | market, shop | zusätzlich `vote` |
-| admin | `open`, `refresh`, `close`, `sel_expand`, `sel_clear`, `plot_create`, `plot_*`, `zone_create`, `zone_delete`, `buyer_add`/`_edit`/`_remove`, `jobs_reroll`, `job_remove`, `setting`, `reload` |
+| admin | `open`, `refresh`, `close`, `sel_expand`, `sel_clear`, `plot_create`, `plot_*`, `zone_create`, `zone_delete`, `buyer_add`/`_edit`/`_remove`, `jobs_reroll`, `job_remove`, `setting`, `reload`; seit 0.6.0 `advent_item`, `advent_clear`, `advent_coins` (value), `advent_text` (text), `advent_default` (count = Türchen, 0 = alle), `advent_reopen` (name, leer = alle) – Türchen in `count` |
 
 Jede Ansicht trägt eine Sitzungsnummer (`View.session`); `close` schickt sie zurück und schließt nur genau diese
 Sitzung. Absicherung: Block-Fenster gelten nur mit offener Sitzung am selben Block (≤ 8 Blöcke, Block noch da). Ein spätes
@@ -137,3 +142,9 @@ Ausnahmen; Ausnahmen in Aktionen werden geloggt und nicht weitergereicht.
 | 600 Ticks | Speichern, wenn sich etwas geändert hat |
 
 Alles läuft im Server-Thread.
+
+## Umstellung beim Start (seit 0.6.0)
+
+Einstellungen haben `configVersion`, Weltdaten `version`. Ist eine Datei älter, läuft einmal die Umstellung
+(`MarktConfig.migrate`, `MarktData.migrate`), vorher wird die Datei als `markt.json.vor-0.6.0` kopiert. Danach gleicht
+`LagerService.sync` Brandts Lager mit `lager.items` ab (bei jedem Start und `/markt reload`).

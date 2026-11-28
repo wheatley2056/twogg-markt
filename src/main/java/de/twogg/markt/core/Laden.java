@@ -6,9 +6,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Server-Laden (seit 0.4.0): feste Preise, unbegrenzter Vorrat, kein Stand. Geöffnet wird er per Befehl
- * ({@code /markt laden oeffnen <id> <spieler>}), z. B. von einem Storyteller-NPC aus. Er verkauft ({@link #sells}) und
- * kauft an ({@link #buys}).
+ * Server-Laden (seit 0.4.0), kein Stand. Geöffnet wird er per Befehl ({@code /markt laden oeffnen <id> <spieler>}),
+ * z. B. von einem Storyteller-NPC aus. Er verkauft zu festen Preisen ohne Bestand ({@link #sells}), kauft an
+ * ({@link #buys}) und führt Waren mit Lagerbestand ({@link #waren}, seit 0.5.0). Brandts Lager (seit 0.6.0, siehe
+ * {@link MarktConfig.Lager}) hat nur Waren mit Bestand.
  */
 public final class Laden {
     public String id = "";
@@ -32,6 +33,11 @@ public final class Laden {
     public String zone = "Europe/Berlin";
     /** Zeitpunkt (ms) der letzten ausgeführten Lieferung. */
     public long lastDelivery;
+    /**
+     * Überschuss über dem Soll bei der Lieferung mitnehmen (Verhalten bis 0.5.2, Standard für vorhandene Läden). Brandts
+     * Lager setzt es aus der Config ({@code lager.trimSurplus}, Standard aus: nur auffüllen).
+     */
+    public boolean trimSurplus = true;
 
     /** Eine Ware mit Lager: Preise in Zehnteln je Einheit ({@code unit} Stück), Bestände in Stück. */
     public static final class Ware {
@@ -45,6 +51,8 @@ public final class Laden {
         public long stock;
         public long sold;
         public long bought;
+        /** Seit 0.6.0: Ware kommt aus {@code lager.items} der Config (wird beim Abgleich geändert oder entfernt). */
+        public boolean managed;
     }
 
     public Ware ware(String id) {

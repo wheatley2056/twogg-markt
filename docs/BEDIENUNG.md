@@ -94,7 +94,8 @@ Konto (oder bar, `buyer.payCash`).
 
 ### Laden (seit 0.4.0)
 
-Ein **Server-Laden** gehört keinem Spieler und braucht keinen Stand: feste Preise, unbegrenzter Vorrat. Er hat zwei
+Ein **Server-Laden** gehört keinem Spieler und braucht keinen Stand: feste Preise ohne Bestand oder Waren mit Lager
+(siehe unten; Brandts Lager hat seit 0.6.0 nur Waren mit Lager). Er hat zwei
 Seiten: **Kaufen** (Ware wählen, Menge −/+, Konto/Bar, „Kaufen · Betrag“) und **Verkaufen** (was der Laden ankauft,
 „1×“ oder „Alle“, bis zur Tagesgrenze). Geöffnet wird er nicht über einen Block, sondern **per Befehl** – gedacht für
 NPCs: Im Storyteller eine Seite mit Auslöser „NPC angesprochen“ und der Aktion „Befehl“ (als Konsole)
@@ -118,9 +119,39 @@ Statt fester Preise kann ein Laden **Waren mit Lagerbestand** führen. Jede Ware
 - **Lagerplatz begrenzt:** Ist das Lager voll, nimmt der Händler nichts mehr an („Lager voll“). 100 Stacks Bruchstein
   bringen also nicht 100-mal Geld – nur so viel, wie ins Lager passt, und das immer billiger. Das Geld des Händlers ist
   unbegrenzt.
-- **Lieferung (unsichtbar):** Einmal pro Woche (Standard Montag 06:00) setzt das Versorgungsschiff jede Ware auf den
-  Sollbestand: Fehlendes wird aufgefüllt, Überschuss mitgenommen. Danach lässt sich wieder verkaufen.
+- **Lieferung (unsichtbar):** Einmal pro Woche (Standard Montag 06:00, Brandts Lager Sonntag 06:00) füllt das
+  Versorgungsschiff jede Ware bis zum Sollbestand auf – nicht obendrauf. Überschuss nimmt es bei selbst angelegten
+  Läden mit (wie bisher); in Brandts Lager bleibt er liegen (`lager.trimSurplus`). War der Server zum Termin aus, kommt
+  die Lieferung einmal beim nächsten Start.
 - Im Fenster steht je Ware „Lager knapp/normal/gut gefüllt/voll“, beim Ankauf „noch Platz für n“.
+
+#### Brandts Lager (seit 0.6.0)
+
+Der Händler **Brandt** im Materiallager (Storyteller-NPC, Befehl `markt laden oeffnen materiallager {player}`) verkauft
+die Verkaufsliste der Serverleitung: Rohstoffe, Nether- und End-Sachen, Verzauberungsbücher (Reparatur, Haltbarkeit III,
+Effizienz IV, Huschen III), Schallplatten, Rüstungsbesätze, alle 16 Farbstoffe, Samen, Baustoffe, alle Stämme und
+Laubsorten (auch Tanne und Kork). **Kein unbegrenzter Vorrat:** Jede Ware hat einen Wochenbestand (für 42 Spieler
+bemessen), der **jeden Sonntag um 06:00 (Europe/Berlin)** wieder aufgefüllt wird. Ist etwas ausverkauft, heißt es
+„nächste Lieferung abwarten“.
+
+- **Preis:** Im Fenster steht beim vollen Wochenbestand der Preis aus der Liste. Je weniger noch da ist, desto teurer
+  (leer etwa doppelt), je voller durch Verkäufe der Spieler, desto billiger.
+- **Verkaufen an Brandt:** Alles von der Liste nimmt er zurück, zu etwa 60 % des Verkaufspreises beim gleichen Bestand
+  (`lager.spread`), und das hebt seinen Bestand – aber nur bis zum **Lagerplatz** (doppelter Wochenbestand). Danach
+  „Lager voll“. Was Spieler über den Wochenbestand hinaus verkauft haben, bleibt beim Nachschub liegen und wird billiger
+  weiterverkauft.
+- **Kein Gewinn aus Hin und Her:** Kaufen und sofort zurückverkaufen (oder umgekehrt) bringt nie Geld (wie seit 0.5.2).
+  Die Ankaufstelle zahlt je Stück nie mehr, als Brandt mindestens verlangt (auch Roherz → Barren).
+- Seltenes ist knapp und teuer: Reparatur 25 WLC (4 pro Woche), Huschen III 20 WLC, Schallplatten etwa 12–15 WLC,
+  Rüstungsbesätze etwa 10–15 WLC (je 2 pro Woche). Massenware wie Bruchstein kostet 0,4 WLC je Stack. Die ganze
+  Liste mit Preisen steht in KONFIGURATION.md.
+
+Die Liste, Preise und Bestände stehen in `config/twogg-markt/markt.json` unter `lager` (siehe KONFIGURATION). Nach
+Änderungen `/markt reload` – Bestände bleiben, neue Waren starten beim Wochenbestand. `/markt lager` zeigt den Stand
+(Waren, nächster Nachschub, Items, die der Server nicht kennt). Feste Verkäufe (`/markt laden verkauf`) und fester
+Ankauf (`/markt laden ankauf`) sind in Brandts Lager gesperrt.
+
+#### Eigene Läden mit Lager
 
 Einrichten per Datei (`config/twogg-markt/<datei>.json`, Beispiel `beispiele/materiallager.json`) und
 `/markt laden import <laden> <datei>` – unbekannte Items (z. B. falsche Mod-IDs) werden gemeldet und übersprungen,
@@ -136,7 +167,9 @@ nur genau so; einfache Items nach Art.
 | **Aushängen** | Ware in die Hand nehmen, Stück, Belohnung und optional einen Titel eintragen, Konto/Bar, **Auftrag aushängen**. Die Belohnung wird sofort abgebucht und hinterlegt. Höchstens `jobs.maxPerPlayer` (3) Aufträge, Belohnung bis `jobs.maxReward` (200). |
 | **Abholfach** | Ware, die jemand für die eigenen Aufträge geliefert hat. **Alles abholen** legt sie ins Inventar. |
 
-- Marktaufträge wechseln alle `jobs.refreshMinutes` (24 Stunden), es hängen `jobs.active` (4) gleichzeitig.
+- Marktaufträge wechseln alle `jobs.refreshMinutes` (24 Stunden), es hängen `jobs.active` (4) gleichzeitig. Seit
+  0.6.0 gibt es **keine Beispielaufträge** mehr: Marktaufträge erscheinen nur, wenn Admins Vorlagen in `jobs.pool`
+  eintragen. Sonst hängen am Brett nur die Aufträge der Spieler.
 - Spieleraufträge laufen nach `jobs.playerJobHours` (72 Stunden) ab; Zurückziehen oder Ablauf zahlt die Belohnung
   zurück (offline: beim nächsten Login).
 - Geliefert werden unbeschädigte Stapel mit der richtigen Item-ID; Daten wie Namen sind egal. Was geliefert wird,
@@ -182,7 +215,7 @@ Gestartet wird per `/markt event start [minuten]`, in der Marktverwaltung (Seite
 | **Losbude** | Lose kaufen (0,5 WLC = 5 €, höchstens 10). Bei der Siegerehrung werden 80 % des Topfs ausgeschüttet: 50 / 30 / 20 % an drei verschiedene Gewinner, Chance je nach Zahl der Lose. Der Rest bleibt beim Markt (wird vernichtet). |
 | **Wichteln** (Losbude, Seite „Wichteln“) | Den Stapel in der Hand abgeben (einer pro Spieler, zurücknehmen bis zur Siegerehrung). Bei der Siegerehrung bekommt jeder ein fremdes Geschenk ins Abholfach (abholen an der Losbude oder am Auftragsbrett). |
 | **Geschenkesuche** | Admins verstecken „Versteckte Geschenke“. Rechtsklick: 0,5 WLC, einmal pro Geschenk und Spieler und Event. Zählt für die Bestenliste. |
-| **Adventskalender** | 1.–24. Dezember ein Türchen pro Tag und Spieler (Coins und/oder Items laut `event.adventDays`). Läuft unabhängig vom Event. Verpasste Tage bleiben zu. |
+| **Adventskalender** | 1.–24. Dezember ein Türchen pro Tag und Spieler (Coins und/oder Items laut `event.adventDays`, Admins bearbeiten die Inhalte in der Marktverwaltung, Seite **Advent**). Läuft unabhängig vom Event. Verpasste Tage bleiben zu. |
 | **Abstimmen** | „★ Für diesen Stand stimmen“ in der Standübersicht oder „★ Abstimmen“ an der Theke. Eine Stimme pro Spieler, umentscheiden geht, nicht für den eigenen Stand. |
 
 ### Bestenliste und Preise
@@ -227,9 +260,10 @@ und nach dem Event die Ergebnisse zeigt.
 | **Stände** | Liste; rechts Name, Beschreibung, Miete (€/Zeitraum), Kauf (€), Voraus (max. Zeiträume) → **Speichern**. **Art** schaltet Miete + Kauf → nur Miete → nur Kauf → gesperrt. **Hin** (Teleport), **Zeigen** (Umriss 15 s), **Sichern** (Leerzustand neu), **Reset** (auf Leerzustand), **Räumen** (Besitzer raus, Kasse an ihn), **+1 Zeitraum gratis**, **Stand löschen**. Endgültige Knöpfe brauchen einen zweiten Klick. |
 | **Neu** | Auswahl (Ecken, Größe, Überschneidung), Name, Miete und Kauf in € (leer = 15 € / 400 €), **Stand anlegen**, **Als Räumzone**, Auswahl erweitern oder löschen |
 | **Ankauf** | Posten wählen → Preis (Coins pro Bündel), Bündel (Stück), Bedarf (Bündel pro Tag) → **Ändern** / **Entfernen**. **Neu aus Hand** legt einen Posten für das Item in der Hand an. |
-| **Aufträge** | Alle Aufträge (★ = von Spielern). **Neue Marktaufträge** würfelt neu, **Auftrag entfernen** (Spieleraufträge: Belohnung geht zurück) |
+| **Aufträge** | Alle Aufträge (★ = von Spielern). **Neue Marktaufträge** würfelt neu aus `jobs.pool` (seit 0.6.0 anfangs leer), **Auftrag entfernen** (Spieleraufträge: Belohnung geht zurück) |
 | **Räumzonen** | Liste, **Zone löschen** |
 | **Event** | Start (Minuten), Siegerehrung jetzt, Abbrechen (Lose und Geschenke zurück), Gelände setzen/weg, Tafel hier/weg, Schalter Musik, Bossbar, Handel nur im Event, Schneefall, Feuerwerk, Atmos-Preset |
+| **Advent** (seit 0.6.0) | Türchen 1–24 links; rechts Inhalt, **Coins** und **Text** → **Speichern**. **Item aus der Hand** legt den Stapel in der Hand (Anzahl und alle Daten wie Namen oder Verzauberungen) ins Türchen, **Item entfernen** lässt nur die Coins, **Vorlage** setzt das Türchen auf die Standardwerte zurück, **Alle neu öffnen** vergisst, wer schon geöffnet hat (das heutige Türchen geht dann für alle noch einmal auf). Gespeichert in `markt.json` (`event.adventDays`). |
 | **Regeln** | Schalter und Zahlen aus `markt.json`, sofort gespeichert. **Werte 1/2** blättert, **Neu laden** liest die Datei neu. |
 
 ### Befehle
@@ -268,7 +302,15 @@ und nach dem Event die Ergebnisse zeigt.
 | `/markt laden ware <id> <preis> <einheit> <lager> <soll>` | OP 2 | Ware mit Lager aus der Hand (seit 0.5.0) |
 | `/markt laden import <id> <datei>` | OP 2 | Warenliste aus `config/twogg-markt/<datei>.json` |
 | `/markt laden bestand <id> <ware> <stück>` / `lieferung <id>` | OP 2 | Bestand setzen / sofort liefern (alle auf Soll) |
-| `/markt laden lieferzeit <id> <TAG> <hh:mm>` | OP 2 | Wöchentliche Lieferung, z. B. `MONDAY 06:00` |
+| `/markt laden lieferzeit <id> <TAG> <hh:mm>` | OP 2 | Wöchentliche Lieferung, z. B. `MONDAY 06:00` (Brandts Lager: in der Config, `lager.restockDay`/`restockTime`) |
+| `/markt lager` | OP 2 | Brandts Lager: Waren, nächster Nachschub, unbekannte Items, Warnungen (seit 0.6.0) |
+| `/markt lager abgleich` / `nachschub` | OP 2 | Mit `lager.items` abgleichen (wie bei `/markt reload`) / sofort bis zum Wochenbestand auffüllen |
+| `/markt advent` (= `liste`) | OP 2 | Alle 24 Türchen mit Inhalt (seit 0.6.0) |
+| `/markt advent item <tag>` | OP 2 | Stapel in der Hand (mit Anzahl und Daten) als Inhalt |
+| `/markt advent muenzen <tag> <coins>` / `text <tag> <text>` | OP 2 | Coins (0 = keine) / Text (`-` = ohne) |
+| `/markt advent leeren <tag>` | OP 2 | Item entfernen (Coins bleiben) |
+| `/markt advent standard <tag>\|alle` | OP 2 | Türchen auf die Vorlage zurücksetzen |
+| `/markt advent zuruecksetzen <spieler>\|alle` | OP 2 | Geöffnete Türchen vergessen (heutiges Türchen geht wieder auf) |
 | `/markt reload` / `speichern` | OP 2 | Einstellungen neu lesen / Weltdaten speichern |
 
 Admins dürfen in allen Ständen bauen.

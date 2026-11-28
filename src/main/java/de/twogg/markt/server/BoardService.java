@@ -158,7 +158,8 @@ public final class BoardService {
         v.myJobs = mine;
         v.maxJobs = cfg.maxPerPlayer;
         v.maxReward = MarketMath.tenths(cfg.maxReward);
-        v.jobRefreshIn = Math.max(0, d.lastJobRefresh + cfg.refreshMinutes * MarketMath.MINUTE - now);
+        // ohne Vorlagen im Pool (Standard seit 0.6.0) kommen keine Marktaufträge – dann auch keine Ankündigung
+        v.jobRefreshIn = cfg.pool.isEmpty() || cfg.active <= 0 ? 0 : Math.max(0, d.lastJobRefresh + cfg.refreshMinutes * MarketMath.MINUTE - now);
         ItemStack hand = p.getMainHandItem();
         if (!hand.isEmpty()) {
             v.hand = Stacks.toString(reg, new ItemStack(hand.getItem()));

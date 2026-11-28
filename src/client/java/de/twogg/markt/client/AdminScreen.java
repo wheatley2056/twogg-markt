@@ -18,10 +18,10 @@ import java.util.List;
  * Aufträge, Räumzonen und Regeln. Jede Aktion prüft der Server.
  */
 public class AdminScreen extends MarktScreen {
-    private enum Page { STALLS, NEW, EVENT, BUYER, JOBS, ZONES, RULES }
+    private enum Page { STALLS, NEW, EVENT, ADVENT, BUYER, JOBS, ZONES, RULES }
 
-    private static final String[] NAMES = {"Stände", "Neu", "Event", "Ankauf", "Aufträge", "Räumzonen", "Regeln"};
-    private static final KitIcon[] ICONS = {KitIcon.MAP, KitIcon.PLUS, KitIcon.BOLT, KitIcon.BOX, KitIcon.GRID, KitIcon.CURSOR, KitIcon.GEAR};
+    private static final String[] NAMES = {"Stände", "Neu", "Event", "Advent", "Ankauf", "Aufträge", "Räumzonen", "Regeln"};
+    private static final KitIcon[] ICONS = {KitIcon.MAP, KitIcon.PLUS, KitIcon.BOLT, KitIcon.LOCK, KitIcon.BOX, KitIcon.GRID, KitIcon.CURSOR, KitIcon.GEAR};
     private static final String[] MODES = {"BOTH", "RENT", "BUY", "LOCKED"};
     private static final String[] MODE_NAMES = {"Miete + Kauf", "nur Miete", "nur Kauf", "gesperrt"};
 
@@ -33,6 +33,9 @@ public class AdminScreen extends MarktScreen {
     private String minutesText = "", atmosText = null;
     private String priceText = "", bundleText = "", demandText = "";
     private String selBuyer = "", selJob = "", selZone = "";
+    /** Seite „Advent“ (seit 0.6.0): gewähltes Türchen, Eingaben. */
+    private int selDoor = 1;
+    private String doorCoins = null, doorText = null;
     private final String[] settingText = new String[16];
 
     public AdminScreen(Screen parent) {
@@ -100,6 +103,7 @@ public class AdminScreen extends MarktScreen {
             case BUYER -> view.buyerItems.size();
             case JOBS -> view.jobs.size();
             case ZONES -> view.zones.size();
+            case ADVENT -> view.advent.size();
             default -> 0;
         };
     }
@@ -125,6 +129,7 @@ public class AdminScreen extends MarktScreen {
             case STALLS -> buildStalls(x, y, w);
             case NEW -> buildNew(x, y, w);
             case EVENT -> buildEvent(x, y, w);
+            case ADVENT -> buildAdvent(x, y, w);
             case BUYER -> buildBuyer(x, y, w);
             case JOBS -> buildJobs(x, y, w);
             case ZONES -> buildZones(x, y, w);
@@ -136,9 +141,9 @@ public class AdminScreen extends MarktScreen {
         return switch (idx) {
             case 0 -> String.valueOf(view.plots.size());
             case 2 -> view.event != null && ("OPEN".equals(view.event.phase) || "OPENING".equals(view.event.phase)) ? "●" : "";
-            case 3 -> String.valueOf(view.buyerItems.size());
-            case 4 -> String.valueOf(view.jobs.size());
-            case 5 -> String.valueOf(view.zones.size());
+            case 4 -> String.valueOf(view.buyerItems.size());
+            case 5 -> String.valueOf(view.jobs.size());
+            case 6 -> String.valueOf(view.zones.size());
             default -> "";
         };
     }
@@ -322,6 +327,84 @@ public class AdminScreen extends MarktScreen {
             e.active = ok;
         }
         addRenderableWidget(KitButton.second(x + 148, by, 86, "Auswahl weg", b -> send("sel_clear"))).active = s != null;
+    }
+
+    // ------------------------------------------------------------------ Adventskalender (seit 0.6.0)
+
+    private Views.AdventDoor door(int day) {
+        for (Views.AdventDoor d : view.advent) if (d.day == day) return d;
+        return null;
+    }
+
+    private Views.Action doorAct(String a) {
+        Views.Action x = Views.Action.of(a);
+        x.count = selDoor;
+        return x;
+    }
+
+    private void buildAdvent(int x, int y, int w) {
+        int lw = listW();
+        list(x, y, lw, view.advent.stream().map(d -> String.valueOf(d.day)).toList(),
+                view.advent.stream().map(d -> d.day + ". " + d.text).toList(), String.valueOf(selDoor), id -> {
+            selDoor = parseInt(id);
+            doorCoins = doorText = null;
+            armed = "";
+            rebuildWidgets();
+        });
+        Views.AdventDoor d = door(selDoor);
+        if (d == null) return;
+        if (doorCoins == null) doorCoins = money(d.coins, "");
+        if (doorText == null) doorText = d.note;
+        int dx = x + lw + 10, dw = x + w - dx;
+        int fy = y + 48;
+        int cw3 = Math.max(60, (dw - 4) / 3);
+        input(dx, fy, cw3, "Coins", doorCoins, 8, t -> doorCoins = t, view.unit);
+        input(dx + cw3 + 4, fy, dw - cw3 - 4, "Text (z. B. Nikolaus!)", doorText, 60, t -> doorText = t);
+        int by = fy + 24, half = (dw - 4) / 2;
+        addRenderableWidget(KitButton.primary(dx, by, half, "Speichern", b -> {
+            double c = parseDouble(doorCoins);
+            if (c >= 0 && Math.round(c * 10) != d.coins) {
+                Views.Action a = doorAct("advent_coins");
+                a.value = c;
+                send(a);
+            }
+            if (!doorText.equals(d.note)) {
+                Views.Action a = doorAct("advent_text");
+                a.text = doorText.isBlank() ? "-" : doorText;
+                send(a);
+            }
+            doorCoins = doorText = null;
+        }).accent(accent()));
+        confirm(dx + half + 4, by, half, "Vorlage", "advdef:" + selDoor, () -> {
+            send(doorAct("advent_default"));
+            doorCoins = doorText = null;
+        });
+        by += 24;
+        KitButton hand = addRenderableWidget(KitButton.second(dx, by, dw, KitDraw.fit(view.hand.isEmpty() ? "Geschenk in die Hand nehmen …"
+                : "Item aus der Hand: " + view.handName, dw - 10), b -> send(doorAct("advent_item"))));
+        hand.active = !view.hand.isEmpty();
+        by += 24;
+        addRenderableWidget(KitButton.second(dx, by, half, "Item entfernen", b -> send(doorAct("advent_clear")))).active = !d.itemName.isEmpty();
+        confirm(dx + half + 4, by, half, "Alle neu öffnen", "advreopen", () -> send("advent_reopen"));
+    }
+
+    private void drawAdvent(GuiGraphicsExtractor g, int x, int y, int w) {
+        KitDraw.label(g, "Adventskalender", x, y);
+        int dx = x + listW() + 10, dw = x + w - dx;
+        Views.AdventDoor d = door(selDoor);
+        if (d == null) {
+            KitDraw.wrapped(g, Component.literal("Noch keine Daten – „Aktualisieren“."), dx, y + 14, dw, KitColors.TEXT_SOFT);
+            return;
+        }
+        if (!d.item.isEmpty()) item(g, d.item, dx, y + 12);
+        int tx = d.item.isEmpty() ? dx : dx + 20;
+        KitDraw.drawTitle(g, KitDraw.fit("Türchen " + d.day, dw - (tx - dx)), tx, y + 12, KitColors.TEXT);
+        String what = (d.coins > 0 ? money(d.coins) : "keine Coins") + (d.itemName.isEmpty() ? " · kein Item" : " · " + d.count + "× " + d.itemName);
+        text(g, KitDraw.fit(what, dw), dx, y + 32, KitColors.TEXT_SOFT);
+        int hy = y + 48 + 24 * 3 + 26;
+        if (hy + 9 <= cy + ch - PAD) {
+            text(g, KitDraw.fit("Gespeichert in markt.json (event.adventDays). Item aus der Hand mit allen Daten.", dw), dx, hy, KitColors.FAINT);
+        }
     }
 
     private void buildBuyer(int x, int y, int w) {
@@ -538,6 +621,7 @@ public class AdminScreen extends MarktScreen {
             case STALLS -> drawStalls(g, x, y, w);
             case NEW -> drawNew(g, x, y, w);
             case EVENT -> drawEvent(g, x, y, w);
+            case ADVENT -> drawAdvent(g, x, y, w);
             case BUYER -> drawBuyer(g, x, y, w);
             case JOBS -> drawJobs(g, x, y, w);
             case ZONES -> drawZones(g, x, y, w);

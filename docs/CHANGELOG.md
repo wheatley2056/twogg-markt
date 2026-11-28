@@ -2,6 +2,47 @@
 
 
 
+## 0.6.0+26.1.2 – 28.11.2026 – Brandts Lager mit Wochenbestand, leeres Auftragsbrett, Adventskalender bearbeiten
+
+- **Brandts Lager ohne unbegrenzten Vorrat.** Der Laden `materiallager` (Storyteller-NPC Brandt) wird jetzt aus der
+  Config gepflegt (`lager` in `config/twogg-markt/markt.json`): genau die Verkaufsliste der Serverleitung, 107 Waren
+  (Rohstoffe, Nether/End, vier Verzauberungsbücher mit echten Verzauberungen, Schallplatten Pigstep/Tears,
+  Rüstungsbesätze Rippe/Schnauze/Turmspitze, Bannervorlage Schnauze, alle 16 Farbstoffe, Samen, Baustoffe, alle Stämme
+  und Laubsorten inkl. Tanne und Kork). Jede Ware hat einen **Wochenbestand für 42 Spieler** und einen Preis, der zur
+  Arbeit passt (Stundenlohn 1,5 WLC): Bruchstein 0,4 je Stack, Diamant 4, Reparatur 25 WLC. Tabelle in
+  KONFIGURATION.md.
+- **Nachschub jeden Sonntag 06:00 (Europe/Berlin)**, auch über Sommer-/Winterzeit: Jede Ware wird bis zum
+  Wochenbestand **aufgefüllt, nicht obendrauf gelegt**. War der Server aus, kommt er einmal beim nächsten Start.
+- **Verkaufen an Brandt:** Alles von der Liste, zu etwa 60 % des Verkaufspreises beim gleichen Bestand; das hebt den
+  Bestand bis zum Lagerplatz (doppelter Wochenbestand), danach „Lager voll“. Überschuss bleibt beim Nachschub liegen
+  (`lager.trimSurplus`). Der Schutz gegen die Geldpumpe aus 0.5.2 gilt unverändert; neu prüft der Server, dass die
+  Ankaufstelle je Stück nie mehr zahlt, als Brandt mindestens verlangt (auch Roherz → Barren), und warnt sonst.
+- Im Fenster steht beim Wochenbestand genau der Preis aus der Config (Grundpreis wird passend umgerechnet), dahinter
+  „Nachschub jeden Sonntag 06:00“. Neu: `/markt lager` (Stand, nächster Nachschub, unbekannte Items),
+  `/markt lager abgleich`, `/markt lager nachschub`. Feste Verkaufs-/Ankaufszeilen sind in Brandts Lager gesperrt.
+- **Auftragsbrett startet leer:** keine Beispielaufträge mehr (`jobs.pool` ist in der Vorlage leer). Marktaufträge gibt
+  es nur noch, wenn Admins Vorlagen eintragen; Spieleraufträge wie bisher.
+- **Adventskalender bearbeiten:** Marktverwaltung, neue Seite **Advent** (Coins, Text, Item aus der Hand mit allen
+  Daten, Item entfernen, Vorlage, alle neu öffnen) und `/markt advent [liste]`, `item <tag>`, `muenzen <tag> <coins>`,
+  `text <tag> <text>`, `leeren <tag>`, `standard <tag>|alle`, `zuruecksetzen <spieler>|alle` (OP 2). Gespeichert in
+  `event.adventDays`, neues Feld `stack` (kompletter Stapel).
+- **Was beim ersten Start mit 0.6.0 passiert** (einmal, mit Kopie `markt.json.vor-0.6.0` von Einstellungen und
+  Weltdaten):
+  - Einstellungen bekommen `configVersion: 2` und den Abschnitt `lager` mit der Vorlage; die 16 Beispielvorlagen werden
+    aus `jobs.pool` genommen (eigene Vorlagen bleiben). Ankauf, Adventskalender und Regeln bleiben, wie sie sind.
+  - Weltdaten: Die Beispiel-Marktaufträge (auf dem Server die vier „m41–m44“) verschwinden vom Brett,
+    Spieleraufträge bleiben. In Brandts Lager werden feste Verkaufszeilen (unbegrenzter Vorrat) und feste
+    Ankaufszeilen entfernt.
+  - Brandts Lager wird angelegt bzw. abgeglichen: alle Waren mit vollem Wochenbestand, nächster Nachschub am
+    kommenden Sonntag 06:00. Fehlt eine Mod (Autumnal & Winterly, Arts & Crafts), werden deren Waren übersprungen und
+    im Log genannt.
+- Technisch: `core/Restock` (Termine, Auffüllen), `core/LagerCheck`, `server/LagerService`, `MarktConfig.migrate`,
+  `MarktData.migrate`, `Laden.trimSurplus`, `Laden.Ware.managed`. `beispiele/materiallager.json` mit echten Mod-IDs
+  (bleibt Beispiel für eigene Läden). Tests: `RestockTest` (Sonntag, Sommer-/Winterzeit, Lücke und doppelte Stunde,
+  Nachholen nach Ausfall), `LagerTest` (Liste, Preise nach Seltenheit, 42 Spieler, Lagerplatz, keine Geldpumpe,
+  Ankaufstelle), `MigrationTest` (Server-Stand 0.5.2), `AdventAdminTest`; Spieltest: leeres Brett, Brandts Lager
+  (Kauf, Verkauf bis Lagerplatz, Nachschub), Adventskalender aus der Hand und per Befehl.
+
 ## 0.5.2+26.1.2 – 27.11.2026 – Geldpumpe im Lager-Laden geschlossen
 
 - **Fix: Geldpumpe bei „Waren mit Lager“.** Kauf wurde zum Bestand vor der Entnahme, Ankauf zum Bestand vor dem

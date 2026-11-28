@@ -1,5 +1,5 @@
 {
-  "_hinweis": "Warenliste Materiallager (Brandt). Preise in WLC je Einheit (einheit = Stück pro Handel) beim Sollbestand; leeres Lager = doppelt, volles Lager = halb so teuer. Kauf zum Bestand nach der Entnahme, Ankauf zum Bestand nach dem Einlagern × spread (höchstens 0,95). Lieferung füllt jede Woche auf Soll und nimmt Überschuss mit. Einträge mit MODID: durch die echte Mod-ID ersetzen (z. B. natures_spirit:fir_log), sonst werden sie beim Import übersprungen. Kopieren nach config/twogg-markt/materiallager.json, dann /markt laden import materiallager materiallager",
+  "_hinweis": "Beispiel-Warenliste für einen Laden mit Lager (Import: /markt laden import <laden> <datei>). Brandts Lager (Laden materiallager) kommt seit 0.6.0 NICHT mehr aus dieser Datei, sondern aus config/twogg-markt/markt.json unter \"lager\" (Preise, Wochenbestand, Nachschub sonntags). Preise in WLC je Einheit (einheit = Stück pro Handel) beim Sollbestand; leeres Lager = doppelt, volles Lager = halb so teuer. Ankauf = Preis × spread (höchstens 0,95). Mod-Items: autumnal_winterly (Autumnal & Winterly) und arts_and_crafts (Arts & Crafts); fehlt die Mod, wird die Zeile beim Import übersprungen.",
   "lieferung": {
     "tag": "MONDAY",
     "zeit": "06:00",
@@ -37,7 +37,7 @@
       "preis": 2.0,
       "lager": 256,
       "soll": 128,
-      "item": "MODID:raw_platinum"
+      "item": "autumnal_winterly:raw_platinum"
     },
     {
       "name": "Smaragd",
@@ -493,7 +493,7 @@
       "preis": 0.4,
       "lager": 512,
       "soll": 256,
-      "item": "MODID:winterberry_seeds"
+      "item": "autumnal_winterly:winterberry_seeds"
     },
     {
       "name": "Knochen",
@@ -637,7 +637,7 @@
       "preis": 0.6,
       "lager": 4096,
       "soll": 2048,
-      "item": "MODID:kaolin"
+      "item": "autumnal_winterly:kaolin"
     },
     {
       "name": "Gips",
@@ -645,7 +645,7 @@
       "preis": 0.6,
       "lager": 4096,
       "soll": 2048,
-      "item": "MODID:gypsum"
+      "item": "arts_and_crafts:gypsum"
     },
     {
       "name": "Speckstein",
@@ -653,7 +653,7 @@
       "preis": 0.6,
       "lager": 4096,
       "soll": 2048,
-      "item": "MODID:soapstone"
+      "item": "arts_and_crafts:soapstone"
     },
     {
       "name": "Eichenstamm",
@@ -733,7 +733,7 @@
       "preis": 0.8,
       "lager": 2048,
       "soll": 1024,
-      "item": "MODID:fir_log"
+      "item": "autumnal_winterly:fir_log"
     },
     {
       "name": "Korkstamm",
@@ -741,7 +741,7 @@
       "preis": 0.8,
       "lager": 2048,
       "soll": 1024,
-      "item": "MODID:cork_log"
+      "item": "arts_and_crafts:cork_log"
     },
     {
       "name": "Karmesinstiel",
@@ -853,7 +853,7 @@
       "preis": 0.3,
       "lager": 1024,
       "soll": 512,
-      "item": "MODID:fir_leaves"
+      "item": "autumnal_winterly:fir_leaves"
     },
     {
       "name": "Korklaub",
@@ -861,7 +861,7 @@
       "preis": 0.3,
       "lager": 1024,
       "soll": 512,
-      "item": "MODID:cork_leaves"
+      "item": "arts_and_crafts:cork_leaves"
     },
     {
       "name": "Weiße Wolle",

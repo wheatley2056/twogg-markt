@@ -75,7 +75,7 @@ class MarketMathTest {
 
     @Test
     void pickDrawsDistinctTemplates() {
-        List<MarktConfig.JobTemplate> pool = MarktConfig.defaults().jobs.pool;
+        List<MarktConfig.JobTemplate> pool = MarktConfig.winterlandJobPool();
         List<MarktConfig.JobTemplate> got = MarketMath.pick(pool, 4, new Random(42));
         assertEquals(4, got.size());
         Set<String> titles = new HashSet<>();
@@ -157,7 +157,8 @@ class MarketMathTest {
         MarktConfig c = MarktConfig.defaults();
         c.sanitize();
         assertFalse(c.buyer.items.isEmpty());
-        assertTrue(c.jobs.pool.size() >= c.jobs.active);
+        assertTrue(c.jobs.pool.isEmpty(), "seit 0.6.0 ohne Beispielaufträge");
+        assertFalse(c.lager.items.isEmpty());
         for (MarktConfig.BuyerItem i : c.buyer.items) assertTrue(i.item.startsWith("minecraft:"), i.item);
     }
 

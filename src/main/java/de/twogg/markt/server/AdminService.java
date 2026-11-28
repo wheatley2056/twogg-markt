@@ -127,6 +127,7 @@ public final class AdminService {
         st.snowBlocksPerPay = c.snow.blocksPerPay;
         v.settings = st;
         v.event = EventService.info(p, true);
+        for (int day = 1; day <= 24; day++) v.advent.add(adventDoor(reg, c.advent(day), day));
         ItemStack hand = p.getMainHandItem();
         if (!hand.isEmpty()) {
             v.hand = Stacks.id(hand);
@@ -316,7 +317,9 @@ public final class AdminService {
             }
             case "jobs_reroll" -> {
                 BoardService.reroll();
-                return "Neue Marktaufträge ausgehängt.";
+                // seit 0.6.0 ist der Pool anfangs leer (keine Beispielaufträge)
+                return c.jobs.pool.isEmpty() ? "Der Auftrags-Pool ist leer (jobs.pool in config/twogg-markt/markt.json) – keine Marktaufträge."
+                        : "Neue Marktaufträge ausgehängt.";
             }
             case "job_remove" -> {
                 Job j = d.job(act.id == null ? "" : act.id);
@@ -371,12 +374,96 @@ public final class AdminService {
                 Holograms.removeLeaderboard();
                 return "Bestenliste-Tafel entfernt.";
             }
+            case "advent_item" -> {
+                ItemStack hand = p.getMainHandItem();
+                if (hand.isEmpty()) throw err("Das Geschenk für das Türchen in die Hand nehmen.");
+                if (hand.is(de.twogg.markt.content.ModContent.PLANNER)) throw err("Den Marktplaner lieber nicht verschenken.");
+                MarktConfig.AdventDay door = c.adventOrCreate(day(act));
+                door.stack = Stacks.toJson(p.level().registryAccess(), hand.copy());
+                if (door.stack == null) throw err("Dieses Item lässt sich nicht speichern.");
+                door.item = Stacks.id(hand);
+                door.count = hand.getCount();
+                MarktRuntime.saveConfig();
+                return "Türchen " + door.day + ": " + hand.getCount() + "× " + hand.getHoverName().getString() + " (mit allen Daten).";
+            }
+            case "advent_clear" -> {
+                MarktConfig.AdventDay door = c.adventOrCreate(day(act));
+                door.stack = null;
+                door.item = "";
+                door.count = 0;
+                MarktRuntime.saveConfig();
+                return "Türchen " + door.day + ": kein Item mehr" + (door.coins > 0 ? ", nur " + door.coins + " Coins." : " – und keine Coins (leer).");
+            }
+            case "advent_coins" -> {
+                if (!Double.isFinite(act.value) || act.value < 0 || act.value > 10_000) throw err("Coins von 0 bis 10 000.");
+                MarktConfig.AdventDay door = c.adventOrCreate(day(act));
+                door.coins = MarketMath.tenths(act.value) / 10.0;
+                MarktRuntime.saveConfig();
+                return "Türchen " + door.day + ": " + door.coins + " Coins.";
+            }
+            case "advent_text" -> {
+                MarktConfig.AdventDay door = c.adventOrCreate(day(act));
+                String t = act.text == null ? "" : act.text.trim();
+                door.text = t.equals("-") ? "" : t.length() > 60 ? t.substring(0, 60) : t;
+                MarktRuntime.saveConfig();
+                return "Türchen " + door.day + ": " + (door.text.isEmpty() ? "ohne Text." : "Text „" + door.text + "“.");
+            }
+            case "advent_default" -> {
+                int day = act.count;
+                if (day < 0 || day > 24) throw err("Türchen 1 bis 24 (0 = alle).");
+                c.resetAdvent(day);
+                MarktRuntime.saveConfig();
+                return day == 0 ? "Alle 24 Türchen auf die Vorlage zurückgesetzt." : "Türchen " + day + " auf die Vorlage zurückgesetzt.";
+            }
+            case "advent_reopen" -> {
+                // Geöffnete Türchen vergessen: name = Spieler (online) oder leer = alle
+                String who = act.name == null ? "" : act.name.trim();
+                if (who.isEmpty()) {
+                    int n = d.advent.size();
+                    d.advent.clear();
+                    return "Geöffnete Türchen aller Spieler zurückgesetzt (" + n + " Spieler) – das heutige Türchen geht wieder auf.";
+                }
+                ServerPlayer t = p.level().getServer().getPlayerList().getPlayerByName(who);
+                if (t == null) throw err("Spieler " + who + " ist nicht online.");
+                d.advent.remove(t.getUUID().toString());
+                return "Geöffnete Türchen von " + t.getGameProfile().name() + " zurückgesetzt.";
+            }
             case "reload" -> {
                 if (!MarktRuntime.reload()) throw err("Einstellungen fehlerhaft, nichts geändert (siehe Log).");
                 return "Einstellungen neu geladen.";
             }
             default -> { return ""; }
         }
+    }
+
+    private static int day(Views.Action act) {
+        if (act.count < 1 || act.count > 24) throw err("Türchen 1 bis 24.");
+        return act.count;
+    }
+
+    /** Türchen für die Marktverwaltung und {@code /markt advent liste}. */
+    static Views.AdventDoor adventDoor(net.minecraft.core.HolderLookup.Provider reg, MarktConfig.AdventDay a, int day) {
+        Views.AdventDoor door = new Views.AdventDoor();
+        door.day = day;
+        door.state = "ADMIN";
+        if (a == null) {
+            door.text = "leer";
+            return door;
+        }
+        door.coins = MarketMath.tenths(a.coins);
+        door.note = a.text;
+        ItemStack gift = ActivityService.gift(reg, a);
+        if (!gift.isEmpty()) {
+            door.item = Stacks.toString(reg, gift.copyWithCount(1));
+            door.count = gift.getCount();
+            door.itemName = gift.getHoverName().getString();
+        } else if (!a.item.isBlank() && a.count > 0) {
+            door.itemName = a.item + " (unbekannt)";
+            door.count = a.count;
+        }
+        String r = ActivityService.reward(a);
+        door.text = r.isBlank() ? "leer" : r;
+        return door;
     }
 
     public static Plot createPlot(ServerPlayer p, String name, double rent, double buy) {
